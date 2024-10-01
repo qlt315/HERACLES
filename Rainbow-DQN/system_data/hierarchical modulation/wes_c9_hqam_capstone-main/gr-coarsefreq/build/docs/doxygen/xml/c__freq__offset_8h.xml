@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="c__freq__offset_8h" kind="file" language="C++">
+    <compoundname>c_freq_offset.h</compoundname>
+    <includes refid="api_8h" local="no">coarsefreq/api.h</includes>
+    <includes local="no">gnuradio/block.h</includes>
+    <includedby refid="c__freq__offset__impl_8h" local="no">c_freq_offset_impl.h</includedby>
+    <incdepgraph>
+      <node id="3">
+        <label>gnuradio/attributes.h</label>
+      </node>
+      <node id="1">
+        <label>c_freq_offset.h</label>
+        <link refid="c__freq__offset_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>gnuradio/block.h</label>
+      </node>
+      <node id="2">
+        <label>coarsefreq/api.h</label>
+        <link refid="api_8h"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="2">
+        <label>c_freq_offset_impl.h</label>
+        <link refid="c__freq__offset__impl_8h"/>
+      </node>
+      <node id="1">
+        <label>c_freq_offset.h</label>
+        <link refid="c__freq__offset_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classgr_1_1coarsefreq_1_1c__freq__offset" prot="public">gr::coarsefreq::c_freq_offset</innerclass>
+    <innernamespace refid="namespacegr">gr</innernamespace>
+    <innernamespace refid="namespacegr_1_1coarsefreq">gr::coarsefreq</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/bhagat/gr-coarsefreq/include/coarsefreq/c_freq_offset.h"/>
+  </compounddef>
+</doxygen>

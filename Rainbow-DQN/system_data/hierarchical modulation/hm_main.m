@@ -1,0 +1,255 @@
+% 2-layer hierarchical modulation
+
+clear;
+%  close all;
+max_runs = 1;
+max_decode_iterations = 20;
+
+min_sum = 1;
+n_0 = 1/2;
+
+max_power = 1; % Maximum transmit power
+power_ratio = 0.5;  % 0<=ratio<=1;
+power_1 = power_ratio * max_power;
+power_2 = max_power-power_1;
+
+Est_err_para = 0;
+
+% Modulation for layer 1 (base layer)
+%Should be one of 'bpsk', 'ask4', 'ask8' (equivalently QPSK, 16-QAM, and 64-QAM)
+constellation_name_1 = 'bpsk'; 
+modulation_1 = tm_constellation(constellation_name_1);
+
+% Modulation for layer 2 (enhancement layer)
+%Should be one of 'bpsk', 'ask4', 'ask8' (equivalently QPSK, 16-QAM, and 64-QAM)
+constellation_name_2 = 'ask4'; 
+modulation_2 = tm_constellation(constellation_name_2);
+
+
+% Number of bits (ensure layer 1 symbol num = layer 2 symbol num)
+bit_num_1 = 648; % layer 1 bits -> Should be one of 648, 1296, and 1944
+bit_num_2 = bit_num_1 * (modulation_2.n_bits / modulation_1.n_bits);% layer 2 bits -> Should be one of 648, 1296, and 1944
+rate = 1/2; % LDPC coding rate -> Should be one of 1/2, 2/3, 3/4, 5/6
+
+ldpc_code_1 = ldpc(bit_num_1, bit_num_1*rate);
+ldpc_code_2 = ldpc(bit_num_2, bit_num_2*rate);
+
+ebno_db_min = 0;
+ebno_db_inter = 0.5;
+ebno_db_max = 10;
+ebno_db_vec = (ebno_db_min:ebno_db_inter:ebno_db_max);
+
+num_block_err_1 = zeros(length(ebno_db_vec), 1);
+num_block_err_2 = zeros(length(ebno_db_vec), 1);
+num_block_err = zeros(length(ebno_db_vec), 1);
+num_block_err_2_sic = zeros(length(ebno_db_vec), 1);
+num_block_err_sic = zeros(length(ebno_db_vec), 1);
+
+num_bit_err_1 = zeros(length(ebno_db_vec), 1);
+num_bit_err_2 = zeros(length(ebno_db_vec), 1);
+num_bit_err_2_sic = zeros(length(ebno_db_vec), 1);
+num_bit_err = zeros(length(ebno_db_vec), 1);
+num_bit_err_sic = zeros(length(ebno_db_vec), 1);
+
+tic
+
+ldpc_code_1.load_wifi_ldpc(bit_num_1, rate);
+ldpc_code_2.load_wifi_ldpc(bit_num_2, rate);
+
+info_length_1 = rate * bit_num_1;
+info_length_2 = rate * bit_num_2;
+disp(['Running Hierarchical Modulation with LDPC coding rate = ', num2str(rate), ' and power ratio = ' , num2str(power_ratio),' and channel estimation error = ' , num2str(Est_err_para)]);
+disp([ 'layer 1 bit number = ', num2str(bit_num_1), ' | layer 1 modulation method = ', constellation_name_1, ' | layer 1 symbol number = ', num2str(bit_num_1 / modulation_1.n_bits)]);   
+disp([ 'layer 2 bit number = ', num2str(bit_num_2), ' | layer 2 modulation method = ', constellation_name_2, ' | layer 2 symbol number = ', num2str(bit_num_2 / modulation_2.n_bits)]);
+snr_db_vec = ebno_db_vec + 10*log10(rate) + 10*log10(modulation_1.n_bits) + 10*log10(modulation_2.n_bits);
+
+for i_run = 1 : max_runs
+    
+    
+
+    disp(['Current run = ', num2str(i_run), ' percentage complete = ', num2str((i_run-1)/max_runs * 100), '%', ' time elapsed = ', num2str(toc), ' seconds']);
+
+    
+    noise = sqrt(n_0) * randn(bit_num_1/modulation_1.n_bits, 1);
+    
+    info_bits_1 = rand(info_length_1, 1) < 0.5;
+    info_bits_2 = rand(info_length_2, 1) < 0.5;
+    
+    coded_bits_1 = ldpc_code_1.encode_bits(info_bits_1);
+    coded_bits_2 = ldpc_code_2.encode_bits(info_bits_2);
+    
+
+    
+    scrambling_bits_1 = (rand(bit_num_1, 1) < 0.5);
+    scrambling_bits_2 = (rand(bit_num_2, 1) < 0.5);
+    
+    scrambled_bits_1 = mod(coded_bits_1 + scrambling_bits_1, 2);
+    scrambled_bits_2 = mod(coded_bits_2 + scrambling_bits_2, 2);
+    
+    x_1 = modulation_1.modulate(scrambled_bits_1);
+    x_2 = modulation_2.modulate(scrambled_bits_2);
+    x = power_1 * x_1 + power_2 * x_2;
+    
+    for i_snr = 1 : length(snr_db_vec)
+        
+        snr_db = snr_db_vec(i_snr);
+        
+        snr = 10^(snr_db/10);
+
+
+        % h = randn(size(x)) + 1i * randn(size(x)) / sqrt(2);
+        h = raylrnd(1 / sqrt(2), 1) * sqrt(snr_db); 
+        
+        y =  h .* x + noise/sqrt(snr);
+        
+        % Channel Equalization
+        Est_err = Est_err_para * abs(h);
+        hEst = h + Est_err + Est_err * 1i;
+        y = y ./ hEst;
+        
+
+        % Demodulate the layer 1 bits
+
+        [llr_1, ~] = modulation_1.compute_llr(y, n_0/snr);
+
+        llr_1 = llr_1 .* ( 1 - 2 * scrambling_bits_1);
+        
+        % decoded codeword (for WiFi codes, first K bits are the information bits)
+        [decoded_codeword_1, ~] = ldpc_code_1.decode_llr(llr_1, max_decode_iterations, min_sum);
+        
+        % Calculate layer 1 PER 
+        if any(decoded_codeword_1 ~= coded_bits_1)
+            num_block_err_1(i_snr) = num_block_err_1(i_snr) + 1;
+            num_block_err(i_snr) = num_block_err(i_snr) + 1;
+            num_block_err_sic(i_snr) = num_block_err_sic(i_snr) + 1;
+        else
+            break; % Assumes the codeword will be decoded correctly for a higher SNR as well
+        end
+
+        % Calculate layer 1 BER
+        for i=1:bit_num_1
+            if decoded_codeword_1(i) ~= coded_bits_1(i)
+                num_bit_err_1(i_snr) = num_bit_err_1(i_snr) + 1;
+                num_bit_err(i_snr) = num_bit_err(i_snr) + 1;
+                num_bit_err_sic(i_snr) = num_bit_err_sic(i_snr) + 1;
+            end
+        end
+
+
+        % Demodulate the layer 2 bits without SIC
+
+        [llr_2, ~] = modulation_2.compute_llr(y, n_0/snr);
+
+        llr_2 = llr_2 .* ( 1 - 2 * scrambling_bits_2);
+        
+        [decoded_codeword_2, ~] = ldpc_code_2.decode_llr(llr_2, max_decode_iterations, min_sum);
+        
+        % Calculate layer 2 PER 
+        if any(decoded_codeword_2 ~= coded_bits_2)
+            num_block_err_2(i_snr) = num_block_err_2(i_snr) + 1;
+            num_block_err(i_snr) = num_block_err(i_snr) + 1;
+        else
+            break; % Assumes the codeword will be decoded correctly for a higher SNR as well
+        end
+        
+
+        % Calculate layer 2 BER
+        for i=1:bit_num_2
+            if decoded_codeword_2(i) ~= coded_bits_2(i)
+                num_bit_err_2(i_snr) = num_bit_err_2(i_snr) + 1;
+                num_bit_err(i_snr) = num_bit_err(i_snr) + 1;
+            end
+        end
+        
+        % Demodulate the layer 2 bits with SIC
+
+        % decoded_info_1 = decoded_codeword_1(1:info_length1);
+        % re_coded_bits_1 = ldpc_code_1.encode_bits(decoded_info_1_1);
+        % re_scrambled_bits_1 = mod(re_coded_bits_1 + scrambling_bits_1, 2);
+        % re_modu_bits_1 = modulation_1.modulate(re_scrambled_bits_1);
+        
+        re_scrambled_bits_1 = mod(decoded_codeword_1 + scrambling_bits_1, 2);
+        re_modu_bits_1 = modulation_1.modulate(re_scrambled_bits_1);
+        y_sic = y - power_1 * re_modu_bits_1;
+
+
+        [llr_2_sic, ~] = modulation_2.compute_llr(y_sic, n_0/snr);
+
+        llr_2_sic = llr_2_sic .* ( 1 - 2 * scrambling_bits_2);
+        
+        [decoded_codeword_2_sic, ~] = ldpc_code_2.decode_llr(llr_2_sic, max_decode_iterations, min_sum);
+        
+        % Calculate layer 2 PER 
+        if any(decoded_codeword_2_sic ~= coded_bits_2)
+            num_block_err_2_sic(i_snr) = num_block_err_2_sic(i_snr) + 1;
+            num_block_err_sic(i_snr) = num_block_err_sic(i_snr) + 1;
+        else
+            break; % Assumes the codeword will be decoded correctly for a higher SNR as well
+        end
+        
+
+        % Calculate layer 2 BER
+        for i=1:bit_num_2
+            if decoded_codeword_2_sic(i) ~= coded_bits_2(i)
+                num_bit_err_2_sic(i_snr) = num_bit_err_2_sic(i_snr) + 1;
+                num_bit_err_sic(i_snr) = num_bit_err_sic(i_snr) + 1;
+            end
+        end
+        
+
+        
+    end
+end
+
+bler = num_block_err/max_runs;
+bler_1 = num_block_err_1/max_runs;
+bler_2 = num_block_err_2/max_runs;
+
+bler_sic = num_block_err_sic/max_runs;
+bler_2_sic = num_block_err_2_sic/max_runs;
+
+ber_1 = num_bit_err_1 / (max_runs * bit_num_1);
+ber_2 = num_bit_err_2 / (max_runs * bit_num_2);
+ber = num_bit_err / (max_runs * (bit_num_1+bit_num_2));
+
+ber_2_sic = num_bit_err_2_sic / (max_runs * bit_num_2);
+ber_sic = num_bit_err_sic / (max_runs * (bit_num_1+bit_num_2));
+
+
+file_name = strcat("two_layers_data/snr_", num2str(ebno_db_min), "_", num2str(ebno_db_inter), "_", num2str(ebno_db_max), "_layer1_", constellation_name_1, ...
+    "_layer2_", constellation_name_2, "_esterr_", num2str(Est_err_para), "_rate_",num2str(rate), "_power_ratio_", num2str(rate), ".mat");
+save(file_name);
+
+figure(1)
+semilogy(ebno_db_vec, bler_1, "-o", 'LineWidth', 2, 'Markersize', 7,'Color',[0  114  189]/255);
+hold on; 
+semilogy(ebno_db_vec, bler_2, "-d", 'LineWidth', 2, 'Markersize', 7,'Color',[217  83  25]/255);
+semilogy(ebno_db_vec, bler_2_sic, "d--", 'LineWidth', 2, 'Markersize', 7,'Color',[217  83  25]/255);
+semilogy(ebno_db_vec, bler, "-*", 'LineWidth', 2, 'Markersize', 7,'Color', [237  177  32]/255);
+semilogy(ebno_db_vec, bler_sic, "*--", 'LineWidth', 2, 'Markersize', 7,'Color', [237  177  32]/255);
+grid on;
+xlabel('SNR (dB)')
+ylabel('Packet Error Rate')
+
+layer1_legend = strcat("Layer 1 (", constellation_name_1, ")"); 
+layer2_legend = strcat("Layer 2 w/o SIC (", constellation_name_2, ")");
+layer2_sic_legend = strcat("Layer 2 w SIC (", constellation_name_2, ")");
+hm_legend = strcat("HM (", constellation_name_1, " / ",constellation_name_2, ") w/o SIC");
+hm_sic_legend = strcat("HM (", constellation_name_1, " / ",constellation_name_2, ") w SIC");
+    
+legend(layer1_legend, layer2_legend, layer2_sic_legend, hm_legend, hm_sic_legend);   
+set(gca,'FontName','Times New Roman','FontSize',12);
+
+
+figure(2)
+semilogy(ebno_db_vec, ber_1, "-o", 'LineWidth', 2, 'Markersize', 7,'Color',[0  114  189]/255);
+hold on; 
+semilogy(ebno_db_vec, ber_2, "-d", 'LineWidth', 2, 'Markersize', 7,'Color',[217  83  25]/255);
+semilogy(ebno_db_vec, ber_2_sic, "d--", 'LineWidth', 2, 'Markersize', 7,'Color',[217  83  25]/255);
+semilogy(ebno_db_vec, ber, "-*", 'LineWidth', 2, 'Markersize', 7,'Color',[237  177  32]/255);
+semilogy(ebno_db_vec, ber_sic, "*--", 'LineWidth', 2, 'Markersize', 7,'Color',[237  177  32]/255);
+grid on;
+xlabel('SNR (dB)')
+ylabel('Bit Error Rate')
+legend(layer1_legend, layer2_legend, layer2_sic_legend, hm_legend, hm_sic_legend);
+set(gca,'FontName','Times New Roman','FontSize',12);

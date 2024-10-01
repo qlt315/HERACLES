@@ -1,0 +1,7 @@
+Running: xsim.dir/rfnoc_block_conv_tb_behav/xsimk -simmode gui -wdb rfnoc_block_conv_tb_behav.wdb -simrunnum 0 -socket 60861
+Design successfully loaded
+Design Loading Memory Usage: 35364 KB (Peak: 35364 KB)
+Design Loading CPU Usage: 20 ms
+Simulation completed
+Simulation Memory Usage: 134400 KB (Peak: 174632 KB)
+Simulation CPU Usage: 310030 ms

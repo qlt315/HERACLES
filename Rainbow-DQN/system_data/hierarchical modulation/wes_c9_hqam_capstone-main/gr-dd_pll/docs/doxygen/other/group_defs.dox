@@ -1,0 +1,7 @@
+/*!
+ * \defgroup block GNU Radio DD_PLL C++ Signal Processing Blocks
+ * \brief All C++ blocks that can be used from the DD_PLL GNU Radio
+ *        module are listed here or in the subcategories below.
+ *
+ */
+

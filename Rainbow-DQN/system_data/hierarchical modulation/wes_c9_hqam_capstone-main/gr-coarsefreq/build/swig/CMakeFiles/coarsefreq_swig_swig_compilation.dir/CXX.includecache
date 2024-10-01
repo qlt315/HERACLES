@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/bhagat/gr-coarsefreq/swig/coarsefreq_swig.i
+gnuradio.i
+/home/bhagat/gr-coarsefreq/swig/gnuradio.i
+coarsefreq_swig_doc.i
+/home/bhagat/gr-coarsefreq/swig/coarsefreq_swig_doc.i
+coarsefreq/c_freq_offset.h
+/home/bhagat/gr-coarsefreq/swig/coarsefreq/c_freq_offset.h
+coarsefreq/c_freq_offset.h
+/home/bhagat/gr-coarsefreq/swig/coarsefreq/c_freq_offset.h
+

@@ -1,0 +1,15 @@
+Vivado Simulator 2019.1
+Time resolution is 1 ps
+========================================================
+TESTBENCH STARTED: rfnoc_block_conv_tb
+========================================================
+[TEST CASE   1] (t =         0 ns) BEGIN: Flush block then reset it...
+[TEST CASE   1] (t =      2455 ns) DONE... Passed
+[TEST CASE   2] (t =      2455 ns) BEGIN: Verify Block Info...
+[TEST CASE   2] (t =      2455 ns) DONE... Passed
+[TEST CASE   3] (t =      2455 ns) BEGIN: Test passing through samples...
+Sent input packet from send_samples
+
+Fatal: Timeout: Testbench "rfnoc_block_conv_tb" time limit exceeded
+Time: 10 ms  Iteration: 0  Process: /PkgTestExec/TestExec::start_timeout/Block260_9/timeout  File: /home/wes/projects/dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgTestExec.sv
+$finish called at time : 10 ms : File "/home/wes/projects/dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgTestExec.sv" Line 235

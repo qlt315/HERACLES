@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="dir_49a99ae38a3ee9a3380256228be07374" kind="dir">
+    <compoundname>coarsefreq</compoundname>
+    <innerfile refid="api_8h">api.h</innerfile>
+    <innerfile refid="c__freq__offset_8h">c_freq_offset.h</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/bhagat/gr-coarsefreq/include/coarsefreq/"/>
+  </compounddef>
+</doxygen>

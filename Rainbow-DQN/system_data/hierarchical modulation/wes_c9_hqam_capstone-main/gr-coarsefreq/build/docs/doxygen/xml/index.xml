@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.8.17">
+  <compound refid="classgr_1_1coarsefreq_1_1c__freq__offset" kind="class"><name>gr::coarsefreq::c_freq_offset</name>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset_1a02924d0e5dd8dfd570b8f1defdd56ffa" kind="typedef"><name>sptr</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset_1a46c9072da889182f4071fc151a24e2fb" kind="function"><name>make</name></member>
+  </compound>
+  <compound refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl" kind="class"><name>gr::coarsefreq::c_freq_offset_impl</name>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1a332012d853cf41d369db3b25635e3774" kind="variable"><name>d_packet_len</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1aa713bbc678d6486f3316e4205b94898f" kind="variable"><name>d_threshold</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1a7fba0f838182a2e798a8451ebc263621" kind="variable"><name>d_sample_freq</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1a7239e73d7213145d80724adb8b783639" kind="variable"><name>theta</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1abaa692159105fb1f04f5c3f5ec3ef4c3" kind="variable"><name>incr_count</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1afd183d8b48d57cceadc1ed0d0666b3f0" kind="function"><name>c_freq_offset_impl</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1a9eecbf0b517805160de0d9a10a271fd5" kind="function"><name>~c_freq_offset_impl</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1a4b843102ad358194764fc5adee6a1843" kind="function"><name>forecast</name></member>
+    <member refid="classgr_1_1coarsefreq_1_1c__freq__offset__impl_1ab8244232c56b22a9d890a726832c41aa" kind="function"><name>general_work</name></member>
+  </compound>
+  <compound refid="namespacegr" kind="namespace"><name>gr</name>
+  </compound>
+  <compound refid="namespacegr_1_1coarsefreq" kind="namespace"><name>gr::coarsefreq</name>
+  </compound>
+  <compound refid="namespacestd" kind="namespace"><name>std</name>
+  </compound>
+  <compound refid="api_8h" kind="file"><name>api.h</name>
+    <member refid="api_8h_1add1f20e4672616b740056f925c3356dd" kind="define"><name>COARSEFREQ_API</name></member>
+  </compound>
+  <compound refid="c__freq__offset_8h" kind="file"><name>c_freq_offset.h</name>
+  </compound>
+  <compound refid="c__freq__offset__impl_8h" kind="file"><name>c_freq_offset_impl.h</name>
+  </compound>
+  <compound refid="group__defs_8dox" kind="file"><name>group_defs.dox</name>
+  </compound>
+  <compound refid="main__page_8dox" kind="file"><name>main_page.dox</name>
+  </compound>
+  <compound refid="group__block" kind="group"><name>block</name>
+  </compound>
+  <compound refid="dir_49a99ae38a3ee9a3380256228be07374" kind="dir"><name>coarsefreq</name>
+  </compound>
+  <compound refid="dir_49e56c817e5e54854c35e136979f97ca" kind="dir"><name>docs</name>
+  </compound>
+  <compound refid="dir_359d2bec989c9a8deeeb9aee335c1c76" kind="dir"><name>doxygen</name>
+  </compound>
+  <compound refid="dir_d44c64559bbebec7f509842c48db8b23" kind="dir"><name>include</name>
+  </compound>
+  <compound refid="dir_97aefd0d527b934f1d99a682da8fe6a9" kind="dir"><name>lib</name>
+  </compound>
+  <compound refid="dir_f2cd86917185299abf5a1f0679072f3c" kind="dir"><name>other</name>
+  </compound>
+  <compound refid="indexpage" kind="page"><name>index</name>
+  </compound>
+</doxygenindex>

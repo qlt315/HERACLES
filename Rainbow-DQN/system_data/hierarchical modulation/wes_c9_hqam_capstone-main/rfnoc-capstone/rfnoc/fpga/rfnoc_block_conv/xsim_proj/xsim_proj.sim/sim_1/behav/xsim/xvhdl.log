@@ -1,0 +1,2 @@
+INFO: [VRFC 10-163] Analyzing VHDL file "/home/wes/projects/capstone/oot_modules/rfnoc-capstone/rfnoc/fpga/rfnoc_block_conv/build-ip/xc7z020clg484-3/axi_conv/sim/axi_conv.vhd" into library xil_defaultlib
+INFO: [VRFC 10-3107] analyzing entity 'axi_conv'

@@ -1,0 +1,52 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/general" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/axi" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/control" -d "UHD_FPGA_DIR=/home/wes/projects/dependencies/uhd/fpga/usrp3/top/../.." -d "WORKING_DIR="/home/wes/projects/capstone/oot_modules/rfnoc-capstone/rfnoc/fpga/rfnoc_block_conv"" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_demux.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_fifo.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/sim/fifo/axi_fifo_2clk_sim.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_fifo_bram.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_fifo_flop.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_fifo_flop2.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_fifo_short.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_mux.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/fifo/axi_packet_gate.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/axis_ctrl_master.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/axis_ctrl_slave.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/axi/axis_downsizer.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/axi/axis_packet_flush.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/axis_pyld_ctxt_to_chdr.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/axi/axis_upsizer.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/axi/axis_width_conv.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/backend_iface.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/bin2gray.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/chdr_compute_tkeep.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/chdr_to_axis_pyld_ctxt.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc/core/ctrlport_endpoint.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/gray2bin.v" \
+"../../../../../noc_shell_conv.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/pulse_stretch_min.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/pulse_synchronizer.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/ram_2port.v" \
+"../../../../../rfnoc_block_conv.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/synchronizer.v" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control/synchronizer_impl.v" \
+
+sv xil_defaultlib  --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/control" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/rfnoc" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/general" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/axi" --include "../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/control" -d "UHD_FPGA_DIR=/home/wes/projects/dependencies/uhd/fpga/usrp3/top/../.." -d "WORKING_DIR="/home/wes/projects/capstone/oot_modules/rfnoc-capstone/rfnoc/fpga/rfnoc_block_conv"" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/lib/axi4s_sv/AxiStreamIf.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgAxiStreamBfm.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgChdrData.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgChdrUtils.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgAxisCtrlBfm.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgChdrBfm.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgChdrIfaceBfm.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgCtrlIfaceBfm.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgRfnocBlockCtrlBfm.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgRfnocItemUtils.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/PkgTestExec.sv" \
+"../../../../../../../../../../../dependencies/uhd/fpga/usrp3/sim/rfnoc/sim_clock_gen.sv" \
+"../../../../../rfnoc_block_conv_tb.sv" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort
