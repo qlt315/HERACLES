@@ -3,7 +3,7 @@ from scipy.io import savemat
 from envs.env_random import EnvRandom
 import numpy as np
 import torch
-from agent import DQNAgent
+from rainbow_dqn.rainbow_agent import DQNAgent
 
 # environment
 # env = gym.make("CartPole-v1", max_episode_steps=200, render_mode="rgb_array")

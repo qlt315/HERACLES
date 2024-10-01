@@ -66,9 +66,9 @@ for k in range(len(seed_list)):
     context_train_list = np.random.choice(list(range(len(context_list))),
                                           size=context_num, p=context_prob)
     # Data loading and fitting
-    platform_data = sio.loadmat('system_data/platform_data.mat')
+    platform_data = sio.loadmat('../system_data/platform_data.mat')
 
-    folder_path = "system_data/typical modulation"
+    folder_path = "../system_data/typical modulation"
     file_list = os.listdir(folder_path)
     all_valid_file = []
 

@@ -13,8 +13,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 from torch.nn.utils import clip_grad_norm_
-from replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
-from network import Network
+from rainbow_replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
+from rainbow_network import Network
 
 
 class DQNAgent:

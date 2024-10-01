@@ -16,9 +16,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 from torch.nn.utils import clip_grad_norm_
-from replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
-from network import Network
-from agent import DQNAgent
+from rainbow_replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
+from rainbow_network import Network
+from rainbow_agent import DQNAgent
 import base64
 import glob
 import io
@@ -62,22 +62,22 @@ for i in range(eval_time):
     # load the model
     test_agent = DQNAgent(env, memory_size, batch_size, target_update, test_seed)
     if env.name == "proposed":
-        test_agent.dqn = torch.load('models/dqn_proposed.pth')
+        test_agent.dqn = torch.load('rainbow_dqn/models/dqn_proposed.pth')
         test_agent.dqn_target = torch.load('models/dqn_target_proposed.pth')
     elif env.name == "sse":
-        test_agent.dqn = torch.load('models/dqn_sse.pth')
+        test_agent.dqn = torch.load('rainbow_dqn/models/dqn_sse.pth')
         test_agent.dqn_target = torch.load('models/dqn_target_sse.pth')
     elif env.name == "tem":
-        test_agent.dqn = torch.load('models/dqn_tem.pth')
+        test_agent.dqn = torch.load('rainbow_dqn/models/dqn_tem.pth')
         test_agent.dqn_target = torch.load('models/dqn_target_tem.pth')
 
     # save the data
     if env.name == "proposed":
-        mat_name = "eval_data/eval_proposed_data.mat"
+        mat_name = "rainbow_dqn/eval_data/eval_proposed_data.mat"
     elif env.name == "sse":
-        mat_name = "eval_data/eval_sse_data.mat"
+        mat_name = "rainbow_dqn/eval_data/eval_sse_data.mat"
     elif env.name == "tem":
-        mat_name = "eval_data/eval_tem_data.mat"
+        mat_name = "rainbow_dqn/eval_data/eval_tem_data.mat"
 
     test_agent.test(env, test_seed)
     eval_total_delay_list[0, i] = env.episode_total_delay_list[0]

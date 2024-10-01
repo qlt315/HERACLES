@@ -7,7 +7,6 @@ from typing import Deque, Dict, List, Tuple
 from envs.env_proposed import EnvProposed
 from envs.env_sse import EnvSSE
 from envs.env_tem import EnvTEM
-import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -16,18 +15,19 @@ import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 from torch.nn.utils import clip_grad_norm_
-from replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
-from network import Network
-from agent import DQNAgent
+from rainbow_replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
+from rainbow_network import Network
+import time
+from rainbow_agent import DQNAgent
 import base64
 import glob
 import io
 import os
-
+time_start = time.time()
 # environment
 # env = gym.make("CartPole-v1", max_episode_steps=200, render_mode="rgb_array")
-# env = EnvProposed()
-env = EnvSSE()
+env = EnvProposed()
+# env = EnvSSE()
 # env = EnvTEM()
 
 
@@ -65,11 +65,11 @@ for k in range(len(seed_list)):
 
     # save the data
     if env.name == "proposed":
-        mat_name = "train_data/train_proposed_data.mat"
+        mat_name = "rainbow_dqn/train_data/train_proposed_data.mat"
     elif env.name == "sse":
-        mat_name = "train_data/train_sse_data.mat"
+        mat_name = "rainbow_dqn/train_data/train_sse_data.mat"
     elif env.name == "tem":
-        mat_name = "train_data/train_tem_data.mat"
+        mat_name = "rainbow_dqn/train_data/train_tem_data.mat"
     print("Env Name:", mat_name)
     savemat(mat_name,
             {env.name+"_train_episode_total_delay": env.episode_total_delay_list,
@@ -85,29 +85,32 @@ for k in range(len(seed_list)):
 
     # save the model
     if env.name == "proposed":
-        torch.save(agent.dqn, 'models/dqn_proposed.pth')
-        torch.save(agent.dqn_target, 'models/dqn_target_proposed.pth')
+        torch.save(agent.dqn, 'rainbow_dqn/models/dqn_proposed.pth')
+        torch.save(agent.dqn_target, 'rainbow_dqn/models/dqn_target_proposed.pth')
     elif env.name == "sse":
-        torch.save(agent.dqn, 'models/dqn_sse.pth')
-        torch.save(agent.dqn_target, 'models/dqn_target_sse.pth')
+        torch.save(agent.dqn, 'rainbow_dqn/models/dqn_sse.pth')
+        torch.save(agent.dqn_target, 'rainbow_dqn/models/dqn_target_sse.pth')
     elif env.name == "tem":
-        torch.save(agent.dqn, 'models/dqn_tem.pth')
-        torch.save(agent.dqn_target, 'models/dqn_target_tem.pth')
+        torch.save(agent.dqn, 'rainbow_dqn/models/dqn_tem.pth')
+        torch.save(agent.dqn_target, 'rainbow_dqn/models/dqn_target_tem.pth')
 
     env.step_reward_list = []
     env.reset()
 
 # save the step reward data
 if env.name == "proposed":
-    reward_mat_name = "train_data/train_proposed_step_reward_matrix.mat"
-    matrix_name = "train_proposed_step_reward_matrix"
+    reward_mat_name = "rainbow_dqn/train_data/train_proposed_step_reward_matrix.mat"
+    matrix_name = "rainbow_dqn/train_proposed_step_reward_matrix"
 elif env.name == "sse":
-    reward_mat_name = "train_data/train_sse_step_reward_matrix.mat"
-    matrix_name = "train_sse_step_reward_matrix"
+    reward_mat_name = "rainbow_dqn/train_data/train_sse_step_reward_matrix.mat"
+    matrix_name = "rainbow_dqn/train_sse_step_reward_matrix"
 elif env.name == "tem":
-    reward_mat_name = "train_data/train_tem_step_reward_matrix.mat"
-    matrix_name = "train_tem_step_reward_matrix"
+    reward_mat_name = "rainbow_dqn/train_data/train_tem_step_reward_matrix.mat"
+    matrix_name = "rainbow_dqn/train_tem_step_reward_matrix"
 
 savemat(reward_mat_name,
         {matrix_name: step_reward_matrix,
          })
+
+time_end = time.time()
+print("Running Time："+str(time_end - time_start)+"Second")

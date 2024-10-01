@@ -11,7 +11,7 @@ load("eval_data/eval_random_data.mat")
 num_matrices = 5;  % Number of reward matrices
 colors = lines(num_matrices+1);         % Generate distinct colors for each curve
 % step_reward_matrix = {proposed_step_reward_matrix, tem_step_reward_matritemx, sse_step_reward_matrix};
-step_reward_matrix = {train_proposed_step_reward_matrix09, train_sse_step_reward_matrix,train_tem_step_reward_matrix,amac_step_reward_list, random_step_reward_matrix};
+step_reward_matrix = {train_proposed_step_reward_matrix, train_sse_step_reward_matrix,train_tem_step_reward_matrix,amac_step_reward_list, random_step_reward_matrix};
 hold on;
 
 

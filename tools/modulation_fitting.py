@@ -22,7 +22,7 @@ class EnvProposed(gym.Env):
 
         # Data loading and fitting
         # Load HM data
-        self.hm_folder_path = "system_data/hierarchical modulation/two_layers_data"
+        self.hm_folder_path = "../system_data/hierarchical modulation/two_layers_data"
 
         hm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_layer1_(\w+)_layer2_(\w+)_esterr_([\d.]+)_rate_(\d+)_(\d+)_power_ratio_(\d+\.?\d*)'
         for filename in os.listdir(self.hm_folder_path):
@@ -70,7 +70,7 @@ class EnvProposed(gym.Env):
                         ber_fit_2 = self.hm_polynomial_model_2(hm_snr_fit)
 
 
-        self.tm_folder_path = "system_data/typical modulation"
+        self.tm_folder_path = "../system_data/typical modulation"
         tm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_(\w+)_esterr_([\d\.]+)_rate_(\d+)_(\d+)'
         self.tm_mod = "qpsk"  # qpsk, 16qam, 64qam
         self.tm_coding_rate_num = 1
@@ -111,7 +111,7 @@ class EnvProposed(gym.Env):
                                                    100)
                         ber_fit_qpsk = self.tm_polynomial_model(snr_fit_qpsk)
                         print(ber_fit_qpsk)
-        self.tm_folder_path = "system_data/typical modulation"
+        self.tm_folder_path = "../system_data/typical modulation"
         tm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_(\w+)_esterr_([\d\.]+)_rate_(\d+)_(\d+)'
         self.tm_mod = "16qam"  # qpsk, 16qam, 64qam
         self.tm_coding_rate_num = 1
@@ -151,7 +151,7 @@ class EnvProposed(gym.Env):
                                                     100)
                         ber_fit_16qam = self.tm_polynomial_model(snr_fit_16qam)
 
-        self.tm_folder_path = "system_data/typical modulation"
+        self.tm_folder_path = "../system_data/typical modulation"
         tm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_(\w+)_esterr_([\d\.]+)_rate_(\d+)_(\d+)'
         self.tm_mod = "64qam"  # qpsk, 16qam, 64qam
         self.tm_coding_rate_num = 2

@@ -53,8 +53,7 @@ class EnvSSE(gym.Env):
         self.context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
         self.context_interval = 100  # Interval for context to change
         self.context_num = int(self.slot_num / self.context_interval)
-        self.context_train_list = np.random.choice(list(range(len(self.context_list))),
-                                                   size=self.context_num, p=self.context_prob)
+        self.context_train_list = np.random.choice(list(range(len(self.context_list))),size=self.context_num, p=self.context_prob)
         self.context_flag = 0
         self.delay_vio_num = 0
 
@@ -349,9 +348,9 @@ class EnvSSE(gym.Env):
         reward_3 = total_energy
         reward = reward_1 + self.kappa_1 * reward_2 - self.kappa_2 * reward_3
 
-        print("slot index:", self.step_num, "action info:", action_info.fusion_name, "branch:", action_info.backbone,
-              "reward:", reward, "reward 1:", reward_1, "reward_2:", reward_2, "reward_3", -reward_3, "trans delay:", trans_delay,
-              "context:",self.curr_context)
+        # print("slot index:", self.step_num, "action info:", action_info.fusion_name, "branch:", action_info.backbone,
+        #       "reward:", reward, "reward 1:", reward_1, "reward_2:", reward_2, "reward_3", -reward_3, "trans delay:", trans_delay,
+        #       "context:",self.curr_context)
 
         # reward = acc_exp + self.kappa_1 * (max_delay - total_delay) + self.kappa_2 * self.remain_energy
         self.reward_list[0, self.step_num] = reward
