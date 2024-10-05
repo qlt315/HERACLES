@@ -1,20 +1,15 @@
-import math
-import os
 import random
-from collections import deque
-from typing import Deque, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 from torch.nn.utils import clip_grad_norm_
-from rainbow_replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
-from rainbow_network import Network
+from rainbow_dqn.rainbow_replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
+from rainbow_dqn.rainbow_network import Network
 
 
 class DQNAgent:

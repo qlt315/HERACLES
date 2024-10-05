@@ -1,4 +1,6 @@
 # Collect the information of each action value
+import os
+import pandas as pd
 import numpy as np
 from itertools import permutations
 from scipy.io import loadmat
@@ -191,3 +193,61 @@ def action_mapping(action_sunny_list, action_rain_list, action_snow_list,
         action_info = None
 
     return action_info
+
+
+
+def obtain_cqi_and_snr(directory_path, slot_num):
+
+    # Lists to store SNR and CQI data separately
+    snr_list = []
+    cqi_list = []
+
+    # Loop through all files in the given directory
+    for filename in os.listdir(directory_path):
+        # Check if the file is an Excel file
+        if filename.endswith(".csv") or filename.endswith(".xls"):
+            file_path = os.path.join(directory_path, filename)
+            # Read the Excel file and extract the "SNR" and "CQI" columns
+            df = pd.read_csv(file_path, usecols=["SNR", "CQI"])
+
+            # Append the "SNR" and "CQI" values to their respective lists
+            snr_list.extend(df["SNR"].values)
+            cqi_list.extend(df["CQI"].values)
+
+    # Convert the lists into 1D NumPy arrays
+    snr_array = np.array(snr_list)
+    cqi_array = np.array(cqi_list)
+
+    snr_array = snr_array[snr_array != '-']
+    cqi_array = cqi_array[cqi_array != '-']
+
+    snr_array = np.random.choice(snr_array, size=slot_num, replace=False)
+    cqi_array = np.random.choice(cqi_array, size=slot_num, replace=False)
+    return snr_array, cqi_array
+
+
+import numpy as np
+
+
+def estimate_cqi(cqi_true, est_err_para, min_cqi=1, max_cqi=15):
+    """
+    Estimate the CQI value based on true CQI and a noise-controlled parameter.
+
+    Args:
+    - cqi_true (int): The true CQI value.
+    - sigma (float): Standard deviation of the noise; higher means less accurate estimation.
+    - min_cqi (int): Minimum valid CQI value. Default is 1.
+    - max_cqi (int): Maximum valid CQI value. Default is 15.
+
+    Returns:
+    - cqi_estimated (int): The estimated CQI value with noise added.
+    """
+    # Add Gaussian noise to the true CQI value
+    noise = np.random.normal(0, est_err_para)
+    # Estimate CQI by adding noise and rounding to the nearest integer
+    cqi_estimated = np.round(cqi_true + noise)
+
+    # Ensure the estimated CQI is within the valid range [min_cqi, max_cqi]
+    cqi_estimated = np.clip(cqi_estimated, min_cqi, max_cqi)
+
+    return int(cqi_estimated)

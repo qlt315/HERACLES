@@ -5,11 +5,13 @@ import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import random
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
-
+from dqn_replay_buffer import ReplayBuffer
+from dqn_network import Network
 
 class DQNAgent:
     """DQN Agent interacting with environment.
@@ -109,8 +111,7 @@ class DQNAgent:
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, np.float64, bool]:
         """Take an action and return the response of the env."""
-        next_state, reward, terminated, truncated, _ = self.env.step(action)
-        done = terminated or truncated
+        next_state, reward, done = self.env.step(action)
 
         if not self.is_test:
             self.transition += [reward, next_state, done]
@@ -134,25 +135,23 @@ class DQNAgent:
         """Train the agent."""
         self.is_test = False
 
-        state, _ = self.env.reset(seed=self.seed)
+        state = self.env.reset()
         update_cnt = 0
         epsilons = []
         losses = []
         scores = []
-        score = 0
+
 
         for frame_idx in range(1, num_frames + 1):
             action = self.select_action(state)
             next_state, reward, done = self.step(action)
 
             state = next_state
-            score += reward
+
 
             # if episode ends
             if done:
-                state, _ = self.env.reset(seed=self.seed)
-                scores.append(score)
-                score = 0
+                state = self.env.reset()
 
             # if training is ready
             if len(self.memory) >= self.batch_size:
@@ -172,33 +171,37 @@ class DQNAgent:
                 if update_cnt % self.target_update == 0:
                     self._target_hard_update()
 
-            # plotting
-            if frame_idx % plotting_interval == 0:
-                self._plot(frame_idx, scores, losses, epsilons)
+            # # plotting
+            # if frame_idx % plotting_interval == 0:
+            #     self._plot(frame_idx, scores, losses, epsilons)
 
-        self.env.close()
 
-    def test(self, video_folder: str) -> None:
+    def test(self, test_env, test_seed) -> None:
         """Test the agent."""
         self.is_test = True
 
-        # for recording a video
+        def seed_torch(seed):
+            torch.manual_seed(seed)
+            if torch.backends.cudnn.enabled:
+                torch.cuda.manual_seed(seed)
+                torch.backends.cudnn.benchmark = False
+                torch.backends.cudnn.deterministic = True
+
+        self.seed = test_seed
+        np.random.seed(self.seed)
+        random.seed(self.seed)
+        seed_torch(self.seed)
+
         naive_env = self.env
-        self.env = gym.wrappers.RecordVideo(self.env, video_folder=video_folder)
+        self.env = test_env
 
-        state, _ = self.env.reset(seed=self.seed)
+        state = self.env.reset()
         done = False
-        score = 0
-
         while not done:
             action = self.select_action(state)
             next_state, reward, done = self.step(action)
 
             state = next_state
-            score += reward
-
-        print("score: ", score)
-        self.env.close()
 
         # reset
         self.env = naive_env

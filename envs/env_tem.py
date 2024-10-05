@@ -1,6 +1,6 @@
-# this ablation scheme uses the traditional equal modulation method,
+# this ablation scheme uses the typical modulation method,
 # i.e., all $K$ selected semantic features are transmitted
-# based on 16-QAM without considering the different priorities.
+# without considering the different priorities.
 
 import gym
 from gym import spaces, logger
@@ -63,16 +63,16 @@ class EnvTEM(gym.Env):
          self.action_motorway_list, self.action_fog_list, self.action_night_list) = util.action_gen()
         self.action_space = spaces.Discrete(21)
 
-        # Obs: (1) Estimated channel (2) Task context (0-5) (3) Remaining energy (4) Maximum tolerant delay
-        obs_low = np.array([0, 0, 0, 0])
-        obs_high = np.array([5, 5, 10000, 10])
+        # Obs: (1) Estimated CQI (1-15) (2) SNR in dB (0-20)   (3) Task context (0-5) (4) Remaining energy (5) Maximum tolerant delay
+        obs_low = np.array([1, 0, 0, 0, 0])
+        obs_high = np.array([15, 20, 5, self.max_energy, 1])
         self.observation_space = spaces.Box(obs_low, obs_high, dtype=np.float32)
 
         self.step_num = 0
         self.episode_num = 0
-
-        self.kappa_1 = 1  # delay reward coefficient
-        self.kappa_2 = 1  # energy consumption reward coefficient
+        self.max_re_trans_num = 5000
+        self.kappa_1 = 0.5  # delay reward coefficient
+        self.kappa_2 = 0.5  # energy consumption reward coefficient
 
         # Data loading and fitting
         # Load TM data
@@ -109,21 +109,8 @@ class EnvTEM(gym.Env):
                         self.tm_coefficients = np.polyfit(self.tm_snr_list.ravel(), self.tm_ber.ravel(), self.tm_degree)
                         self.tm_polynomial_model = np.poly1d(self.tm_coefficients)
 
-                        if self.show_fit_plot:
-                            # Generate fitted curve
-                            snr_fit = np.linspace(np.min(self.tm_snr_list.ravel()), np.max(self.tm_snr_list.ravel()),
-                                                  100)
-                            ber_fit = self.tm_polynomial_model(snr_fit)
-
-                            # Plot the original data and the fitted curve
-                            plt.scatter(self.tm_snr_list.ravel(), self.tm_ber, color='red', label='Original Data')
-                            plt.plot(snr_fit, ber_fit, label=f'Fitted Curve (degree={self.tm_degree})', color='blue')
-                            plt.xlabel('SNR (dB)')
-                            plt.ylabel('BER')
-                            plt.title('SNR vs BER Fitting (TM)')
-                            plt.legend()
-                            plt.grid(True)
-                            plt.show()
+        wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
+        self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -131,54 +118,52 @@ class EnvTEM(gym.Env):
 
     def step(self, action):
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
-        max_delay = 0.5
+        max_delay = np.random.uniform(low=0.3, high=1, size=1)
         curr_context_id = self.context_train_list[self.context_flag]
         self.curr_context = self.context_list[curr_context_id]
         if self.step_num % self.context_interval == 0 and self.step_num != 0:
             self.context_flag = self.context_flag + 1
             curr_context_id = self.context_train_list[self.context_flag]
             self.curr_context = self.context_list[curr_context_id]
-        h = (np.random.randn(1) + 1j  # Wireless channel
-             * np.random.randn(1)) / np.sqrt(2)
+        # h = (np.random.randn(1) + 1j  # Wireless channel
+        #      * np.random.randn(1)) / np.sqrt(2)
 
-        # Channel estimation
-        est_err = self.est_err_para * np.abs(h)
-        h_est = h + est_err + est_err * 1j
-        noise_power = abs(h_est) * self.max_power / (10 ** (self.target_snr_db / 10))
+        # # Channel estimation
+        # est_err = self.est_err_para * np.abs(h)
+        # h_est = h + est_err + est_err * 1j
+        # noise_power = abs(h_est) * self.max_power / (10 ** (self.target_snr_db / 10))
+        # Channel estimation (in CQI)
+
+        cqi = int(self.cqi_array[self.step_num])
+        cqi_est = util.estimate_cqi(cqi, self.est_err_para)
 
         action_info = util.action_mapping(self.action_sunny_list, self.action_rain_list, self.action_snow_list,
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
 
         # Calculate SNR and trans rate
-        tm_snr = abs(h_est) * self.max_power / noise_power
-        tm_snr_db = 10 * np.log10(tm_snr)
+        tm_snr_db = float(self.snr_array[self.step_num])
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
+        # print("SNR (dB):", tm_snr_db)
+        tm_snr =  10 ** (tm_snr_db / 10)
+
         tm_ber = np.clip(self.tm_polynomial_model(tm_snr_db), 0.00001, 0.99999)
         tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
+
         # Calculate PER of each branch (totally 21 branches)
         # print(tm_ber, hm_ber_1, hm_ber_2)
-        per_list = util.per_list_gen(tm_ber, self.data_size, self.tm_coding_rate)
-
-        # Calculate accuracy expectation
-        acc_exp = util.acc_exp_gen(per_list, self.curr_context)
-        self.acc_exp_list[0, self.step_num] = acc_exp
+        # per_list = util.per_list_gen(tm_ber, self.data_size, self.tm_coding_rate)
 
         # Calculate delay
-        if len(action_info.fusion_name) == 1:
-            data_size_idx = action_info.fusion_name[0] - 1
-            tm_data_size = np.floor(self.data_size[0, data_size_idx] / self.tm_coding_rate) / self.tm_coding_rate
-        else:
-            data_size_idx = [i - 1 for i in action_info.fusion_name]
-            tm_data_size = np.floor(np.sum(self.data_size[0, data_size_idx]) / self.tm_coding_rate)
-
-        trans_delay = tm_data_size / tm_trans_rate
+        re_trans_delay = 0
+        data_size_idx = action_info.fusion_name[0] - 1
+        data_size = self.data_size[0, data_size_idx] / self.tm_coding_rate
 
         # Retransmission simulation
         if self.enable_re_trans:
             self.re_trans_num = 0
-            block_num = np.floor(tm_data_size / self.sub_block_length)
-            per_curr = 1 - (1 - tm_ber) ** self.sub_block_length
+            block_num = np.floor(data_size / self.sub_block_length)
+            tm_per = 1 - (1 - tm_ber) ** self.sub_block_length
             # print("Using TM")
             # print("BER:",tm_ber)
             # print("PER:", per_curr)
@@ -187,13 +172,14 @@ class EnvTEM(gym.Env):
                 while is_trans_success == 0:
                     # Generate 1 (success) with probability 1-p and 0 (fail) with p
                     is_trans_success = \
-                        random.choices([0, 1], weights=[per_curr, 1 - per_curr])[0]
-                    if is_trans_success == 1:
-                        continue
+                        random.choices([0, 1], weights=[tm_per, 1 - tm_per])[0]
+                    if is_trans_success == 1 or self.re_trans_num >= self.max_re_trans_num:
+                        break
                     else:
                         self.re_trans_num = self.re_trans_num + 1
-            re_trans_delay = self.re_trans_num * (self.sub_block_length / tm_trans_rate)
-            trans_delay = trans_delay + re_trans_delay
+            re_trans_delay = self.re_trans_num * (
+                        (1 / self.tm_coding_rate - 1) * self.sub_block_length / tm_trans_rate)
+        trans_delay = data_size / tm_trans_rate + re_trans_delay
 
         # print("Re-trans number:", self.re_trans_num)
         com_delay = action_info.com_delay
@@ -208,15 +194,14 @@ class EnvTEM(gym.Env):
         self.remain_energy = self.remain_energy - total_energy
 
         # Reward calculation
-        # # Option 1: Calculate accuracy (expectation)
+        # # # Option 1: Calculate accuracy (expectation)
         # acc_exp = util.acc_exp_gen(per_list, self.curr_context)
-        # self.acc_exp_list[0, self.step_num] = acc_exp
         # # Normalize the reward (Acc reward should be further normalized)
         # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
         # Option 2: Don't consider expectation
-        acc_exp = action_info.acc
-        acc_exp = util.acc_normalize(acc_exp, self.curr_context)
+        acc_exp = action_info.acc / 100
+        # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
         reward_1 = acc_exp
         reward_2 = (max_delay - total_delay) / max_delay
@@ -226,8 +211,10 @@ class EnvTEM(gym.Env):
         # reward = acc_exp + self.kappa_1 * (max_delay - total_delay) + self.kappa_2 * self.remain_energy
         self.reward_list[0, self.step_num] = reward
         self.step_reward_list.append(reward.item())
+
+
         # State calculation
-        state = [np.abs(h_est).item(), curr_context_id, self.remain_energy.item(), max_delay]
+        state = [cqi_est, tm_snr, curr_context_id, self.remain_energy.item(), max_delay.item()]
         # print("action info:", action_info.fusion_name, "reward:", reward, "reward 1:", reward_1, "reward_2:", reward_2,
         #       "reward_3", reward_3)
 
@@ -267,12 +254,14 @@ class EnvTEM(gym.Env):
         return np.array(state), reward, done
 
     def reset(self):
-        h_init = 0.5 + 0.5j
+        cqi_init = 1
+        snr_init = 5
         context_id_init = 1
-        max_delay_init = 1
-        state_init = [np.abs(h_init), context_id_init, self.max_energy, max_delay_init]
+        max_delay_init = 0.3
+        state_init = [cqi_init, snr_init, context_id_init, self.max_energy, max_delay_init]
         self.context_flag = 0
         self.step_num = 0
         self.delay_vio_num = 0
         self.remain_energy = self.max_energy  # Available energy of current slot
+        self.done = False
         return np.array(state_init)

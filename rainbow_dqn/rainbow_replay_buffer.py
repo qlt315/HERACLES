@@ -5,7 +5,7 @@ from collections import deque
 from typing import Deque, Dict, List, Tuple
 
 import numpy as np
-from rainbow_segment_tree import MinSegmentTree, SumSegmentTree
+from rainbow_dqn.rainbow_segment_tree import MinSegmentTree, SumSegmentTree
 
 
 class ReplayBuffer:

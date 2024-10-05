@@ -68,15 +68,15 @@ class EnvSSE(gym.Env):
         self.action_space = spaces.Discrete(24)
 
         # Obs: (1) Estimated channel (2) Task context (0-5) (3) Remaining energy (4) Maximum tolerant delay
-        obs_low = np.array([0, 0, 0, 0])
-        obs_high = np.array([5, 5, 10000, 10])
+        obs_low = np.array([1, 0, 0, 0, 0])
+        obs_high = np.array([15, 20, 5, self.max_energy, 1])
         self.observation_space = spaces.Box(obs_low, obs_high, dtype=np.float32)
 
         self.step_num = 0
         self.episode_num = 0
-
-        self.kappa_1 = 1  # delay reward coefficient
-        self.kappa_2 = 1  # energy consumption reward coefficient
+        self.max_re_trans_num = 5000
+        self.kappa_1 = 0.5  # delay reward coefficient
+        self.kappa_2 = 0.5  # energy consumption reward coefficient
 
         # Data loading and fitting
         # Load HM data
@@ -131,34 +131,8 @@ class EnvSSE(gym.Env):
                         self.hm_polynomial_model_3 = np.poly1d(self.hm_coefficients_3)
                         self.hm_polynomial_model_4 = np.poly1d(self.hm_coefficients_4)
 
-                        if self.show_fit_plot:
-                            # Generate fitting curves
-                            snr_fit = np.linspace(np.min(self.hm_snr_list.ravel()), np.max(self.hm_snr_list.ravel()),
-                                                  100)
-                            ber_fit_1 = self.hm_polynomial_model_1(snr_fit)
-                            ber_fit_2 = self.hm_polynomial_model_2(snr_fit)
-                            ber_fit_3 = self.hm_polynomial_model_3(snr_fit)
-                            ber_fit_4 = self.hm_polynomial_model_4(snr_fit)
-
-                            # Validate the fitting results and plot
-                            plt.scatter(self.hm_snr_list.ravel(), self.hm_ber_1, color='red',
-                                        label='original layer 1 BER')
-                            plt.scatter(self.hm_snr_list.ravel(), self.hm_ber_2, color='green',
-                                        label='original layer 2 BER')
-                            plt.scatter(self.hm_snr_list.ravel(), self.hm_ber_3, color='black',
-                                        label='original layer 3 BER')
-                            plt.scatter(self.hm_snr_list.ravel(), self.hm_ber_4, color='orange',
-                                        label='original layer 4 BER')
-                            plt.plot(snr_fit, ber_fit_1, label='fitting curve for layer 1 BER', color='blue')
-                            plt.plot(snr_fit, ber_fit_2, label='fitting curve for layer 2 BER', color='blue')
-                            plt.plot(snr_fit, ber_fit_3, label='fitting curve for layer 3 BER', color='blue')
-                            plt.plot(snr_fit, ber_fit_4, label='fitting curve for layer 4 BER', color='blue')
-                            plt.xlabel('SNR (dB)')
-                            plt.ylabel('BER')
-                            plt.title('SNR vs BER fitting (HM)')
-                            plt.legend()
-                            plt.grid(True)
-                            plt.show()
+        wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
+        self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -166,34 +140,37 @@ class EnvSSE(gym.Env):
 
     def step(self, action):
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
-        max_delay = 0.5
+        max_delay = np.random.uniform(low=0.3, high=1, size=1)
         curr_context_id = self.context_train_list[self.context_flag]
         self.curr_context = self.context_list[curr_context_id]
         if self.step_num % self.context_interval == 0 and self.step_num != 0:
             self.context_flag = self.context_flag + 1
             curr_context_id = self.context_train_list[self.context_flag]
             self.curr_context = self.context_list[curr_context_id]
-        h = (np.random.randn(1) + 1j  # Wireless channel
-             * np.random.randn(1)) / np.sqrt(2)
+        # h = (np.random.randn(1) + 1j  # Wireless channel
+        #      * np.random.randn(1)) / np.sqrt(2)
 
-        # Channel estimation
-        est_err = self.est_err_para * np.abs(h)
-        h_est = h + est_err + est_err * 1j
-        noise_power = abs(h_est) * self.max_power / (10 ** (self.target_snr_db / 10))
+        # Channel estimation (in CQI)
+        cqi = int(self.cqi_array[self.step_num])
+        cqi_est = util.estimate_cqi(cqi, self.est_err_para)
+
+        # # Channel estimation
+        # est_err = self.est_err_para * np.abs(h)
+        # h_est = h + est_err + est_err * 1j
+        # noise_power = abs(h_est) * self.max_power / (10 ** (self.target_snr_db / 10))
 
         action_info = util.action_mapping(self.action_sunny_list, self.action_rain_list, self.action_snow_list,
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
         # Calculate SNR and trans rate
-        hm_snr = abs(h_est) * self.max_power / noise_power
-        hm_snr_db = 10 * np.log10(hm_snr)
+        hm_snr_db = float(self.snr_array[self.step_num])
         hm_snr_db = np.clip(hm_snr_db, np.min(self.hm_snr_list), np.max(self.hm_snr_list))
-
+        hm_snr = 10 ** (hm_snr_db / 10)
         # power ratio = 0.5 / 0.4 / 0.3 / 0.2
-        hm_snr_1 = abs(h_est) * (0.5 * self.max_power) / noise_power
-        hm_snr_2 = abs(h_est) * (0.4 * self.max_power) / noise_power
-        hm_snr_3 = abs(h_est) * (0.3 * self.max_power) / noise_power
-        hm_snr_4 = abs(h_est) * (0.2 * self.max_power) / noise_power
+        hm_snr_1 = 0.5 * hm_snr
+        hm_snr_2 = 0.4 * hm_snr
+        hm_snr_3 = 0.3 * hm_snr
+        hm_snr_4 = 0.2 * hm_snr
 
         hm_snr_1_db = 10 * np.log10(hm_snr_1)
         hm_snr_2_db = 10 * np.log10(hm_snr_2)
@@ -210,10 +187,7 @@ class EnvSSE(gym.Env):
         hm_ber_3 = np.clip(self.hm_polynomial_model_3(hm_snr_3_db), 0.00001, 0.99999)
         hm_ber_4 = np.clip(self.hm_polynomial_model_4(hm_snr_4_db), 0.00001, 0.99999)
 
-        hm_trans_rate_1 = self.bandwidth * np.log2(1 + hm_snr_1)  # Bit / s
-        hm_trans_rate_2 = self.bandwidth * np.log2(1 + hm_snr_2)  # Bit / s
-        hm_trans_rate_3 = self.bandwidth * np.log2(1 + hm_snr_3)  # Bit / s
-        hm_trans_rate_4 = self.bandwidth * np.log2(1 + hm_snr_4)  # Bit / s
+        hm_trans_rate = self.bandwidth * np.log2(1 + hm_snr)  # Bit / s
 
         # Calculate accuracy expectation
         # acc_exp = acc_exp_gen(per, self.curr_context)
@@ -223,19 +197,14 @@ class EnvSSE(gym.Env):
 
         # Calculate delay
         order = action_info.fusion_name
-        # hm_data_size = np.floor(np.max(self.data_size) / self.hm_coding_rate)
-        # trans_delay = hm_data_size / hm_trans_rate
-        trans_delay_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate) / hm_trans_rate_1
-        trans_delay_2 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate) / hm_trans_rate_2
-        trans_delay_3 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate) / hm_trans_rate_3
-        trans_delay_4 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate) / hm_trans_rate_4
+        hm_data_size = np.floor(np.max(self.data_size) / self.hm_coding_rate)
+        trans_delay = hm_data_size / hm_trans_rate
 
+        re_trans_delay = 0
         # Retransmission simulation
         if self.enable_re_trans:
-            re_trans_num_1 = 0
-            re_trans_num_2 = 0
-            re_trans_num_3 = 0
-            re_trans_num_4 = 0
+            re_trans_num = 0
+
 
             block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
             block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
@@ -247,79 +216,20 @@ class EnvSSE(gym.Env):
             per_3 = 1 - ((1 - hm_ber_3) ** self.sub_block_length)
             per_4 = 1 - ((1 - hm_ber_4) ** self.sub_block_length)
 
-            # Calculate PER
-            # per_list = per_list_gen(hm_ber_list, self.data_size, self.hm_coding_rate)
-            # per_curr = 1 - ((1 - hm_ber_1) ** self.sub_block_length * (1 - hm_ber_2) ** self.sub_block_length
-            #                 * (1 - hm_ber_3) ** self.sub_block_length * (1 - hm_ber_4) ** self.sub_block_length)
-            # print("Using HM")
-            # print("BER 1:", hm_ber_1, "BER 2", hm_ber_2)
-            # for b_1 in range(int(block_num_1)):
-            #     is_trans_success = 0
-            #     while is_trans_success == 0:
-            #         # Generate 1 (success) with probability 1-p and 0 (fail) with p
-            #         is_trans_success = \
-            #             random.choices([0, 1], weights=[per_1, 1 - per_1])[0]
-            #         if is_trans_success == 1:
-            #             continue
-            #         else:
-            #             re_trans_num_1 = re_trans_num_1 + 1
-            #             if re_trans_num_1 >= 500 * hm_ber_1:
-            #                 break
-            #
-            # for b_2 in range(int(block_num_2)):
-            #     is_trans_success = 0
-            #     while is_trans_success == 0:
-            #         # Generate 1 (success) with probability 1-p and 0 (fail) with p
-            #         is_trans_success = \
-            #             random.choices([0, 1], weights=[per_2, 1 - per_2])[0]
-            #         if is_trans_success == 1:
-            #             continue
-            #         else:
-            #             re_trans_num_2 = re_trans_num_2 + 1
-            #             if re_trans_num_2 >= 50000 * hm_ber_2:
-            #                 break
-            #
-            # for b_3 in range(int(block_num_3)):
-            #     is_trans_success = 0
-            #     while is_trans_success == 0:
-            #         # Generate 1 (success) with probability 1-p and 0 (fail) with p
-            #         is_trans_success = \
-            #             random.choices([0, 1], weights=[per_3, 1 - per_3])[0]
-            #         if is_trans_success == 1:
-            #             continue
-            #         else:
-            #             re_trans_num_3 = re_trans_num_3 + 1
-            #             if re_trans_num_3 >= 50000 * hm_ber_3:
-            #                 break
-            #
-            # for b_4 in range(int(block_num_4)):
-            #     is_trans_success = 0
-            #     while is_trans_success == 0:
-            #         # Generate 1 (success) with probability 1-p and 0 (fail) with p
-            #         is_trans_success = \
-            #             random.choices([0, 1], weights=[per_4, 1 - per_4])[0]
-            #         if is_trans_success == 1:
-            #             continue
-            #         else:
-            #             re_trans_num_4 = re_trans_num_4 + 1
-            #             if re_trans_num_4 >= 50000 * hm_ber_4:
-            #                 break
-            re_trans_num_1 = 5e2 * hm_ber_1
-            re_trans_num_2 = 5e2 * hm_ber_2
-            re_trans_num_3 = 5e2 * hm_ber_3
-            re_trans_num_4 = 5e2 * hm_ber_4
-            self.re_trans_num = re_trans_num_1 + re_trans_num_2 + re_trans_num_3 + re_trans_num_4
-            re_trans_delay_1 = re_trans_num_1 * (self.sub_block_length / hm_trans_rate_1)
-            re_trans_delay_2 = re_trans_num_2 * (self.sub_block_length / hm_trans_rate_2)
-            re_trans_delay_3 = re_trans_num_3 * (self.sub_block_length / hm_trans_rate_3)
-            re_trans_delay_4 = re_trans_num_4 * (self.sub_block_length / hm_trans_rate_4)
-            trans_delay_1 = trans_delay_1 + re_trans_delay_1
-            trans_delay_2 = trans_delay_2 + re_trans_delay_2
-            trans_delay_3 = trans_delay_3 + re_trans_delay_3
-            trans_delay_4 = trans_delay_4 + re_trans_delay_4
-        # print("Retrains delay:",re_trans_delay_1,re_trans_delay_2,re_trans_delay_3,re_trans_delay_4)
-        trans_delay = max(trans_delay_1, trans_delay_2, trans_delay_3, trans_delay_4)
-        # print(trans_delay_1,trans_delay_2,trans_delay_3,trans_delay_4)
+            per = 1- (1-per_1) * (1-per_2) * (1-per_3) * (1-per_4)
+
+            re_trans_delay = self.re_trans_num * ((1 / self.hm_coding_rate - 1) * self.sub_block_length / hm_trans_rate)
+            for j in range(int(max(block_num_1, block_num_2, block_num_3, block_num_4))):
+                is_trans_success = 0
+                while is_trans_success == 0:
+                    # Generate 1 (success) with probability 1-p and 0 (fail) with p
+                    is_trans_success = \
+                        random.choices([0, 1], weights=[per, 1 - per])[0]
+                    if is_trans_success == 1 or self.re_trans_num >= self.max_re_trans_num:
+                        break
+                    else:
+                        self.re_trans_num = self.re_trans_num + 1
+        trans_delay = trans_delay + re_trans_delay
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
@@ -339,8 +249,8 @@ class EnvSSE(gym.Env):
         # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
         # Option 2: Don't consider expectation
-        acc_exp = action_info.acc
-        acc_exp = util.acc_normalize(acc_exp, self.curr_context)
+        acc_exp = action_info.acc / 100
+        # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
         reward_1 = acc_exp
         reward_2 = (max_delay - total_delay) / max_delay
@@ -356,7 +266,7 @@ class EnvSSE(gym.Env):
         self.reward_list[0, self.step_num] = reward
         self.step_reward_list.append(reward.item())
         # State calculation
-        state = [np.abs(h_est).item(), curr_context_id, self.remain_energy.item(), max_delay]
+        state = [cqi_est, hm_snr, curr_context_id, self.remain_energy.item(), max_delay.item()]
         if total_delay > max_delay:
             self.delay_vio_num = self.delay_vio_num + 1
 
@@ -392,12 +302,14 @@ class EnvSSE(gym.Env):
         return np.array(state), reward, done
 
     def reset(self):
-        h_init = 0.5 + 0.5j
+        cqi_init = 1
+        snr_init = 5
         context_id_init = 1
-        max_delay_init = 1
-        state_init = [np.abs(h_init), context_id_init, self.max_energy, max_delay_init]
+        max_delay_init = 0.3
+        state_init = [cqi_init, snr_init, context_id_init, self.max_energy, max_delay_init]
         self.context_flag = 0
         self.step_num = 0
         self.delay_vio_num = 0
         self.remain_energy = self.max_energy  # Available energy of current slot
+        self.done = False
         return np.array(state_init)
