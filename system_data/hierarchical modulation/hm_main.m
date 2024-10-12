@@ -2,18 +2,18 @@
 
 clear;
 %  close all;
-max_runs = 1;
+max_runs = 10000;
 max_decode_iterations = 20;
 
 min_sum = 1;
 n_0 = 1/2;
 
 max_power = 1; % Maximum transmit power
-power_ratio = 0.5;  % 0<=ratio<=1;
+power_ratio = 0.999;  % 0<=ratio<=1;
 power_1 = power_ratio * max_power;
 power_2 = max_power-power_1;
 
-Est_err_para = 0;
+Est_err_para = 0.3;
 
 % Modulation for layer 1 (base layer)
 %Should be one of 'bpsk', 'ask4', 'ask8' (equivalently QPSK, 16-QAM, and 64-QAM)
@@ -29,7 +29,9 @@ modulation_2 = tm_constellation(constellation_name_2);
 % Number of bits (ensure layer 1 symbol num = layer 2 symbol num)
 bit_num_1 = 648; % layer 1 bits -> Should be one of 648, 1296, and 1944
 bit_num_2 = bit_num_1 * (modulation_2.n_bits / modulation_1.n_bits);% layer 2 bits -> Should be one of 648, 1296, and 1944
-rate = 1/2; % LDPC coding rate -> Should be one of 1/2, 2/3, 3/4, 5/6
+rate_num = 1;
+rate_den = 2;
+rate = rate_num/rate_den; % LDPC coding rate -> Should be one of 1/2, 2/3, 3/4, 5/6
 
 ldpc_code_1 = ldpc(bit_num_1, bit_num_1*rate);
 ldpc_code_2 = ldpc(bit_num_2, bit_num_2*rate);
@@ -216,8 +218,26 @@ ber_2_sic = num_bit_err_2_sic / (max_runs * bit_num_2);
 ber_sic = num_bit_err_sic / (max_runs * (bit_num_1+bit_num_2));
 
 
+if constellation_name_1 == "bpsk"
+    constellation_name_1 = "qpsk";
+elseif constellation_name_1 == "ask4"
+    constellation_name_1 = "16qam";
+elseif constellation_name_1 == "ask8"
+    constellation_name_1 = "64qam";
+end
+
+
+if constellation_name_2 == "bpsk"
+    constellation_name_2 = "qpsk";
+elseif constellation_name_2 == "ask4"
+    constellation_name_2 = "16qam";
+elseif constellation_name_2 == "ask8"
+    constellation_name_2 = "64qam";
+end
+
+
 file_name = strcat("two_layers_data/snr_", num2str(ebno_db_min), "_", num2str(ebno_db_inter), "_", num2str(ebno_db_max), "_layer1_", constellation_name_1, ...
-    "_layer2_", constellation_name_2, "_esterr_", num2str(Est_err_para), "_rate_",num2str(rate), "_power_ratio_", num2str(rate), ".mat");
+    "_layer2_", constellation_name_2, "_esterr_", num2str(Est_err_para), "_rate_",num2str(rate_num), "_", num2str(rate_den), "_power_ratio_", num2str(power_ratio), ".mat");
 save(file_name);
 
 figure(1)

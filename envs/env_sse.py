@@ -12,7 +12,7 @@ import re
 from scipy.io import loadmat
 import envs.utils_sse as util
 import matplotlib.pyplot as plt
-
+import scipy.special as ss
 
 class EnvSSE(gym.Env):
     def __init__(self):
@@ -29,13 +29,13 @@ class EnvSSE(gym.Env):
         self.est_err_para = 0.5  # Channel estimation error parameter
         self.data_size = np.zeros([1, self.sensor_num])
         for i in range(self.sensor_num):
-            self.data_size[0, i] = np.random.rand(1) * 5000
+            self.data_size[0, i] = np.random.rand(1) * 10000
         # self.data_size[0, 0] = 6064128
         # self.data_size[0, 1] = self.data_size[0, 0]
         # self.data_size[0, 2] = 1.8432e6
         # self.data_size[0, 3] = 1.73e6
 
-        self.target_snr_db = 10
+        self.target_snr_db = 2.5
         self.total_delay_list = np.zeros([1, self.slot_num])
         self.total_energy_list = np.zeros([1, self.slot_num])
         self.acc_exp_list = np.zeros([1, self.slot_num])
@@ -48,6 +48,7 @@ class EnvSSE(gym.Env):
         self.episode_delay_vio_num_list = []
         self.episode_remain_energy_list = []
         self.episode_re_trans_num_list = []
+        self.episode_acc_vio_num_list = []
         self.context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
         # self.context_list = ["sunny", "sunny", "sunny", "sunny", "sunny", "sunny"]
         self.context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
@@ -56,7 +57,7 @@ class EnvSSE(gym.Env):
         self.context_train_list = np.random.choice(list(range(len(self.context_list))),size=self.context_num, p=self.context_prob)
         self.context_flag = 0
         self.delay_vio_num = 0
-
+        self.acc_vio_num = 0
         self.curr_context = None
         self.show_fit_plot = False
         self.re_trans_num = -1
@@ -67,16 +68,16 @@ class EnvSSE(gym.Env):
          self.action_motorway_list, self.action_fog_list, self.action_night_list) = util.action_gen()
         self.action_space = spaces.Discrete(24)
 
-        # Obs: (1) Estimated channel (2) Task context (0-5) (3) Remaining energy (4) Maximum tolerant delay
-        obs_low = np.array([1, 0, 0, 0, 0])
-        obs_high = np.array([15, 20, 5, self.max_energy, 1])
+        # Obs: (1) Estimated CQI (1-15) (2) SNR in dB (0-20)   (3) Task context (0-5)  (4) Min accuracy
+        obs_low = np.array([1, 0, 0, 0])
+        obs_high = np.array([15, 20, 5, 1])
         self.observation_space = spaces.Box(obs_low, obs_high, dtype=np.float32)
 
         self.step_num = 0
         self.episode_num = 0
-        self.max_re_trans_num = 5000
-        self.kappa_1 = 0.5  # delay reward coefficient
-        self.kappa_2 = 0.5  # energy consumption reward coefficient
+        self.max_re_trans_num = 20
+        self.kappa_1 = 1  # delay reward coefficient
+        self.kappa_2 = 1  # energy consumption reward coefficient
 
         # Data loading and fitting
         # Load HM data
@@ -147,6 +148,7 @@ class EnvSSE(gym.Env):
             self.context_flag = self.context_flag + 1
             curr_context_id = self.context_train_list[self.context_flag]
             self.curr_context = self.context_list[curr_context_id]
+        min_acc = util.obtain_min_acc(self.curr_context)
         # h = (np.random.randn(1) + 1j  # Wireless channel
         #      * np.random.randn(1)) / np.sqrt(2)
 
@@ -163,7 +165,8 @@ class EnvSSE(gym.Env):
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
         # Calculate SNR and trans rate
-        hm_snr_db = float(self.snr_array[self.step_num])
+        # hm_snr_db = float(self.snr_array[self.step_num])
+        hm_snr_db = self.target_snr_db
         hm_snr_db = np.clip(hm_snr_db, np.min(self.hm_snr_list), np.max(self.hm_snr_list))
         hm_snr = 10 ** (hm_snr_db / 10)
         # power ratio = 0.5 / 0.4 / 0.3 / 0.2
@@ -201,10 +204,9 @@ class EnvSSE(gym.Env):
         trans_delay = hm_data_size / hm_trans_rate
 
         re_trans_delay = 0
+        re_trans_energy = 0
         # Retransmission simulation
         if self.enable_re_trans:
-            re_trans_num = 0
-
 
             block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
             block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
@@ -219,23 +221,31 @@ class EnvSSE(gym.Env):
             per = 1- (1-per_1) * (1-per_2) * (1-per_3) * (1-per_4)
 
             re_trans_delay = self.re_trans_num * ((1 / self.hm_coding_rate - 1) * self.sub_block_length / hm_trans_rate)
+            re_trans_energy = self.max_power * re_trans_delay
             for j in range(int(max(block_num_1, block_num_2, block_num_3, block_num_4))):
+                re_trans_num_block = 0
                 is_trans_success = 0
                 while is_trans_success == 0:
                     # Generate 1 (success) with probability 1-p and 0 (fail) with p
                     is_trans_success = \
                         random.choices([0, 1], weights=[per, 1 - per])[0]
-                    if is_trans_success == 1 or self.re_trans_num >= self.max_re_trans_num:
+                    if is_trans_success == 1 or re_trans_num_block >= self.max_re_trans_num:
                         break
                     else:
-                        self.re_trans_num = self.re_trans_num + 1
+                        re_trans_num_block = re_trans_num_block + 1
+                        per_1 = 1 - ((1 - hm_ber_1) ** (self.sub_block_length / (1-self.hm_coding_rate)))
+                        per_2 = 1 - ((1 - hm_ber_2) ** (self.sub_block_length / (1-self.hm_coding_rate)))
+                        per_3 = 1 - ((1 - hm_ber_3) ** (self.sub_block_length / (1-self.hm_coding_rate)))
+                        per_4 = 1 - ((1 - hm_ber_4) ** (self.sub_block_length / (1-self.hm_coding_rate)))
+                        per = 1 - (1 - per_1) * (1 - per_2) * (1 - per_3) * (1 - per_4)
+                self.re_trans_num = self.re_trans_num + re_trans_num_block
         trans_delay = trans_delay + re_trans_delay
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
 
         # Calculate energy consumption
-        trans_energy = self.max_power * trans_delay
+        trans_energy = self.max_power * trans_delay + re_trans_energy
         com_energy = action_info.com_energy
         total_energy = trans_energy + com_energy
         self.total_energy_list[0, self.step_num] = total_energy
@@ -250,13 +260,16 @@ class EnvSSE(gym.Env):
 
         # Option 2: Don't consider expectation
         acc_exp = action_info.acc / 100
+        if acc_exp < min_acc:
+            # print("acc:",acc_exp, "acc_min:",min_acc)
+            self.acc_vio_num = self.acc_vio_num + 1
         # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
-        reward_1 = acc_exp
-        reward_2 = (max_delay - total_delay) / max_delay
+        reward_1 = 2* ss.erf(acc_exp-min_acc)
+        reward_2 = total_delay / max_delay
         # reward_3 = self.remain_energy / self.max_energy
-        reward_3 = total_energy
-        reward = reward_1 + self.kappa_1 * reward_2 - self.kappa_2 * reward_3
+        reward_3 = total_energy / self.max_energy
+        reward = reward_1 - self.kappa_1 * reward_2 - self.kappa_2 * reward_3
 
         # print("slot index:", self.step_num, "action info:", action_info.fusion_name, "branch:", action_info.backbone,
         #       "reward:", reward, "reward 1:", reward_1, "reward_2:", reward_2, "reward_3", -reward_3, "trans delay:", trans_delay,
@@ -266,7 +279,7 @@ class EnvSSE(gym.Env):
         self.reward_list[0, self.step_num] = reward
         self.step_reward_list.append(reward.item())
         # State calculation
-        state = [cqi_est, hm_snr, curr_context_id, self.remain_energy.item(), max_delay.item()]
+        state = [cqi_est, hm_snr, curr_context_id, min_acc.item()]
         if total_delay > max_delay:
             self.delay_vio_num = self.delay_vio_num + 1
 
@@ -286,6 +299,7 @@ class EnvSSE(gym.Env):
             print("Average episode reward", episode_reward)
             print("Delay violation slot number:", self.delay_vio_num)
             print("Retransmission number:", self.re_trans_num)
+            print("Accuracy violation slot number:", self.acc_vio_num)
 
             self.episode_total_delay_list.append(episode_total_delay)
             self.episode_total_energy_list.append(episode_total_energy)
@@ -294,7 +308,7 @@ class EnvSSE(gym.Env):
             self.episode_delay_vio_num_list.append(self.delay_vio_num)
             self.episode_remain_energy_list.append(self.remain_energy)
             self.episode_re_trans_num_list.append(self.re_trans_num)
-
+            self.episode_acc_vio_num_list.append(self.acc_vio_num)
         else:
             done = False
 
@@ -305,11 +319,12 @@ class EnvSSE(gym.Env):
         cqi_init = 1
         snr_init = 5
         context_id_init = 1
-        max_delay_init = 0.3
-        state_init = [cqi_init, snr_init, context_id_init, self.max_energy, max_delay_init]
+        min_acc_init = 0.1
+        state_init = [cqi_init, snr_init, context_id_init, min_acc_init]
         self.context_flag = 0
         self.step_num = 0
         self.delay_vio_num = 0
+        self.acc_vio_num = 0
         self.remain_energy = self.max_energy  # Available energy of current slot
         self.done = False
         return np.array(state_init)

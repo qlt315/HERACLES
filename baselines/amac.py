@@ -6,9 +6,67 @@ import random
 import math
 import envs.utils_proposed as util
 from scipy.io import savemat
+import scipy.special as ss
+import pandas as pd
 
+def obtain_cqi_and_snr(file_paths, slot_num):
+    """
+    This function reads multiple CSV files from a list of file paths, extracts "SNR" and "CQI" columns,
+    and concatenates them into 1D arrays.
 
-is_test = True # False for plotting the reward, True for eval data
+    Parameters:
+    - file_paths: list of strings containing paths to directories or specific CSV files.
+    - slot_num: number of data points to randomly select from the concatenated data.
+
+    Returns:
+    - snr_array: 1D numpy array containing randomly selected "SNR" values.
+    - cqi_array: 1D numpy array containing randomly selected "CQI" values.
+    """
+
+    # Lists to store SNR and CQI data separately
+    snr_list = []
+    cqi_list = []
+
+    # Loop through all provided file paths
+    for directory_path in file_paths:
+        # Check if the path is a directory or a file
+        if os.path.isdir(directory_path):
+            # If it's a directory, loop through all files in the directory
+            for filename in os.listdir(directory_path):
+                # Check if the file is a CSV file
+                if filename.endswith(".csv"):
+                    file_path = os.path.join(directory_path, filename)
+                    # Read the CSV file and extract the "SNR" and "CQI" columns
+                    df = pd.read_csv(file_path, usecols=["SNR", "CQI"])
+                    # Convert non-numeric values to NaN and drop them
+                    df["SNR"] = pd.to_numeric(df["SNR"], errors='coerce')
+                    df["CQI"] = pd.to_numeric(df["CQI"], errors='coerce')
+                    df = df.dropna()  # Drop rows with NaN values
+                    # Append the valid "SNR" and "CQI" values to their respective lists
+                    snr_list.extend(df["SNR"].values)
+                    cqi_list.extend(df["CQI"].values)
+        elif os.path.isfile(directory_path) and directory_path.endswith(".csv"):
+            # If it's a file, directly read and extract the "SNR" and "CQI" columns
+            df = pd.read_csv(directory_path, usecols=["SNR", "CQI"])
+            # Convert non-numeric values to NaN and drop them
+            df["SNR"] = pd.to_numeric(df["SNR"], errors='coerce')
+            df["CQI"] = pd.to_numeric(df["CQI"], errors='coerce')
+            df = df.dropna()  # Drop rows with NaN values
+            # Append the valid "SNR" and "CQI" values to their respective lists
+            snr_list.extend(df["SNR"].values)
+            cqi_list.extend(df["CQI"].values)
+
+    # Convert the lists into 1D NumPy arrays
+    snr_array = np.array(snr_list)
+    cqi_array = np.array(cqi_list)
+
+    # Randomly select `slot_num` values from the arrays
+    snr_array = np.random.choice(snr_array, size=slot_num, replace=False)
+    cqi_array = np.random.choice(cqi_array, size=slot_num, replace=False)
+
+    return snr_array, cqi_array
+
+is_test = False # False for plotting the reward, True for eval data
 
 
 if is_test:
@@ -21,21 +79,22 @@ eval_total_energy_list = np.zeros([1, len(seed_list)])
 eval_reward_list = np.zeros([1, len(seed_list)])
 eval_acc_exp_list = np.zeros([1, len(seed_list)])
 eval_delay_vio_num_list = np.zeros([1, len(seed_list)])
+eval_acc_vio_num_list = np.zeros([1, len(seed_list)])
 eval_remain_energy_list = np.zeros([1, len(seed_list)])
 eval_re_trans_number_list = np.zeros([1, len(seed_list)])
 
-slot_num = 6000  # Number of time slots
+slot_num = 20*3000  # Number of time slots
 reward_list = np.zeros([len(seed_list), slot_num])
 sensor_num = 4  # Number of sensors
 bandwidth = 20e6  # System bandwidth (Hz)
 max_power = 1  # Maximum transmit power (W)
 Est_err_para = 0.5
 
-kappa_1 = 0.5
-kappa_2 = 0.5
-enable_re_trans = True
+kappa_1 = 1
+kappa_2 = 1
+enable_re_trans = False
 sub_block_length = 128
-target_snr_db = 10
+target_snr_db = 2
 for k in range(len(seed_list)):
     print("seed:",seed_list[k])
     max_energy = 6000  # Maximum energy consumption (J)
@@ -49,17 +108,17 @@ for k in range(len(seed_list)):
     # Quantized data size
     data_size = np.zeros([1, sensor_num])
     for i in range(sensor_num):
-        data_size[0, i] = np.random.rand() * 5000
+        data_size[0, i] = np.random.rand() * 10000
     # Initialize lists
     total_delay_list = np.zeros([1, slot_num])
     total_energy_list = np.zeros([1, slot_num])
     total_acc_list = np.zeros([1, slot_num])
-
+    acc_vio_num = 0
     delay_vio_num = 0
     re_trans_num = np.nan
     context_flag = 0
     consider_re_trans = 0  # 0 or 1
-    max_re_trans_num = 5000
+    max_re_trans_num = 200
     context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
     context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
     curr_context = None
@@ -83,8 +142,12 @@ for k in range(len(seed_list)):
     all_mod_method = []
     all_rate = []
 
-    wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
-    snr_array, cqi_array = util.obtain_cqi_and_snr(wireless_data_path, slot_num)
+    wireless_data_paths = ['system_data/5G_dataset/Netflix/Driving/animated-RickandMorty',
+                           'system_data/5G_dataset/Netflix/Driving/Season3-StrangerThings',
+                           'system_data/5G_dataset/Download/Driving',
+                           'system_data/5G_dataset/Amazon_Prime/Driving/Season3-TheExpanse'
+                           ]
+    snr_array, cqi_array = obtain_cqi_and_snr(wireless_data_paths, slot_num)
 
     # Process valid files
     for file_name in all_valid_file:
@@ -112,9 +175,10 @@ for k in range(len(seed_list)):
     # Main simulation loop
     for i in range(slot_num):
         print("slot num:", i)
-        
+
         curr_context_id = context_train_list[context_flag]
         curr_context = context_list[curr_context_id]
+        min_acc = util.obtain_min_acc(curr_context)
         if i % context_interval == 0 and i != 0:
             context_flag = context_flag + 1
             curr_context_id = context_train_list[context_flag]
@@ -123,7 +187,8 @@ for k in range(len(seed_list)):
         max_delay = 0.5  # Maximum tolerant delay (s)
 
         # Calculate SNR
-        snr_db =float(snr_array[i])
+        snr_db = float(snr_array[i])
+        # snr_db = target_snr_db
         snr = 10 ** (snr_db / 10)
 
         # Search for optimal transmission scheme
@@ -159,6 +224,7 @@ for k in range(len(seed_list)):
             re_trans_delay = 0
             # Retransmission simulation
             if enable_re_trans:
+
                 re_trans_num = 0
                 block_num = np.floor(coded_data_size / sub_block_length)
                 per_curr = 1 - (1 - ber_curr) ** sub_block_length
@@ -166,15 +232,18 @@ for k in range(len(seed_list)):
                 # print("BER:",tm_ber)
                 # print("PER:", per_curr)
                 for j in range(int(block_num)):
+                    re_trans_num_block = 0
                     is_trans_success = 0
                     while is_trans_success == 0:
                         # Generate 1 (success) with probability 1-p and 0 (fail) with p
                         is_trans_success = \
                             random.choices([0, 1], weights=[per_curr, 1 - per_curr])[0]
-                        if is_trans_success == 1 or re_trans_num >= max_re_trans_num:
+                        if is_trans_success == 1 or re_trans_num_block >= max_re_trans_num:
                             break
                         else:
-                            re_trans_num = re_trans_num + 1
+                            re_trans_num_block = re_trans_num_block + 1
+                            per_curr = 1 - (1 - ber_curr) ** (sub_block_length / (1-rate_curr))
+                    re_trans_num = re_trans_num + re_trans_num_block
                 re_trans_delay = re_trans_num * (
                             (1 / rate_curr - 1) * sub_block_length / trans_rate)
             trans_delay = trans_delay + re_trans_delay
@@ -233,6 +302,7 @@ for k in range(len(seed_list)):
             # print("BER:",ber_curr)
             # print("PER:", per_curr)
             for l in range(int(block_num)):
+                re_trans_num_block = 0
                 is_trans_success = 0
                 while is_trans_success == 0:
                     if per_curr == 1:
@@ -242,10 +312,12 @@ for k in range(len(seed_list)):
                     # Generate 1 (success) with probability 1-p and 0 (fail) with p
                     is_trans_success = \
                         random.choices([0, 1], weights=[per_curr, 1 - per_curr])[0]
-                    if is_trans_success == 1 or re_trans_num >= max_re_trans_num:
+                    if is_trans_success == 1 or re_trans_num_block>= max_re_trans_num:
                         continue
                     else:
-                        re_trans_num = re_trans_num + 1
+                        re_trans_num_block = re_trans_num_block + 1
+                        per_curr = 1 - (1 - ber_curr) ** (sub_block_length / (1-rate_curr))
+                re_trans_num = re_trans_num + re_trans_num_block
             re_trans_delay = re_trans_num * (sub_block_length / trans_rate)
             trans_delay = trans_delay + re_trans_delay
 
@@ -257,13 +329,16 @@ for k in range(len(seed_list)):
 
         if total_delay_list[0, i] > max_delay:
             delay_vio_num += 1
-
+        if acc_curr < min_acc:
+            # print("acc:",acc_exp, "acc_min:",min_acc)
+            acc_vio_num = acc_vio_num + 1
+        # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
         # acc_curr = util.acc_normalize(acc_curr, curr_context)
-        reward_1 = acc_curr / 100
-        reward_2 = (max_delay - total_delay_list[0, i]) / max_delay
-        reward_3 = total_energy_list[0, i]
+        reward_1 = 2* ss.erf(acc_curr-min_acc)
+        reward_2 =  total_delay_list[0, i] / max_delay
+        reward_3 = total_energy_list[0, i] / max_energy
 
-        reward = reward_1 + kappa_1 * reward_2 - kappa_2 * reward_3
+        reward = reward_1 - kappa_1 * reward_2 - kappa_2 * reward_3
         print("reward:", reward, "reward 1:", reward_1, "reward_2:", reward_2, "reward_3", reward_3)
         reward_curr_list.append(reward)
 
@@ -281,6 +356,7 @@ for k in range(len(seed_list)):
     print(f'Average Accuracy: {aver_acc:.2f}')
     print(f'Timeout Number: {delay_vio_num}')
     print(f'Retransmission Number: {re_trans_num}')
+    print(f'Accuracy Violation Number: {acc_vio_num}')
 
     eval_total_delay_list[0, k] = aver_total_delay
     eval_total_energy_list[0, k] = aver_total_energy
@@ -289,19 +365,21 @@ for k in range(len(seed_list)):
     eval_delay_vio_num_list[0, k] = delay_vio_num
     eval_remain_energy_list[0, k] = curr_energy
     eval_re_trans_number_list[0, k] = re_trans_num
-
+    eval_acc_vio_num_list[0, k] = acc_vio_num
 
 
 if is_test:
-    mat_name = "baselines/amac_reward.mat"
-    savemat(mat_name,{"amac_step_reward_list": reward_list})
-else:
     mat_name = "baselines/eval_amac_data.mat"
     savemat(mat_name,
-        {"amac_eval_episode_total_delay": np.sum(eval_total_delay_list) / len(seed_list),
-         "amac_eval_episode_total_energy": np.sum(eval_total_energy_list) / len(seed_list),
-         "amac_eval_episode_reward": np.sum(eval_reward_list) / len(seed_list),
-         "amac_eval_episode_acc_exp": np.sum(eval_acc_exp_list) / len(seed_list),
-         "amac_eval_episode_delay_vio_num": np.sum(eval_delay_vio_num_list) / len(seed_list),
-         "amac_eval_episode_remain_energy": np.sum(eval_remain_energy_list) / len(seed_list),
-         "amac_eval_episode_re_trans_number": np.sum(eval_re_trans_number_list) / len(seed_list)})
+            {"amac_eval_episode_total_delay": np.sum(eval_total_delay_list) / len(seed_list),
+             "amac_eval_episode_total_energy": np.sum(eval_total_energy_list) / len(seed_list),
+             "amac_eval_episode_reward": np.sum(eval_reward_list) / len(seed_list),
+             "amac_eval_episode_acc_exp": np.sum(eval_acc_exp_list) / len(seed_list),
+             "amac_eval_episode_delay_vio_num": np.sum(eval_delay_vio_num_list) / len(seed_list),
+             "amac_eval_episode_acc_vio_num": np.sum(eval_acc_vio_num_list) / len(seed_list),
+             "amac_eval_episode_remain_energy": np.sum(eval_remain_energy_list) / len(seed_list),
+             "amac_eval_episode_re_trans_number": np.sum(eval_re_trans_number_list) / len(seed_list)})
+else:
+    mat_name = "baselines/amac_reward.mat"
+    savemat(mat_name, {"amac_step_reward_list": reward_list
+                       })

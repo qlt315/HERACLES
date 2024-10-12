@@ -200,7 +200,8 @@ if __name__ == '__main__':
                  "rainbow_dqn" + runner.env.name + "_train_episode_acc_exp": runner.env.episode_acc_exp_list,
                  "rainbow_dqn" + runner.env.name + "_train_episode_remain_energy": runner.env.episode_remain_energy_list,
                  "rainbow_dqn" + runner.env.name + "_train_episode_re_trans_number": runner.env.episode_re_trans_num_list,
-                 "rainbow_dqn" + runner.env.name + "_train_step_reward": runner.env.step_reward_list
+                 "rainbow_dqn" + runner.env.name + "_train_delay_vio_number": runner.env.episode_delay_vio_num_list,
+                 "rainbow_dqn" + runner.env.name + "_train_acc_vio_number": runner.env.episode_acc_vio_num_list
                  })
         step_reward_matrix[k, :] = np.array(runner.env.step_reward_list)
 

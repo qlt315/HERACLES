@@ -135,9 +135,9 @@ def action_gen():
 
     #  1,2--Camera 3--Radar 4--Lidar
     #  Array order represents modulation order
-    fusion_name_list = [[1], [2], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
-                        [1], [2], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
-                        [1], [2], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
+    fusion_name_list = [[1], [3], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
+                        [1], [3], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
+                        [1], [3], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
                         [3, 4], [4, 3], [1, 2], [2, 1], [1, 4], [4, 1]]
 
     mod_type_list = ["TM", "TM", "TM", "HM", "HM", "HM", "HM", "HM", "HM",
@@ -299,6 +299,10 @@ def action_mapping(action_sunny_list, action_rain_list, action_snow_list,
 
     return action_info
 
+import os
+import pandas as pd
+import numpy as np
+
 def obtain_cqi_and_snr(directory_path, slot_num):
 
     # Lists to store SNR and CQI data separately
@@ -323,13 +327,11 @@ def obtain_cqi_and_snr(directory_path, slot_num):
 
     snr_array = snr_array[snr_array != '-']
     cqi_array = cqi_array[cqi_array != '-']
+
     snr_array = np.random.choice(snr_array, size=slot_num, replace=False)
     cqi_array = np.random.choice(cqi_array, size=slot_num, replace=False)
-
     return snr_array, cqi_array
 
-
-import numpy as np
 
 
 def estimate_cqi(cqi_true, est_err_para, min_cqi=1, max_cqi=15):
@@ -354,3 +356,29 @@ def estimate_cqi(cqi_true, est_err_para, min_cqi=1, max_cqi=15):
     cqi_estimated = np.clip(cqi_estimated, min_cqi, max_cqi)
 
     return int(cqi_estimated)
+
+def obtain_min_acc(current_context):
+    platform_data = loadmat("system_data/platform_data.mat")
+    acc_sunny_list = platform_data["sunny"][:21]
+    acc_rain_list = platform_data["rain"][:21]
+    acc_snow_list = platform_data["snow"][:21]
+    acc_motorway_list = platform_data["motorway"][:21]
+    acc_fog_list = platform_data["fog"][:21]
+    acc_night_list = platform_data["night"][:21]
+    try:
+        if current_context == "sunny":
+            min_acc = np.random.uniform(low=np.min(acc_sunny_list), high=np.max(acc_sunny_list), size=1)
+        elif current_context == "rain":
+            min_acc = np.random.uniform(low=np.min(acc_rain_list), high=np.max(acc_rain_list), size=1)
+        elif current_context == "snow":
+            min_acc = np.random.uniform(low=np.min(acc_snow_list), high=np.max(acc_snow_list), size=1)
+        elif current_context == "motorway":
+            min_acc = np.random.uniform(low=np.min(acc_motorway_list), high=np.max(acc_motorway_list), size=1)
+        elif current_context == "fog":
+            min_acc = np.random.uniform(low=np.min(acc_fog_list), high=np.max(acc_fog_list), size=1)
+        elif current_context == "night":
+            min_acc = np.random.uniform(low=np.min(acc_night_list), high=np.max(acc_night_list), size=1)
+    except:
+        print("min acc calcualtion failed!")
+
+    return min_acc / 150
