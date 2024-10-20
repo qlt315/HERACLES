@@ -52,7 +52,7 @@ class SumTree(object):
         return data_index, self.tree[tree_index]  # Return the index of the sampled data in the buffer and its priority
 
     def get_batch_index(self, current_size, batch_size, beta):
-        batch_index = np.zeros(batch_size, dtype=np.long)
+        batch_index = np.zeros(batch_size, dtype=np.int64)
         IS_weight = torch.zeros(batch_size, dtype=torch.float32)
         segment = self.priority_sum / batch_size  # Divide the range [0, priority_sum] into batch_size segments, and sample a number from each segment
         for i in range(batch_size):

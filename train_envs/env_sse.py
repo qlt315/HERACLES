@@ -335,3 +335,82 @@ class EnvSSE(gym.Env):
         self.remain_energy = self.max_energy  # Available energy of current slot
         self.done = False
         return np.array(state_init)
+
+    def input_est_err(self, est_err_para):
+        self.est_err_para = est_err_para
+        self.hm_folder_path = "./system_data/hierarchical modulation/two_layers_data"
+
+        hm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_layer1_(\w+)_layer2_(\w+)_esterr_([\d.]+)_rate_(\d+)_(\d+)_power_ratio_(\d+\.?\d*)'
+        for filename in os.listdir(self.hm_folder_path):
+            if filename.endswith('.mat'):
+                match = re.match(hm_pattern, filename)
+                if match:
+                    self.hm_err_para_ = float(match.group(6))
+                    self.hm_power_ratio_ = float(match.group(9))
+                    if self.hm_err_para_ != self.est_err_para or self.hm_power_ratio_ != self.hm_power_ratio:
+                        continue
+                    else:
+                        print("Loading 2-Layer HM SNR-BER data:", filename)
+                        hm_file_path = os.path.join(self.hm_folder_path, filename)
+                        self.hm_snr_min = float(match.group(1))
+                        self.hm_snr_int = float(match.group(2))
+                        self.hm_snr_max = float(match.group(3))
+                        self.hm_layer1_mod = match.group(4)
+                        self.hm_layer2_mod = match.group(5)
+                        self.hm_coding_rate_num = int(match.group(7))
+                        self.hm_coding_rate_den = int(match.group(8))
+                        self.hm_coding_rate = self.hm_coding_rate_num / self.hm_coding_rate_den
+
+                        self.hm_data = loadmat(hm_file_path, variable_names=['ber_1', 'ber_2_sic'])
+                        self.hm_ber_1 = self.hm_data['ber_1']  # Layer 1 BER
+                        self.hm_ber_2 = self.hm_data['ber_2_sic']  # Layer 2 BER with SIC
+
+                        self.hm_ber_1 = self.hm_ber_1[self.hm_ber_1 != 0]
+                        self.hm_ber_2 = self.hm_ber_2[self.hm_ber_2 != 0]
+                        self.hm_snr_list = np.arange(self.hm_snr_min, self.hm_snr_max + self.hm_snr_int,
+                                                     self.hm_snr_int)
+                        self.hm_snr_list = self.hm_snr_list[:len(self.hm_ber_1)]
+                        # Function fitting
+                        self.hm_degree = 5
+                        self.hm_coefficients_1 = np.polyfit(self.hm_snr_list.ravel(), self.hm_ber_1.ravel(),
+                                                            self.hm_degree)
+                        self.hm_coefficients_2 = np.polyfit(self.hm_snr_list.ravel(), self.hm_ber_2.ravel(),
+                                                            self.hm_degree)
+                        self.hm_polynomial_model_1 = np.poly1d(self.hm_coefficients_1)
+                        self.hm_polynomial_model_2 = np.poly1d(self.hm_coefficients_2)
+
+        self.tm_folder_path = "./system_data/typical modulation"
+        tm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_(\w+)_esterr_([\d\.]+)_rate_(\d+)_(\d+)'
+        self.tm_mod = "qpsk"  # qpsk, 16qam, 64qam
+        self.tm_coding_rate_num = 1
+        self.tm_coding_rate_den = 2
+        self.tm_coding_rate = self.tm_coding_rate_num / self.tm_coding_rate_den
+        for filename in os.listdir(self.tm_folder_path):
+            if filename.endswith('.mat'):
+                match = re.match(tm_pattern, filename)
+                if match:
+                    self.tm_snr_min = float(match.group(1))
+                    self.tm_snr_int = float(match.group(2))
+                    self.tm_snr_max = float(match.group(3))
+                    self.tm_mod_ = match.group(4)
+                    self.tm_est_err_para_ = float(match.group(5))
+                    self.tm_coding_rate_num_ = int(match.group(6))
+                    self.tm_coding_rate_den_ = int(match.group(7))
+                    self.tm_coding_rate_ = self.tm_coding_rate_num_ / self.tm_coding_rate_den_
+
+                    if self.tm_est_err_para_ == self.est_err_para and self.tm_mod_ == self.tm_mod \
+                            and self.tm_coding_rate_ == self.tm_coding_rate:
+                        print("Loading TM SNR-BER data:", filename)
+                        tm_file_path = os.path.join(self.tm_folder_path, filename)
+                        self.tm_data = loadmat(tm_file_path)
+                        self.tm_ber = self.tm_data['bler']
+                        self.tm_snr_list = np.arange(self.tm_snr_min, self.tm_snr_max + self.tm_snr_int,
+                                                     self.tm_snr_int)
+
+                        # Function fitting
+                        self.tm_degree = 7
+                        self.tm_coefficients = np.polyfit(self.tm_snr_list.ravel(), self.tm_ber.ravel(), self.tm_degree)
+                        self.tm_polynomial_model = np.poly1d(self.tm_coefficients)
+
+    def input_snr(self, snr_db):
+        self.target_snr_db = snr_db
