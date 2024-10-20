@@ -185,8 +185,8 @@ class EnvProposed_erf(gym.Env):
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
         # Calculate SNR and trans rate
-        tm_snr_db = float(self.snr_array[self.step_num])
-        # tm_snr_db = self.target_snr_db
+        # tm_snr_db = float(self.snr_array[self.step_num])
+        tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
         tm_snr = 10 ** (tm_snr_db / 10)

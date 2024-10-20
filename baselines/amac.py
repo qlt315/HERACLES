@@ -196,8 +196,8 @@ class Amac:
                 max_delay = 0.5  # Maximum tolerant delay (s)
 
                 # Calculate SNR
-                snr_db = float(snr_array[i])
-                # snr_db = target_snr_db
+                # snr_db = float(snr_array[i])
+                snr_db = self.target_snr_db
                 snr = 10 ** (snr_db / 10)
 
                 # Search for optimal transmission scheme
