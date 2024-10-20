@@ -213,7 +213,7 @@ class Amac:
                     ber_curr = np.polyval(p_curr, snr_db)
                     ber_curr = np.clip(ber_curr, 0, 1)
                     acc_curr = platform_data[curr_context][22, 0] / 100
-
+                    print(acc_curr)
                     # Delay Calculation
                     trans_rate = self.bandwidth * np.log2(1 + snr)
                     # print("trans rate:",trans_rate)

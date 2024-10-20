@@ -292,7 +292,7 @@ end
 %% Fig.7 Different Est Err
 load("experiments\diff_est_err_data\diff_est_err_data.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number"];
-y_max_list = [1.5,3,1,1,40000];
+y_max_list = [0.5,3,1,0.1,40000];
 for i=1:5
     figure(14+i)
     data = zeros(6,3);

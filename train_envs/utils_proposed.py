@@ -381,5 +381,5 @@ def obtain_min_acc(current_context):
     except:
         print("min acc calcualtion failed!")
 
-    return min_acc / 150
+    return min_acc / 120
 
