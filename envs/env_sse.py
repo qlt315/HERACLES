@@ -17,7 +17,6 @@ import scipy.special as ss
 class EnvSSE(gym.Env):
     def __init__(self):
         self.name = "sse"
-        self.seed()
         # Parameter settings
         self.slot_num = 3000  # Number of time slots
         self.max_energy = 2000  # Maximum energy consumption (J)
@@ -139,15 +138,10 @@ class EnvSSE(gym.Env):
         wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
     def step(self, action):
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
         max_delay = np.random.uniform(low=0.3, high=1, size=1)
         curr_context_id = self.context_train_list[self.context_flag]
-        print(self.context_train_list)
         self.curr_context = self.context_list[curr_context_id]
         if self.step_num % self.context_interval == 0 and self.step_num != 0:
             self.context_flag = self.context_flag + 1

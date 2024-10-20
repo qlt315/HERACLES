@@ -185,7 +185,6 @@ class Amac:
             # Main simulation loop
             for i in range(self.slot_num):
                 print("slot num:", i)
-                print(context_train_list)
                 curr_context_id = context_train_list[context_flag]
                 curr_context = context_list[curr_context_id]
                 min_acc = util.obtain_min_acc(curr_context)

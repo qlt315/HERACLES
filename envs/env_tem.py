@@ -18,7 +18,6 @@ import scipy.special as ss
 class EnvTEM(gym.Env):
     def __init__(self):
         self.name = "tem"
-        self.seed()
         # Parameter settings
         self.slot_num = 3000  # Number of time slots
         self.max_energy = 2000  # Maximum energy consumption (J)
@@ -115,10 +114,6 @@ class EnvTEM(gym.Env):
 
         wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
-
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
 
     def step(self, action):
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)

@@ -145,7 +145,6 @@ if __name__ == '__main__':
 
     seed = 37
 
-
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -219,6 +218,7 @@ if __name__ == '__main__':
                 print("env name:", env.name)
                 print("est_err_para:", runner.env.est_err_para)
                 print("algorithm:", runner.algorithm)
+                runner.env.context_train_list = [5,5,5,2,2,3,2,0,2,2,2,3,4,3,2,2,0,5,3,5,4,5,0,5,2,5,5,5,5,2]
                 runner.run()
                 # save the data
                 if algorithm == "rainbow_dqn" and env_id == 0:

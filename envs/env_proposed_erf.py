@@ -1,7 +1,6 @@
 import math
 import gym
 from gym import spaces, logger
-from gym.utils import seeding
 import numpy as np
 import os
 import re
@@ -164,9 +163,6 @@ class EnvProposed_erf(gym.Env):
         wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
 
     def step(self, action):
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
