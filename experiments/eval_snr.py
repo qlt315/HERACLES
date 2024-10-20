@@ -132,7 +132,7 @@ class Runner:
 
 
 if __name__ == '__main__':
-    snr_db_list = np.arange(1, 3.2, 0.2)
+    snr_db_list = np.arange(0.5, 3, 0.5)
 
     rainbow_env_proposed_erf_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
     rainbow_env_proposed_origin_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
@@ -211,7 +211,8 @@ if __name__ == '__main__':
                 runner = Runner(args=args, env=env, number=1, seed=seed)
                 # load the model
                 runner.agent.net, runner.agent.target_net = sl.load_nn_model(runner)
-
+                runner.env.context_train_list = [5, 5, 5, 2, 2, 3, 2, 0, 2, 2, 2, 3, 4, 3, 2, 2, 0, 5, 3, 5, 4, 5, 0, 5,
+                                                 2, 5, 5, 5, 5, 2]
                 runner.env.input_snr(snr_db_list[s])
                 print("env name:", env.name)
                 print("snr_db:", runner.env.target_snr_db)

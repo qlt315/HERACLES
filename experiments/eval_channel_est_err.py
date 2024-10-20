@@ -15,10 +15,12 @@ import tools.saving_loading as sl
 import time
 import os
 from scipy.io import savemat
+
 time_start = time.time()
 env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 algorithm_list = ["rainbow_dqn", "dqn"]
 env_num = len(set(type(obj) for obj in env_list))
+
 
 class Runner:
     def __init__(self, args, env, number, seed):
@@ -134,16 +136,17 @@ class Runner:
 
 
 if __name__ == '__main__':
-    est_err_list = [0,0.3,0.5]
+    est_err_list = [0, 0.3, 0.5]
 
-    rainbow_env_proposed_erf_diff_est_err_matrix = np.zeros([5,len(est_err_list)])
-    rainbow_env_proposed_origin_diff_est_err_matrix = np.zeros([5,len(est_err_list)])
-    rainbow_env_sse_diff_est_err_matrix = np.zeros([5,len(est_err_list)])
-    rainbow_env_tem_diff_est_err_matrix = np.zeros([5,len(est_err_list)])
-    amac_diff_est_err_matrix = np.zeros([5,len(est_err_list)])
-    dqn_diff_est_err_matrix = np.zeros([5,len(est_err_list)])
+    rainbow_env_proposed_erf_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
+    rainbow_env_proposed_origin_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
+    rainbow_env_sse_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
+    rainbow_env_tem_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
+    amac_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
+    dqn_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
 
     seed = 37
+
 
     def seed_torch(seed):
         torch.manual_seed(seed)
@@ -160,7 +163,6 @@ if __name__ == '__main__':
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
-
 
     for algo_id in range(len(algorithm_list)):
         algorithm = algorithm_list[algo_id]
@@ -218,7 +220,8 @@ if __name__ == '__main__':
                 print("env name:", env.name)
                 print("est_err_para:", runner.env.est_err_para)
                 print("algorithm:", runner.algorithm)
-                runner.env.context_train_list = [5,5,5,2,2,3,2,0,2,2,2,3,4,3,2,2,0,5,3,5,4,5,0,5,2,5,5,5,5,2]
+                runner.env.context_train_list = [5, 5, 5, 2, 2, 3, 2, 0, 2, 2, 2, 3, 4, 3, 2, 2, 0, 5, 3, 5, 4, 5, 0, 5,
+                                                 2, 5, 5, 5, 5, 2]
                 runner.run()
                 # save the data
                 if algorithm == "rainbow_dqn" and env_id == 0:
@@ -299,5 +302,3 @@ if __name__ == '__main__':
              })
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + " Second")
-
-

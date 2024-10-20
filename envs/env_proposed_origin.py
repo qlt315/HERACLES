@@ -1,7 +1,6 @@
 import math
 import gym
 from gym import spaces, logger
-from gym.utils import seeding
 import numpy as np
 import os
 import re
@@ -26,7 +25,7 @@ class EnvProposed_origin(gym.Env):
         self.sensor_num = 4  # Number of sensors
         self.bandwidth = 20e6  # System bandwidth (Hz)
         self.max_power = 1  # Maximum transmit power (W)
-        self.est_err_para = 0.5   # Channel estimation error parameter
+        self.est_err_para = 0.5  # Channel estimation error parameter
         self.hm_power_ratio = 0.999  # Choose from 0.5-0.9
         self.data_size = np.zeros([1, self.sensor_num])
         for i in range(self.sensor_num):
@@ -59,7 +58,8 @@ class EnvProposed_origin(gym.Env):
         self.context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
         self.context_interval = 100  # Interval for context to change
         self.context_num = int(self.slot_num / self.context_interval)
-        self.context_train_list = np.random.choice(list(range(len(self.context_list))), size=self.context_num, p=self.context_prob)
+        self.context_train_list = np.random.choice(list(range(len(self.context_list))), size=self.context_num,
+                                                   p=self.context_prob)
         self.delay_vio_num = 0
         self.context_flag = 0
         self.num_actions = 33
@@ -127,7 +127,6 @@ class EnvProposed_origin(gym.Env):
                         self.hm_polynomial_model_1 = np.poly1d(self.hm_coefficients_1)
                         self.hm_polynomial_model_2 = np.poly1d(self.hm_coefficients_2)
 
-
         self.tm_folder_path = "./system_data/typical modulation"
         tm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_(\w+)_esterr_([\d\.]+)_rate_(\d+)_(\d+)'
         self.tm_mod = "qpsk"  # qpsk, 16qam, 64qam
@@ -190,12 +189,13 @@ class EnvProposed_origin(gym.Env):
         tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
-        tm_snr =  10 ** (tm_snr_db / 10)
+        tm_snr = 10 ** (tm_snr_db / 10)
 
         tm_ber = np.clip(self.tm_polynomial_model(tm_snr_db), 0.00001, 0.99999)
         tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
+
         hm_snr_1 = tm_snr * self.hm_power_ratio
-        hm_snr_2 = tm_snr * (1-self.hm_power_ratio)
+        hm_snr_2 = tm_snr * (1 - self.hm_power_ratio)
 
         hm_snr_1_db = 10 * np.log10(hm_snr_1)
         hm_snr_2_db = 10 * np.log10(hm_snr_2)
@@ -205,7 +205,6 @@ class EnvProposed_origin(gym.Env):
         hm_ber_2 = np.clip(self.hm_polynomial_model_2(hm_snr_2_db), 0.00001, 0.99999)
 
         hm_trans_rate = tm_trans_rate
-
 
         # Calculate PER of each branch (totally 21 branches)
         # print(tm_ber, hm_ber_1, hm_ber_2)
@@ -224,9 +223,7 @@ class EnvProposed_origin(gym.Env):
                 self.re_trans_num = 0
                 block_num = np.floor(data_size / self.sub_block_length)
                 tm_per = 1 - (1 - tm_ber) ** self.sub_block_length
-                # print("Using TM")
-                # print("PER:", tm_per)
-                # print("Block num:", block_num)
+
                 for j in range(int(block_num)):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -238,9 +235,11 @@ class EnvProposed_origin(gym.Env):
                             break
                         else:
                             re_trans_num_block = re_trans_num_block + 1
-                            tm_per = 1 - (1 - tm_ber) ** (self.sub_block_length / (1-self.tm_coding_rate))
+                            tm_per = 1 - (1 - tm_ber) ** (self.sub_block_length / (1 - self.tm_coding_rate))
                     self.re_trans_num = self.re_trans_num + re_trans_num_block
-                re_trans_delay = self.re_trans_num * ((1/self.tm_coding_rate-1) * self.sub_block_length / tm_trans_rate)
+                # print("Re trans num:", self.re_trans_num)
+                re_trans_delay = self.re_trans_num * (
+                        (1 / self.tm_coding_rate - 1) * self.sub_block_length / tm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
 
             trans_delay = data_size / tm_trans_rate + re_trans_delay
@@ -253,9 +252,10 @@ class EnvProposed_origin(gym.Env):
                 order = action_info.fusion_name
                 hm_per_1 = 1 - (1 - hm_ber_1) ** self.sub_block_length
                 hm_per_2 = 1 - (1 - hm_ber_2) ** self.sub_block_length
-                hm_per = 1-(1-hm_per_1) * (1-hm_per_2)
-                block_num_1 = np.floor(self.data_size[0, order[0]-1] / self.hm_coding_rate / self.sub_block_length)
-                block_num_2 = np.floor(self.data_size[0, order[1]-1] / self.hm_coding_rate / self.sub_block_length)
+                hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
+                block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
+                block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
+
                 for j in range(int(max(block_num_1, block_num_2))):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -267,12 +267,13 @@ class EnvProposed_origin(gym.Env):
                             break
                         else:
                             re_trans_num_block = re_trans_num_block + 1
-                            hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length / (1-self.tm_coding_rate))
-                            hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length / (1-self.tm_coding_rate))
+                            hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length / (1 - self.tm_coding_rate))
+                            hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length / (1 - self.tm_coding_rate))
                             hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                     self.re_trans_num = self.re_trans_num + re_trans_num_block
-                self.re_trans_list[0, self.step_num] = self.re_trans_num
-                re_trans_delay = self.re_trans_num * ((1/self.hm_coding_rate-1) * self.sub_block_length / hm_trans_rate)
+                # print("Re trans num:", self.re_trans_num)
+                re_trans_delay = self.re_trans_num * (
+                        (1 / self.hm_coding_rate - 1) * self.sub_block_length / hm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
                 # print("re trans delay:",re_trans_delay)
             trans_delay = data_size / hm_trans_rate + re_trans_delay
@@ -281,7 +282,7 @@ class EnvProposed_origin(gym.Env):
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
-
+        self.re_trans_list[0, self.step_num] = self.re_trans_num
         # Calculate energy consumption
         trans_energy = self.max_power * trans_delay + re_trans_energy
         com_energy = action_info.com_energy
@@ -308,7 +309,7 @@ class EnvProposed_origin(gym.Env):
         reward_2 = total_delay / max_delay
         reward_3 = total_energy / self.max_energy
         # reward_3 = total_energy
-        reward = self.kappa_3 * reward_1 - self.kappa_2 * reward_2 - self.kappa_3 * reward_3
+        reward = self.kappa_1 * reward_1 - self.kappa_2 * reward_2 - self.kappa_3 * reward_3
         # print(reward_1, reward_2, reward_3, reward)
         # reward = acc_exp + self.kappa_1 * (max_delay - total_delay) + self.kappa_2 * self.remain_energy
 

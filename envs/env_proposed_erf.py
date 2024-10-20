@@ -25,7 +25,7 @@ class EnvProposed_erf(gym.Env):
         self.sensor_num = 4  # Number of sensors
         self.bandwidth = 20e6  # System bandwidth (Hz)
         self.max_power = 1  # Maximum transmit power (W)
-        self.est_err_para = 0.5   # Channel estimation error parameter
+        self.est_err_para = 0.5  # Channel estimation error parameter
         self.hm_power_ratio = 0.999  # Choose from 0.5-0.9
         self.data_size = np.zeros([1, self.sensor_num])
         for i in range(self.sensor_num):
@@ -58,7 +58,8 @@ class EnvProposed_erf(gym.Env):
         self.context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
         self.context_interval = 100  # Interval for context to change
         self.context_num = int(self.slot_num / self.context_interval)
-        self.context_train_list = np.random.choice(list(range(len(self.context_list))), size=self.context_num, p=self.context_prob)
+        self.context_train_list = np.random.choice(list(range(len(self.context_list))), size=self.context_num,
+                                                   p=self.context_prob)
         self.delay_vio_num = 0
         self.context_flag = 0
         self.num_actions = 33
@@ -126,7 +127,6 @@ class EnvProposed_erf(gym.Env):
                         self.hm_polynomial_model_1 = np.poly1d(self.hm_coefficients_1)
                         self.hm_polynomial_model_2 = np.poly1d(self.hm_coefficients_2)
 
-
         self.tm_folder_path = "./system_data/typical modulation"
         tm_pattern = r'snr_([\d.]+)_([\d.]+)_([\d.]+)_(\w+)_esterr_([\d\.]+)_rate_(\d+)_(\d+)'
         self.tm_mod = "qpsk"  # qpsk, 16qam, 64qam
@@ -163,7 +163,6 @@ class EnvProposed_erf(gym.Env):
         wireless_data_path = 'system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
-
     def step(self, action):
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
         max_delay = np.random.uniform(low=0.3, high=1, size=1)
@@ -196,7 +195,7 @@ class EnvProposed_erf(gym.Env):
         tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
 
         hm_snr_1 = tm_snr * self.hm_power_ratio
-        hm_snr_2 = tm_snr * (1-self.hm_power_ratio)
+        hm_snr_2 = tm_snr * (1 - self.hm_power_ratio)
 
         hm_snr_1_db = 10 * np.log10(hm_snr_1)
         hm_snr_2_db = 10 * np.log10(hm_snr_2)
@@ -206,7 +205,6 @@ class EnvProposed_erf(gym.Env):
         hm_ber_2 = np.clip(self.hm_polynomial_model_2(hm_snr_2_db), 0.00001, 0.99999)
 
         hm_trans_rate = tm_trans_rate
-
 
         # Calculate PER of each branch (totally 21 branches)
         # print(tm_ber, hm_ber_1, hm_ber_2)
@@ -239,9 +237,10 @@ class EnvProposed_erf(gym.Env):
                             break
                         else:
                             re_trans_num_block = re_trans_num_block + 1
-                            tm_per = 1 - (1 - tm_ber) ** (self.sub_block_length / (1-self.tm_coding_rate))
+                            tm_per = 1 - (1 - tm_ber) ** (self.sub_block_length / (1 - self.tm_coding_rate))
                     self.re_trans_num = self.re_trans_num + re_trans_num_block
-                re_trans_delay = self.re_trans_num * ((1/self.tm_coding_rate-1) * self.sub_block_length / tm_trans_rate)
+                re_trans_delay = self.re_trans_num * (
+                            (1 / self.tm_coding_rate - 1) * self.sub_block_length / tm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
 
             trans_delay = data_size / tm_trans_rate + re_trans_delay
@@ -254,9 +253,9 @@ class EnvProposed_erf(gym.Env):
                 order = action_info.fusion_name
                 hm_per_1 = 1 - (1 - hm_ber_1) ** self.sub_block_length
                 hm_per_2 = 1 - (1 - hm_ber_2) ** self.sub_block_length
-                hm_per = 1-(1-hm_per_1) * (1-hm_per_2)
-                block_num_1 = np.floor(self.data_size[0, order[0]-1] / self.hm_coding_rate / self.sub_block_length)
-                block_num_2 = np.floor(self.data_size[0, order[1]-1] / self.hm_coding_rate / self.sub_block_length)
+                hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
+                block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
+                block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
                 for j in range(int(max(block_num_1, block_num_2))):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -268,12 +267,12 @@ class EnvProposed_erf(gym.Env):
                             break
                         else:
                             re_trans_num_block = re_trans_num_block + 1
-                            hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length / (1-self.tm_coding_rate))
-                            hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length / (1-self.tm_coding_rate))
+                            hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length / (1 - self.tm_coding_rate))
+                            hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length / (1 - self.tm_coding_rate))
                             hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                     self.re_trans_num = self.re_trans_num + re_trans_num_block
-                self.re_trans_list[0, self.step_num] = self.re_trans_num
-                re_trans_delay = self.re_trans_num * ((1/self.hm_coding_rate-1) * self.sub_block_length / hm_trans_rate)
+                re_trans_delay = self.re_trans_num * (
+                            (1 / self.hm_coding_rate - 1) * self.sub_block_length / hm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
                 # print("re trans delay:",re_trans_delay)
             trans_delay = data_size / hm_trans_rate + re_trans_delay
@@ -282,7 +281,7 @@ class EnvProposed_erf(gym.Env):
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
-
+        self.re_trans_list[0, self.step_num] = self.re_trans_num
         # Calculate energy consumption
         trans_energy = self.max_power * trans_delay + re_trans_energy
         com_energy = action_info.com_energy
@@ -305,7 +304,7 @@ class EnvProposed_erf(gym.Env):
 
         self.acc_exp_list[0, self.step_num] = acc_exp
         # Reward calculation
-        reward_1 = ss.erf(acc_exp-min_acc)
+        reward_1 = ss.erf(acc_exp - min_acc)
         reward_2 = total_delay / max_delay
         reward_3 = total_energy / self.max_energy
         # reward_3 = total_energy
