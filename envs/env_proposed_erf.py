@@ -7,7 +7,7 @@ import os
 import re
 from scipy.io import loadmat
 from tensorboard.compat.tensorflow_stub.dtypes import float32
-import train_envs.utils_proposed as util
+import envs.utils_proposed as util
 import random
 import matplotlib.pyplot as plt
 import scipy.special as ss
@@ -15,9 +15,9 @@ import scipy.special as ss
 
 # import envs.mobile_channel_gen
 
-class EnvProposed_origin(gym.Env):
+class EnvProposed_erf(gym.Env):
     def __init__(self):
-        self.name = "proposed_origin"
+        self.name = "proposed_erf"
         # Parameter settings
         self.slot_num = 3000  # Number of time slots
         self.max_energy = 2000  # Maximum energy consumption (J)
@@ -38,7 +38,7 @@ class EnvProposed_origin(gym.Env):
         # self.data_size[0, 1] = self.data_size[0, 0]
         # self.data_size[0, 2] = 1.8432e6
         # self.data_size[0, 3] = 1.73e6
-        self.target_snr_db = 2
+        self.target_snr_db = 1
         self.total_delay_list = np.zeros([1, self.slot_num])
         self.total_energy_list = np.zeros([1, self.slot_num])
         self.acc_exp_list = np.zeros([1, self.slot_num])
@@ -194,11 +194,10 @@ class EnvProposed_origin(gym.Env):
         tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
-        tm_snr =  10 ** (tm_snr_db / 10)
+        tm_snr = 10 ** (tm_snr_db / 10)
 
         tm_ber = np.clip(self.tm_polynomial_model(tm_snr_db), 0.00001, 0.99999)
         tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
-
 
         hm_snr_1 = tm_snr * self.hm_power_ratio
         hm_snr_2 = tm_snr * (1-self.hm_power_ratio)
@@ -310,11 +309,11 @@ class EnvProposed_origin(gym.Env):
 
         self.acc_exp_list[0, self.step_num] = acc_exp
         # Reward calculation
-        reward_1 = acc_exp - min_acc
+        reward_1 = ss.erf(acc_exp-min_acc)
         reward_2 = total_delay / max_delay
         reward_3 = total_energy / self.max_energy
         # reward_3 = total_energy
-        reward = self.kappa_3 * reward_1 - self.kappa_2 * reward_2 - self.kappa_3 * reward_3
+        reward = self.kappa_1 * reward_1 - self.kappa_2 * reward_2 - self.kappa_3 * reward_3
         # print(reward_1, reward_2, reward_3, reward)
         # reward = acc_exp + self.kappa_1 * (max_delay - total_delay) + self.kappa_2 * self.remain_energy
 
@@ -333,6 +332,8 @@ class EnvProposed_origin(gym.Env):
             print("Episode index:", self.episode_num)
             self.episode_num = self.episode_num + 1
             self.done = True
+
+            self.acc_vio_num = self.acc_vio_num / self.slot_num
 
             episode_total_delay = np.sum(self.total_delay_list) / self.slot_num
             episode_total_energy = np.sum(self.total_energy_list) / self.slot_num
@@ -372,6 +373,20 @@ class EnvProposed_origin(gym.Env):
         self.acc_vio_num = 0
         self.remain_energy = self.max_energy  # Available energy of current slot
         self.done = False
+        self.total_delay_list = np.zeros([1, self.slot_num])
+        self.total_energy_list = np.zeros([1, self.slot_num])
+        self.acc_exp_list = np.zeros([1, self.slot_num])
+        self.reward_list = np.zeros([1, self.slot_num])
+        self.re_trans_list = np.zeros([1, self.slot_num])
+
+        self.episode_total_delay_list = []
+        self.episode_total_energy_list = []
+        self.episode_acc_exp_list = []
+        self.episode_reward_list = []
+        self.episode_delay_vio_num_list = []
+        self.episode_remain_energy_list = []
+        self.episode_re_trans_num_list = []
+        self.episode_acc_vio_num_list = []
         return np.array(state_init)
 
     def input_est_err(self, est_err_para):

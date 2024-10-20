@@ -1,10 +1,10 @@
 import torch
 import numpy as np
 import gym
-from eval_envs.env_proposed_origin import EnvProposed_origin
-from eval_envs.env_proposed_erf import EnvProposed_erf
-from eval_envs.env_tem import EnvTEM
-from eval_envs.env_sse import EnvSSE
+from envs.env_proposed_origin import EnvProposed_origin
+from envs.env_proposed_erf import EnvProposed_erf
+from envs.env_tem import EnvTEM
+from envs.env_sse import EnvSSE
 from torch.utils.tensorboard import SummaryWriter
 from rainbow_dqn.rainbow_replay_buffer import *
 from rainbow_dqn.rainbow_agent import DQN

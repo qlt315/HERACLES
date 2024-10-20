@@ -2,7 +2,7 @@ import random
 from scipy.io import savemat
 import numpy as np
 import torch
-from train_envs.env_proposed import EnvProposed
+from envs.env_proposed import EnvProposed
 from baselines.random_agent import RandomAgent
 
 

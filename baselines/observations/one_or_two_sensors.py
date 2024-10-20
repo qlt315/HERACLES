@@ -10,7 +10,7 @@ import numpy as np
 import os
 import re
 from scipy.io import loadmat
-import train_envs.utils_tem as util
+import envs.utils_tem as util
 import random
 import matplotlib.pyplot as plt
 import scipy.special as ss

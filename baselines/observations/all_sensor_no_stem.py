@@ -4,7 +4,7 @@ import re
 import scipy.io as sio
 import random
 import math
-import train_envs.utils_proposed as util
+import envs.utils_proposed as util
 from scipy.io import savemat
 from scipy.io import loadmat
 import scipy.special as ss

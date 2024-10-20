@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 import gym
-from train_envs.env_proposed_origin import EnvProposed_origin
-from train_envs.env_proposed_erf import EnvProposed_erf
+from envs.env_proposed_origin import EnvProposed_origin
+from envs.env_proposed_erf import EnvProposed_erf
 from torch.utils.tensorboard import SummaryWriter
 from rainbow_replay_buffer import *
 from rainbow_agent import DQN

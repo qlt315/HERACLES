@@ -6,7 +6,7 @@ import numpy as np
 import os
 import re
 from scipy.io import loadmat, savemat
-import train_envs.utils_proposed as util
+import envs.utils_proposed as util
 import random
 import matplotlib.pyplot as plt
 

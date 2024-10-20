@@ -4,10 +4,11 @@ import re
 import scipy.io as sio
 import random
 import math
-import train_envs.utils_proposed as util
+import envs.utils_proposed as util
 from scipy.io import savemat
 import scipy.special as ss
 import pandas as pd
+
 
 def obtain_cqi_and_snr(file_paths, slot_num):
     """
@@ -107,10 +108,10 @@ class Amac:
             max_energy = 6000  # Maximum energy consumption (J)
             curr_energy = max_energy  # Available energy of current slot
             last_energy = 0  # Consumed energy of last slot
-
             seed = self.seed_list[k]
             # Parameter settings
             np.random.seed(seed)
+            random.seed(seed)
 
             # Quantized data size
             data_size = np.zeros([1, self.sensor_num])
@@ -131,8 +132,10 @@ class Amac:
             curr_context = None
             context_interval = 100  # Interval for context to change
             context_num = int(self.slot_num / context_interval)
-            context_train_list = np.random.choice(list(range(len(context_list))),
-                                                  size=context_num, p=context_prob)
+            if self.is_test:
+                context_train_list = [5,5,5,2,2,3,2,0,2,2,2,3,4,3,2,2,0,5,3,5,4,5,0,5,2,5,5,5,5,2]
+            else:
+                context_train_list = np.random.choice(list(range(len(context_list))), size=context_num, p=context_prob)
             # Data loading and fitting
             platform_data = sio.loadmat('system_data/platform_data.mat')
 
@@ -182,7 +185,7 @@ class Amac:
             # Main simulation loop
             for i in range(self.slot_num):
                 print("slot num:", i)
-
+                print(context_train_list)
                 curr_context_id = context_train_list[context_flag]
                 curr_context = context_list[curr_context_id]
                 min_acc = util.obtain_min_acc(curr_context)
@@ -213,7 +216,6 @@ class Amac:
                     ber_curr = np.polyval(p_curr, snr_db)
                     ber_curr = np.clip(ber_curr, 0, 1)
                     acc_curr = platform_data[curr_context][22, 0] / 100
-                    print(acc_curr)
                     # Delay Calculation
                     trans_rate = self.bandwidth * np.log2(1 + snr)
                     # print("trans rate:",trans_rate)
