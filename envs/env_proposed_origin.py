@@ -164,7 +164,6 @@ class EnvProposed_origin(gym.Env):
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
     def step(self, action):
-        print(self.context_train_list)
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
         max_delay = np.random.uniform(low=0.3, high=1, size=1)
         curr_context_id = self.context_train_list[self.context_flag]
