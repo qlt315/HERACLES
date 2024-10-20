@@ -194,7 +194,7 @@ class EnvProposed_erf(gym.Env):
         # tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
-        tm_snr =  10 ** (tm_snr_db / 10)
+        tm_snr = 10 ** (tm_snr_db / 10)
 
         tm_ber = np.clip(self.tm_polynomial_model(tm_snr_db), 0.00001, 0.99999)
         tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
