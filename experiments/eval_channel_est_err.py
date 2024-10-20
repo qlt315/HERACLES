@@ -16,6 +16,21 @@ import time
 import os
 from scipy.io import savemat
 
+seed = 37
+
+
+def seed_torch(seed):
+    torch.manual_seed(seed)
+    if torch.backends.cudnn.enabled:
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+
+
+np.random.seed(seed)
+random.seed(seed)
+seed_torch(seed)
+
 time_start = time.time()
 env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 algorithm_list = ["rainbow_dqn", "dqn"]
@@ -145,20 +160,7 @@ if __name__ == '__main__':
     amac_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
     dqn_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
 
-    seed = 37
 
-
-    def seed_torch(seed):
-        torch.manual_seed(seed)
-        if torch.backends.cudnn.enabled:
-            torch.cuda.manual_seed(seed)
-            torch.backends.cudnn.benchmark = False
-            torch.backends.cudnn.deterministic = True
-
-
-    np.random.seed(seed)
-    random.seed(seed)
-    seed_torch(seed)
 
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to train
@@ -220,8 +222,6 @@ if __name__ == '__main__':
                 print("env name:", env.name)
                 print("est_err_para:", runner.env.est_err_para)
                 print("algorithm:", runner.algorithm)
-                runner.env.context_train_list = [5, 5, 5, 2, 2, 3, 2, 0, 2, 2, 2, 3, 4, 3, 2, 2, 0, 5, 3, 5, 4, 5, 0, 5,
-                                                 2, 5, 5, 5, 5, 2]
                 runner.run()
                 # save the data
                 if algorithm == "rainbow_dqn" and env_id == 0:

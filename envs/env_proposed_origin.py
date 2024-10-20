@@ -164,6 +164,7 @@ class EnvProposed_origin(gym.Env):
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
     def step(self, action):
+        print(self.context_train_list)
         # print("Episode index:", self.episode_num, "Step index:", self.step_num)
         max_delay = np.random.uniform(low=0.3, high=1, size=1)
         curr_context_id = self.context_train_list[self.context_flag]
@@ -185,8 +186,8 @@ class EnvProposed_origin(gym.Env):
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
         # Calculate SNR and trans rate
-        # tm_snr_db = float(self.snr_array[self.step_num])
-        tm_snr_db = self.target_snr_db
+        tm_snr_db = float(self.snr_array[self.step_num])
+        # tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
         tm_snr = 10 ** (tm_snr_db / 10)

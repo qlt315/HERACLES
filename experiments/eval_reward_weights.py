@@ -17,6 +17,17 @@ import os
 from scipy.io import savemat
 time_start = time.time()
 
+seed = 37
+def seed_torch(seed):
+    torch.manual_seed(seed)
+    if torch.backends.cudnn.enabled:
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+
+np.random.seed(seed)
+random.seed(seed)
+seed_torch(seed)
 
 env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 algorithm_list = ["rainbow_dqn", "dqn"]
@@ -142,23 +153,14 @@ if __name__ == '__main__':
     kappa_2_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # delay reward weight
     kappa_3_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # energy reward weight
 
-    rainbow_env_proposed_erf_diff_kappa_matrix = np.zeros([4,len(kappa_1_list),3])
-    rainbow_env_proposed_origin_diff_kappa_matrix = np.zeros([4,len(kappa_1_list),3])
-    rainbow_env_sse_diff_kappa_matrix = np.zeros([4,len(kappa_1_list),3])
-    rainbow_env_tem_diff_kappa_matrix = np.zeros([4,len(kappa_1_list),3])
-    amac_diff_kappa_matrix = np.zeros([4,len(kappa_1_list),3])
-    dqn_diff_kappa_matrix = np.zeros([4,len(kappa_1_list),3])
+    rainbow_env_proposed_erf_diff_kappa_matrix = np.zeros([5,len(kappa_1_list),3])
+    rainbow_env_proposed_origin_diff_kappa_matrix = np.zeros([5,len(kappa_1_list),3])
+    rainbow_env_sse_diff_kappa_matrix = np.zeros([5,len(kappa_1_list),3])
+    rainbow_env_tem_diff_kappa_matrix = np.zeros([5,len(kappa_1_list),3])
+    amac_diff_kappa_matrix = np.zeros([5,len(kappa_1_list),3])
+    dqn_diff_kappa_matrix = np.zeros([5,len(kappa_1_list),3])
 
-    seed = 37
-    def seed_torch(seed):
-        torch.manual_seed(seed)
-        if torch.backends.cudnn.enabled:
-            torch.cuda.manual_seed(seed)
-            torch.backends.cudnn.benchmark = False
-            torch.backends.cudnn.deterministic = True
-    np.random.seed(seed)
-    random.seed(seed)
-    seed_torch(seed)
+
 
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to train
@@ -228,6 +230,7 @@ if __name__ == '__main__':
                 runner.env.kappa_1 = kappa_1_list[w]
                 runner.env.kappa_2 = 1
                 runner.env.kappa_3 = 1
+                print("env name:", env.name)
                 print("Kappa 1:", runner.env.kappa_1, "Kappa 2:", runner.env.kappa_2, "Kappa 3", runner.env.kappa_3)
                 print("algorithm:", runner.algorithm)
                 runner.run()
@@ -238,26 +241,32 @@ if __name__ == '__main__':
                     rainbow_env_proposed_origin_diff_kappa_matrix[1, w, 0] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     rainbow_env_proposed_origin_diff_kappa_matrix[2, w, 0] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_origin_diff_kappa_matrix[3, w, 0] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_proposed_origin_diff_kappa_matrix[4, w, 0] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
+                    print(rainbow_env_proposed_origin_diff_kappa_matrix[:,:,0])
                 elif algorithm == "rainbow_dqn" and env_id == 1:
                     rainbow_env_proposed_erf_diff_kappa_matrix[0, w, 0] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     rainbow_env_proposed_erf_diff_kappa_matrix[1, w, 0] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     rainbow_env_proposed_erf_diff_kappa_matrix[2, w, 0] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_erf_diff_kappa_matrix[3, w, 0] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_proposed_erf_diff_kappa_matrix[4, w, 0] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 2:
                     rainbow_env_sse_diff_kappa_matrix[0, w, 0] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     rainbow_env_sse_diff_kappa_matrix[1, w, 0] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     rainbow_env_sse_diff_kappa_matrix[2, w, 0] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_sse_diff_kappa_matrix[3, w, 0] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_sse_diff_kappa_matrix[4, w, 0] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 3:
                     rainbow_env_tem_diff_kappa_matrix[0, w, 0] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     rainbow_env_tem_diff_kappa_matrix[1, w, 0] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     rainbow_env_tem_diff_kappa_matrix[2, w, 0] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_tem_diff_kappa_matrix[3, w, 0] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_tem_diff_kappa_matrix[4, w, 0] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "dqn":
                     dqn_diff_kappa_matrix[0, w, 0] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     dqn_diff_kappa_matrix[1, w, 0] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     dqn_diff_kappa_matrix[2, w, 0] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     dqn_diff_kappa_matrix[3, w, 0] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    dqn_diff_kappa_matrix[4, w, 0] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
                 runner.env.reset()
 
             for w in range(len(kappa_2_list)):
@@ -272,12 +281,13 @@ if __name__ == '__main__':
                 env_index = 0
                 env = env_list[env_id]
                 runner = Runner(args=args, env=env, number=1, seed=seed)
-
                 # load the model
                 runner.agent.net, runner.agent.target_net = sl.load_nn_model_diff_kappa(runner, folder_path)
                 runner.env.kappa_1 = 1
                 runner.env.kappa_2 = kappa_2_list[w]
                 runner.env.kappa_3 = 1
+                print("env name:", env.name)
+                print("Kappa 1:", runner.env.kappa_1, "Kappa 2:", runner.env.kappa_2, "Kappa 3", runner.env.kappa_3)
                 print("algorithm:", runner.algorithm)
                 runner.run()
                 # save the data
@@ -290,6 +300,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_origin_diff_kappa_matrix[3, w, 1] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_proposed_origin_diff_kappa_matrix[4, w, 1] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 1:
                     rainbow_env_proposed_erf_diff_kappa_matrix[0, w, 1] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -299,6 +311,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_erf_diff_kappa_matrix[3, w, 1] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_proposed_erf_diff_kappa_matrix[4, w, 1] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 2:
                     rainbow_env_sse_diff_kappa_matrix[0, w, 1] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -308,6 +322,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_sse_diff_kappa_matrix[3, w, 1] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_sse_diff_kappa_matrix[4, w, 1] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 3:
                     rainbow_env_tem_diff_kappa_matrix[0, w, 1] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -317,11 +333,14 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_tem_diff_kappa_matrix[3, w, 1] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_tem_diff_kappa_matrix[4, w, 1] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "dqn":
                     dqn_diff_kappa_matrix[0, w, 1] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     dqn_diff_kappa_matrix[1, w, 1] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     dqn_diff_kappa_matrix[2, w, 1] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     dqn_diff_kappa_matrix[3, w, 1] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    dqn_diff_kappa_matrix[4, w, 1] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
 
 
 
@@ -345,6 +364,8 @@ if __name__ == '__main__':
                 runner.env.kappa_1 = 1
                 runner.env.kappa_2 = 1
                 runner.env.kappa_3 = kappa_3_list[w]
+                print("env name:", env.name)
+                print("Kappa 1:", runner.env.kappa_1, "Kappa 2:", runner.env.kappa_2, "Kappa 3", runner.env.kappa_3)
                 print("algorithm:", runner.algorithm)
                 runner.run()
 
@@ -358,6 +379,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_origin_diff_kappa_matrix[3, w, 2] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_proposed_origin_diff_kappa_matrix[4, w, 2] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 1:
                     rainbow_env_proposed_erf_diff_kappa_matrix[0, w, 2] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -367,6 +390,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_erf_diff_kappa_matrix[3, w, 2] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_proposed_erf_diff_kappa_matrix[4, w, 2] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 2:
                     rainbow_env_sse_diff_kappa_matrix[0, w, 2] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -376,6 +401,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_sse_diff_kappa_matrix[3, w, 2] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_sse_diff_kappa_matrix[4, w, 2] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 3:
                     rainbow_env_tem_diff_kappa_matrix[0, w, 2] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -385,11 +412,14 @@ if __name__ == '__main__':
                         runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_tem_diff_kappa_matrix[3, w, 2] = np.sum(
                         runner.env.episode_acc_vio_num_list) / episode_number
+                    rainbow_env_tem_diff_kappa_matrix[4, w, 2] = np.sum(
+                        runner.env.episode_re_trans_num_list) / episode_number
                 elif algorithm == "dqn":
                     dqn_diff_kappa_matrix[0, w, 1] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     dqn_diff_kappa_matrix[1, w, 1] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     dqn_diff_kappa_matrix[2, w, 1] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     dqn_diff_kappa_matrix[3, w, 1] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
+                    dqn_diff_kappa_matrix[4, w, 1] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
                 runner.env.reset()
 
     # amac evaluation
@@ -404,6 +434,7 @@ if __name__ == '__main__':
         amac_diff_kappa_matrix[1, w, 0] = runner.total_energy_list.item()
         amac_diff_kappa_matrix[2, w, 0] = runner.acc_exp_list.item()
         amac_diff_kappa_matrix[3, w, 0] = runner.acc_vio_num_list.item()
+        amac_diff_kappa_matrix[4, w, 0] = runner.re_trans_num_list.item()
 
     for w in range(len(kappa_2_list)):
         runner = amac.Amac(is_test=True)
@@ -416,6 +447,7 @@ if __name__ == '__main__':
         amac_diff_kappa_matrix[1, w, 1] = runner.total_energy_list.item()
         amac_diff_kappa_matrix[2, w, 1] = runner.acc_exp_list.item()
         amac_diff_kappa_matrix[3, w, 1] = runner.acc_vio_num_list.item()
+        amac_diff_kappa_matrix[4, w, 1] = runner.re_trans_num_list.item()
 
     for w in range(len(kappa_3_list)):
         runner = amac.Amac(is_test=True)
@@ -428,6 +460,7 @@ if __name__ == '__main__':
         amac_diff_kappa_matrix[1, w, 2] = runner.total_energy_list.item()
         amac_diff_kappa_matrix[2, w, 2] = runner.acc_exp_list.item()
         amac_diff_kappa_matrix[3, w, 2] = runner.acc_vio_num_list.item()
+        amac_diff_kappa_matrix[4, w, 2] = runner.re_trans_num_list.item()
 
     # save all the data
     mat_name = "experiments/diff_reward_weights_data/diff_reward_weights_data.mat"

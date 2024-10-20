@@ -230,16 +230,16 @@ for i=1:3
     surf(X, Y, Z, 'FaceColor', colors(2,:), 'FaceAlpha', 0.5);
     
     
-    x = rainbow_env_proposed_sse_diff_kappa_matrix(1,:,i); % delay
-    y = rainbow_env_proposed_sse_diff_kappa_matrix(2,:,i); % energy
-    z = rainbow_env_proposed_sse_diff_kappa_matrix(4,:,i); % acc vio prob
+    x = rainbow_env_sse_diff_kappa_matrix(1,:,i); % delay
+    y = rainbow_env_sse_diff_kappa_matrix(2,:,i); % energy
+    z = rainbow_env_sse_diff_kappa_matrix(4,:,i); % acc vio prob
     [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
     surf(X, Y, Z, 'FaceColor', colors(3,:), 'FaceAlpha', 0.5);
     
     
-    x = rainbow_env_proposed_tem_diff_kappa_matrix(1,:,i); % delay
-    y = rainbow_env_proposed_tem_diff_kappa_matrix(2,:,i); % energy
-    z = rainbow_env_proposed_tem_diff_kappa_matrix(4,:,i); % acc vio prob
+    x = rainbow_env_tem_diff_kappa_matrix(1,:,i); % delay
+    y = rainbow_env_tem_diff_kappa_matrix(2,:,i); % energy
+    z = rainbow_env_tem_diff_kappa_matrix(4,:,i); % acc vio prob
     [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
     surf(X, Y, Z, 'FaceColor', colors(4,:), 'FaceAlpha', 0.5);
     
