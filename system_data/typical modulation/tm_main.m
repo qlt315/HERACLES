@@ -6,7 +6,7 @@ ldpc_code = ldpc(0, 0);
 min_sum = 1;
 n_0 = 1/2;
 
-Est_err_para = 0.3;
+est_err_para = 0.3;
 
 block_length = 1944; % Should be one of 648, 1296, and 1944
 rate = 5/6; % Should be one of 1/2, 2/3, 3/4, 5/6
@@ -59,9 +59,9 @@ for i_run = 1 : max_runs
         y =  h .* x + noise/sqrt(snr);
         
         % Channel Equalization
-        Est_err = Est_err_para * abs(h);
-        hEst = h + Est_err + Est_err * 1i;
-        y = y ./ hEst;
+        est_err = est_err_para * abs(h);
+        h_est = h + est_err + est_err * 1i;
+        y = y ./ h_est;
         
         [llr, ~] = modulation.compute_llr(y, n_0/snr);
         

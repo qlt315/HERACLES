@@ -4,7 +4,7 @@ import re
 import scipy.io as sio
 import random
 import math
-import envs.utils_proposed as util
+import train_envs.utils_proposed as util
 from scipy.io import savemat
 from scipy.io import loadmat
 import scipy.special as ss
@@ -22,7 +22,7 @@ for s in range(len(snr_db_list)):
     sensor_num = 4  # Number of sensors
     bandwidth = 20e6  # System bandwidth (Hz)
     max_power = 1  # Maximum transmit power (W)
-    Est_err_para = 0.5
+    est_err_para = 0.5
     est_err_para = 0.5
     kappa_1 = 1
     kappa_2 = 1
@@ -71,7 +71,7 @@ for s in range(len(snr_db_list)):
 
         # Search for valid files
         for file_name in file_list:
-            if f"esterr_{Est_err_para}" in file_name:
+            if f"esterr_{est_err_para}" in file_name:
                 all_valid_file.append(file_name)
 
 

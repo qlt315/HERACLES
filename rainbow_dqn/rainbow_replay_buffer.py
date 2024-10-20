@@ -1,229 +1,206 @@
-import math
-import os
-import random
-from collections import deque
-from typing import Deque, Dict, List, Tuple
-
+import torch
 import numpy as np
-from rainbow_dqn.rainbow_segment_tree import MinSegmentTree, SumSegmentTree
+from collections import deque
+from rainbow_dqn.rainbow_sum_tree import SumTree
 
 
-class ReplayBuffer:
-    """A simple numpy replay buffer."""
+class ReplayBuffer(object):
+    def __init__(self, args):
+        self.batch_size = args.batch_size
+        self.buffer_capacity = args.buffer_capacity
+        self.current_size = 0
+        self.count = 0
+        self.buffer = {'state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'action': np.zeros((self.buffer_capacity, 1)),
+                       'reward': np.zeros(self.buffer_capacity),
+                       'next_state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'terminal': np.zeros(self.buffer_capacity),
+                       }
 
-    def __init__(
-            self,
-            obs_dim: int,
-            size: int,
-            batch_size: int = 32,
-            n_step: int = 1,
-            gamma: float = 0.99
-    ):
-        self.obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
-        self.next_obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
-        self.acts_buf = np.zeros([size], dtype=np.float32)
-        self.rews_buf = np.zeros([size], dtype=np.float32)
-        self.done_buf = np.zeros(size, dtype=np.float32)
-        self.max_size, self.batch_size = size, batch_size
-        self.ptr, self.size, = 0, 0
+    def store_transition(self, state, action, reward, next_state, terminal, done):
+        self.buffer['state'][self.count] = state
+        self.buffer['action'][self.count] = action
+        self.buffer['reward'][self.count] = reward
+        self.buffer['next_state'][self.count] = next_state
+        self.buffer['terminal'][self.count] = terminal
+        self.count = (self.count + 1) % self.buffer_capacity  # When the 'count' reaches buffer_capacity, it will be reset to 0.
+        self.current_size = min(self.current_size + 1, self.buffer_capacity)
 
-        # for N-step Learning
-        self.n_step_buffer = deque(maxlen=n_step)
-        self.n_step = n_step
-        self.gamma = gamma
+    def sample(self, total_steps):
+        index = np.random.randint(0, self.current_size, size=self.batch_size)
+        batch = {}
+        for key in self.buffer.keys():  # Convert numpy arrays to tensors
+            if key == 'action':
+                batch[key] = torch.tensor(self.buffer[key][index], dtype=torch.long)
+            else:
+                batch[key] = torch.tensor(self.buffer[key][index], dtype=torch.float32)
 
-    def store(
-            self,
-            obs: np.ndarray,
-            act: np.ndarray,
-            rew: float,
-            next_obs: np.ndarray,
-            done: bool,
-    ) -> Tuple[np.ndarray, np.ndarray, float, np.ndarray, bool]:
-        transition = (obs, act, rew, next_obs, done)
-        self.n_step_buffer.append(transition)
-
-        # single step transition is not ready
-        if len(self.n_step_buffer) < self.n_step:
-            return ()
-
-        # make a n-step transition
-        rew, next_obs, done = self._get_n_step_info(
-            self.n_step_buffer, self.gamma
-        )
-        obs, act = self.n_step_buffer[0][:2]
-
-        self.obs_buf[self.ptr] = obs
-        self.next_obs_buf[self.ptr] = next_obs
-        self.acts_buf[self.ptr] = act
-        self.rews_buf[self.ptr] = rew
-        self.done_buf[self.ptr] = done
-        self.ptr = (self.ptr + 1) % self.max_size
-        self.size = min(self.size + 1, self.max_size)
-
-        return self.n_step_buffer[0]
-
-    def sample_batch(self) -> Dict[str, np.ndarray]:
-        idxs = np.random.choice(self.size, size=self.batch_size, replace=False)
-
-        return dict(
-            obs=self.obs_buf[idxs],
-            next_obs=self.next_obs_buf[idxs],
-            acts=self.acts_buf[idxs],
-            rews=self.rews_buf[idxs],
-            done=self.done_buf[idxs],
-            # for N-step Learning
-            indices=idxs,
-        )
-
-    def sample_batch_from_idxs(
-            self, idxs: np.ndarray
-    ) -> Dict[str, np.ndarray]:
-        # for N-step Learning
-        return dict(
-            obs=self.obs_buf[idxs],
-            next_obs=self.next_obs_buf[idxs],
-            acts=self.acts_buf[idxs],
-            rews=self.rews_buf[idxs],
-            done=self.done_buf[idxs],
-        )
-
-    def _get_n_step_info(
-            self, n_step_buffer: Deque, gamma: float
-    ) -> Tuple[np.int64, np.ndarray, bool]:
-        """Return n step rew, next_obs, and done."""
-        # info of the last transition
-        rew, next_obs, done = n_step_buffer[-1][-3:]
-
-        for transition in reversed(list(n_step_buffer)[:-1]):
-            r, n_o, d = transition[-3:]
-
-            rew = r + gamma * rew * (1 - d)
-            next_obs, done = (n_o, d) if d else (next_obs, done)
-
-        return rew, next_obs, done
-
-    def __len__(self) -> int:
-        return self.size
+        return batch, None, None
 
 
-class PrioritizedReplayBuffer(ReplayBuffer):
-    """Prioritized Replay buffer.
+class N_Steps_ReplayBuffer(object):
+    def __init__(self, args):
+        self.gamma = args.gamma
+        self.batch_size = args.batch_size
+        self.buffer_capacity = args.buffer_capacity
+        self.current_size = 0
+        self.count = 0
+        self.n_steps = args.n_steps
+        self.n_steps_deque = deque(maxlen=self.n_steps)
+        self.buffer = {'state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'action': np.zeros((self.buffer_capacity, 1)),
+                       'reward': np.zeros(self.buffer_capacity),
+                       'next_state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'terminal': np.zeros(self.buffer_capacity),
+                       }
 
-    Attributes:
-        max_priority (float): max priority
-        tree_ptr (int): next index of tree
-        alpha (float): alpha parameter for prioritized replay buffer
-        sum_tree (SumSegmentTree): sum tree for prior
-        min_tree (MinSegmentTree): min tree for min prior to get max weight
+    def store_transition(self, state, action, reward, next_state, terminal, done):
+        transition = (state, action, reward, next_state, terminal, done)
+        self.n_steps_deque.append(transition)
+        if len(self.n_steps_deque) == self.n_steps:
+            state, action, n_steps_reward, next_state, terminal = self.get_n_steps_transition()
+            self.buffer['state'][self.count] = state
+            self.buffer['action'][self.count] = action
+            self.buffer['reward'][self.count] = n_steps_reward
+            self.buffer['next_state'][self.count] = next_state
+            self.buffer['terminal'][self.count] = terminal
+            self.count = (self.count + 1) % self.buffer_capacity  # When the 'count' reaches buffer_capacity, it will be reset to 0.
+            self.current_size = min(self.current_size + 1, self.buffer_capacity)
 
-    """
+    def get_n_steps_transition(self):
+        state, action = self.n_steps_deque[0][:2]
+        next_state, terminal = self.n_steps_deque[-1][3:5]
+        n_steps_reward = 0
+        for i in reversed(range(self.n_steps)):
+            r, s_, ter, d = self.n_steps_deque[i][2:]
+            n_steps_reward = r + self.gamma * (1 - d) * n_steps_reward
+            if d:
+                next_state, terminal = s_, ter
 
-    def __init__(
-            self,
-            obs_dim: int,
-            size: int,
-            batch_size: int = 32,
-            alpha: float = 0.6,
-            n_step: int = 1,
-            gamma: float = 0.99,
-    ):
-        """Initialization."""
-        assert alpha >= 0
+        return state, action, n_steps_reward, next_state, terminal
 
-        super(PrioritizedReplayBuffer, self).__init__(
-            obs_dim, size, batch_size, n_step, gamma
-        )
-        self.max_priority, self.tree_ptr = 1.0, 0
-        self.alpha = alpha
+    def sample(self, total_steps):
+        index = np.random.randint(0, self.current_size, size=self.batch_size)
+        batch = {}
+        for key in self.buffer.keys():  # Convert numpy arrays to tensors
+            if key == 'action':
+                batch[key] = torch.tensor(self.buffer[key][index], dtype=torch.long)
+            else:
+                batch[key] = torch.tensor(self.buffer[key][index], dtype=torch.float32)
 
-        # capacity must be positive and a power of 2.
-        tree_capacity = 1
-        while tree_capacity < self.max_size:
-            tree_capacity *= 2
+        return batch, None, None
 
-        self.sum_tree = SumSegmentTree(tree_capacity)
-        self.min_tree = MinSegmentTree(tree_capacity)
 
-    def store(
-            self,
-            obs: np.ndarray,
-            act: int,
-            rew: float,
-            next_obs: np.ndarray,
-            done: bool,
-    ) -> Tuple[np.ndarray, np.ndarray, float, np.ndarray, bool]:
-        """Store experience and priority."""
-        transition = super().store(obs, act, rew, next_obs, done)
+class Prioritized_ReplayBuffer(object):
+    def __init__(self, args):
+        self.max_train_steps = args.max_train_steps
+        self.alpha = args.alpha
+        self.beta_init = args.beta_init
+        self.beta = args.beta_init
+        self.batch_size = args.batch_size
+        self.buffer_capacity = args.buffer_capacity
+        self.sum_tree = SumTree(self.buffer_capacity)
+        self.current_size = 0
+        self.count = 0
+        self.buffer = {'state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'action': np.zeros((self.buffer_capacity, 1)),
+                       'reward': np.zeros(self.buffer_capacity),
+                       'next_state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'terminal': np.zeros(self.buffer_capacity),
+                       }
 
-        if transition:
-            self.sum_tree[self.tree_ptr] = self.max_priority ** self.alpha
-            self.min_tree[self.tree_ptr] = self.max_priority ** self.alpha
-            self.tree_ptr = (self.tree_ptr + 1) % self.max_size
+    def store_transition(self, state, action, reward, next_state, terminal, done):
+        self.buffer['state'][self.count] = state
+        self.buffer['action'][self.count] = action
+        self.buffer['reward'][self.count] = reward
+        self.buffer['next_state'][self.count] = next_state
+        self.buffer['terminal'][self.count] = terminal
+        # For the first experience, initialize priority to 1.0; for new experiences, assign the current maximum priority
+        priority = 1.0 if self.current_size == 0 else self.sum_tree.priority_max
+        self.sum_tree.update(data_index=self.count, priority=priority)  # Update the priority of the current experience in sum_tree
+        self.count = (self.count + 1) % self.buffer_capacity  # When the 'count' reaches buffer_capacity, it will be reset to 0.
+        self.current_size = min(self.current_size + 1, self.buffer_capacity)
 
-        return transition
+    def sample(self, total_steps):
+        batch_index, IS_weight = self.sum_tree.get_batch_index(current_size=self.current_size, batch_size=self.batch_size, beta=self.beta)
+        self.beta = self.beta_init + (1 - self.beta_init) * (total_steps / self.max_train_steps)  # beta: beta_init->1.0
+        batch = {}
+        for key in self.buffer.keys():  # Convert numpy arrays to tensors
+            if key == 'action':
+                batch[key] = torch.tensor(self.buffer[key][batch_index], dtype=torch.long)
+            else:
+                batch[key] = torch.tensor(self.buffer[key][batch_index], dtype=torch.float32)
 
-    def sample_batch(self, beta: float = 0.4) -> Dict[str, np.ndarray]:
-        """Sample a batch of experiences."""
-        assert len(self) >= self.batch_size
-        assert beta > 0
+        return batch, batch_index, IS_weight
 
-        indices = self._sample_proportional()
+    def update_batch_priorities(self, batch_index, td_errors):  # Update the priorities of the data at batch_index based on the given td_errors
+        priorities = (np.abs(td_errors) + 0.01) ** self.alpha
+        for index, priority in zip(batch_index, priorities):
+            self.sum_tree.update(data_index=index, priority=priority)
 
-        obs = self.obs_buf[indices]
-        next_obs = self.next_obs_buf[indices]
-        acts = self.acts_buf[indices]
-        rews = self.rews_buf[indices]
-        done = self.done_buf[indices]
-        weights = np.array([self._calculate_weight(i, beta) for i in indices])
 
-        return dict(
-            obs=obs,
-            next_obs=next_obs,
-            acts=acts,
-            rews=rews,
-            done=done,
-            weights=weights,
-            indices=indices,
-        )
+class N_Steps_Prioritized_ReplayBuffer(object):
+    def __init__(self, args):
+        self.max_train_steps = args.max_train_steps
+        self.alpha = args.alpha
+        self.beta_init = args.beta_init
+        self.beta = args.beta_init
+        self.gamma = args.gamma
+        self.batch_size = args.batch_size
+        self.buffer_capacity = args.buffer_capacity
+        self.sum_tree = SumTree(self.buffer_capacity)
+        self.n_steps = args.n_steps
+        self.n_steps_deque = deque(maxlen=self.n_steps)
+        self.buffer = {'state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'action': np.zeros((self.buffer_capacity, 1)),
+                       'reward': np.zeros(self.buffer_capacity),
+                       'next_state': np.zeros((self.buffer_capacity, args.state_dim)),
+                       'terminal': np.zeros(self.buffer_capacity),
+                       }
+        self.current_size = 0
+        self.count = 0
 
-    def update_priorities(self, indices: List[int], priorities: np.ndarray):
-        """Update priorities of sampled transitions."""
-        assert len(indices) == len(priorities)
+    def store_transition(self, state, action, reward, next_state, terminal, done):
+        transition = (state, action, reward, next_state, terminal, done)
+        self.n_steps_deque.append(transition)
+        if len(self.n_steps_deque) == self.n_steps:
+            state, action, n_steps_reward, next_state, terminal = self.get_n_steps_transition()
+            self.buffer['state'][self.count] = state
+            self.buffer['action'][self.count] = action
+            self.buffer['reward'][self.count] = n_steps_reward
+            self.buffer['next_state'][self.count] = next_state
+            self.buffer['terminal'][self.count] = terminal
+            # For the first experience in the buffer, assign priority as 1.0; for new experiences, assign the current maximum priority
+            priority = 1.0 if self.current_size == 0 else self.sum_tree.priority_max
+            self.sum_tree.update(data_index=self.count, priority=priority)  # Update the priority of the current experience in sum_tree
+            self.count = (self.count + 1) % self.buffer_capacity  # When 'count' reaches buffer_capacity, it will be reset to 0.
+            self.current_size = min(self.current_size + 1, self.buffer_capacity)
 
-        for idx, priority in zip(indices, priorities):
-            assert priority > 0
-            assert 0 <= idx < len(self)
+    def sample(self, total_steps):
+        batch_index, IS_weight = self.sum_tree.get_batch_index(current_size=self.current_size, batch_size=self.batch_size, beta=self.beta)
+        self.beta = self.beta_init + (1 - self.beta_init) * (total_steps / self.max_train_steps)  # beta: beta_init->1.0
+        batch = {}
+        for key in self.buffer.keys():  # Convert numpy arrays to tensors
+            if key == 'action':
+                batch[key] = torch.tensor(self.buffer[key][batch_index], dtype=torch.long)
+            else:
+                batch[key] = torch.tensor(self.buffer[key][batch_index], dtype=torch.float32)
 
-            self.sum_tree[idx] = priority ** self.alpha
-            self.min_tree[idx] = priority ** self.alpha
+        return batch, batch_index, IS_weight
 
-            self.max_priority = max(self.max_priority, priority)
+    def get_n_steps_transition(self):
+        state, action = self.n_steps_deque[0][:2]  # Retrieve the state and action of the first transition in the deque
+        next_state, terminal = self.n_steps_deque[-1][3:5]  # Retrieve the next state and terminal of the last transition in the deque
+        n_steps_reward = 0
+        for i in reversed(range(self.n_steps)):  # Calculate the n-steps reward in reverse order
+            r, s_, ter, d = self.n_steps_deque[i][2:]
+            n_steps_reward = r + self.gamma * (1 - d) * n_steps_reward
+            if d:  # If done=True, it indicates the end of an episode, so save the current transition's next state and terminal
+                next_state, terminal = s_, ter
 
-    def _sample_proportional(self) -> List[int]:
-        """Sample indices based on proportions."""
-        indices = []
-        p_total = self.sum_tree.sum(0, len(self) - 1)
-        segment = p_total / self.batch_size
+        return state, action, n_steps_reward, next_state, terminal
 
-        for i in range(self.batch_size):
-            a = segment * i
-            b = segment * (i + 1)
-            upperbound = random.uniform(a, b)
-            idx = self.sum_tree.retrieve(upperbound)
-            indices.append(idx)
-
-        return indices
-
-    def _calculate_weight(self, idx: int, beta: float):
-        """Calculate the weight of the experience at idx."""
-        # get max weight
-        p_min = self.min_tree.min() / self.sum_tree.sum()
-        max_weight = (p_min * len(self)) ** (-beta)
-
-        # calculate weights
-        p_sample = self.sum_tree[idx] / self.sum_tree.sum()
-        weight = (p_sample * len(self)) ** (-beta)
-        weight = weight / max_weight
-
-        return weight
+    def update_batch_priorities(self, batch_index, td_errors):  # Update the priorities of the data at batch_index based on the given td_errors
+        priorities = (np.abs(td_errors) + 0.01) ** self.alpha
+        for index, priority in zip(batch_index, priorities):
+            self.sum_tree.update(data_index=index, priority=priority)

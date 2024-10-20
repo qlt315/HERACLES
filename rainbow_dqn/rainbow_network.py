@@ -1,159 +1,91 @@
-import math
-import os
-import random
-from collections import deque
-from typing import Deque, Dict, List, Tuple
-
-import gymnasium as gym
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from IPython.display import clear_output
-from torch.nn.utils import clip_grad_norm_
+import math
+
+
+class Dueling_Net(nn.Module):
+    def __init__(self, args):
+        super(Dueling_Net, self).__init__()
+        self.fc1 = nn.Linear(args.state_dim, args.hidden_dim)
+        self.fc2 = nn.Linear(args.hidden_dim, args.hidden_dim)
+        if args.use_noisy:
+            self.V = NoisyLinear(args.hidden_dim, 1)
+            self.A = NoisyLinear(args.hidden_dim, args.action_dim)
+        else:
+            self.V = nn.Linear(args.hidden_dim, 1)
+            self.A = nn.Linear(args.hidden_dim, args.action_dim)
+
+    def forward(self, s):
+        s = torch.relu(self.fc1(s))
+        s = torch.relu(self.fc2(s))
+        V = self.V(s)  # batch_size X 1
+        A = self.A(s)  # batch_size X action_dim
+        Q = V + (A - torch.mean(A, dim=-1, keepdim=True))  # Q(s,a) = V(s) + A(s,a) - mean(A(s,a))
+        return Q
+
+
+class Net(nn.Module):
+    def __init__(self, args):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(args.state_dim, args.hidden_dim)
+        self.fc2 = nn.Linear(args.hidden_dim, args.hidden_dim)
+        if args.use_noisy:
+            self.fc3 = NoisyLinear(args.hidden_dim, args.action_dim)
+        else:
+            self.fc3 = nn.Linear(args.hidden_dim, args.action_dim)
+
+    def forward(self, s):
+        s = torch.relu(self.fc1(s))
+        s = torch.relu(self.fc2(s))
+        Q = self.fc3(s)
+        return Q
 
 
 class NoisyLinear(nn.Module):
-    """Noisy linear module for NoisyNet.
-
-    Attributes:
-        in_features (int): input size of linear module
-        out_features (int): output size of linear module
-        std_init (float): initial std value
-        weight_mu (nn.Parameter): mean value weight parameter
-        weight_sigma (nn.Parameter): std value weight parameter
-        bias_mu (nn.Parameter): mean value bias parameter
-        bias_sigma (nn.Parameter): std value bias parameter
-
-    """
-
-    def __init__(
-            self,
-            in_features: int,
-            out_features: int,
-            std_init: float = 0.5,
-    ):
-        """Initialization."""
+    def __init__(self, in_features, out_features, sigma_init=0.5):
         super(NoisyLinear, self).__init__()
-
         self.in_features = in_features
         self.out_features = out_features
-        self.std_init = std_init
+        self.sigma_init = sigma_init
 
-        self.weight_mu = nn.Parameter(torch.Tensor(out_features, in_features))
-        self.weight_sigma = nn.Parameter(
-            torch.Tensor(out_features, in_features)
-        )
-        self.register_buffer(
-            "weight_epsilon", torch.Tensor(out_features, in_features)
-        )
+        self.weight_mu = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.weight_sigma = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.register_buffer('weight_epsilon', torch.FloatTensor(out_features, in_features))
 
-        self.bias_mu = nn.Parameter(torch.Tensor(out_features))
-        self.bias_sigma = nn.Parameter(torch.Tensor(out_features))
-        self.register_buffer("bias_epsilon", torch.Tensor(out_features))
+        self.bias_mu = nn.Parameter(torch.FloatTensor(out_features))
+        self.bias_sigma = nn.Parameter(torch.FloatTensor(out_features))
+        self.register_buffer('bias_epsilon', torch.FloatTensor(out_features))
 
         self.reset_parameters()
         self.reset_noise()
 
+    def forward(self, x):
+        if self.training:
+            self.reset_noise()
+            weight = self.weight_mu + self.weight_sigma.mul(self.weight_epsilon)  # mul performs element-wise multiplication
+            bias = self.bias_mu + self.bias_sigma.mul(self.bias_epsilon)
+        else:
+            weight = self.weight_mu
+            bias = self.bias_mu
+
+        return F.linear(x, weight, bias)
+
     def reset_parameters(self):
-        """Reset trainable network parameters (factorized gaussian noise)."""
         mu_range = 1 / math.sqrt(self.in_features)
         self.weight_mu.data.uniform_(-mu_range, mu_range)
-        self.weight_sigma.data.fill_(
-            self.std_init / math.sqrt(self.in_features)
-        )
         self.bias_mu.data.uniform_(-mu_range, mu_range)
-        self.bias_sigma.data.fill_(
-            self.std_init / math.sqrt(self.out_features)
-        )
+
+        self.weight_sigma.data.fill_(self.sigma_init / math.sqrt(self.in_features))
+        self.bias_sigma.data.fill_(self.sigma_init / math.sqrt(self.out_features))  # Here, divide by out_features
 
     def reset_noise(self):
-        """Make new noise."""
-        epsilon_in = self.scale_noise(self.in_features)
-        epsilon_out = self.scale_noise(self.out_features)
+        epsilon_i = self.scale_noise(self.in_features)
+        epsilon_j = self.scale_noise(self.out_features)
+        self.weight_epsilon.copy_(torch.ger(epsilon_j, epsilon_i))
+        self.bias_epsilon.copy_(epsilon_j)
 
-        # outer product
-        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
-        self.bias_epsilon.copy_(epsilon_out)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward method implementation.
-
-        We don't use separate statements on train / eval mode.
-        It doesn't show remarkable difference of performance.
-        """
-        return F.linear(
-            x,
-            self.weight_mu + self.weight_sigma * self.weight_epsilon,
-            self.bias_mu + self.bias_sigma * self.bias_epsilon,
-        )
-
-    @staticmethod
-    def scale_noise(size: int) -> torch.Tensor:
-        """Set scale to make noise (factorized gaussian noise)."""
-        x = torch.randn(size)
-
-        return x.sign().mul(x.abs().sqrt())
-
-
-class Network(nn.Module):
-    def __init__(
-            self,
-            in_dim: int,
-            out_dim: int,
-            atom_size: int,
-            support: torch.Tensor
-    ):
-        """Initialization."""
-        super(Network, self).__init__()
-
-        self.support = support
-        self.out_dim = out_dim
-        self.atom_size = atom_size
-
-        # set common feature layer
-        self.feature_layer = nn.Sequential(
-            nn.Linear(in_dim, 128),
-            nn.ReLU(),
-        )
-
-        # set advantage layer
-        self.advantage_hidden_layer = NoisyLinear(128, 128)
-        self.advantage_layer = NoisyLinear(128, out_dim * atom_size)
-
-        # set value layer
-        self.value_hidden_layer = NoisyLinear(128, 128)
-        self.value_layer = NoisyLinear(128, atom_size)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward method implementation."""
-        dist = self.dist(x)
-        q = torch.sum(dist * self.support, dim=2)
-
-        return q
-
-    def dist(self, x: torch.Tensor) -> torch.Tensor:
-        """Get distribution for atoms."""
-        feature = self.feature_layer(x)
-        adv_hid = F.relu(self.advantage_hidden_layer(feature))
-        val_hid = F.relu(self.value_hidden_layer(feature))
-
-        advantage = self.advantage_layer(adv_hid).view(
-            -1, self.out_dim, self.atom_size
-        )
-        value = self.value_layer(val_hid).view(-1, 1, self.atom_size)
-        q_atoms = value + advantage - advantage.mean(dim=1, keepdim=True)
-
-        dist = F.softmax(q_atoms, dim=-1)
-        dist = dist.clamp(min=1e-3)  # for avoiding nans
-
-        return dist
-
-    def reset_noise(self):
-        """Reset all noisy layers."""
-        self.advantage_hidden_layer.reset_noise()
-        self.advantage_layer.reset_noise()
-        self.value_hidden_layer.reset_noise()
-        self.value_layer.reset_noise()
+    def scale_noise(self, size):
+        x = torch.randn(size)  # torch.randn generates a standard normal distribution
+        x = x.sign().mul(x.abs().sqrt())
+        return x

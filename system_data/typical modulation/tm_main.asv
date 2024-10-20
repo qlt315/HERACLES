@@ -58,10 +58,10 @@ for i_run = 1 : max_runs
         y =  h .* x + noise/sqrt(snr);
         
         % Channel Equalization
-        Est_err_para = 0;
-        Est_err = Est_err_para * abs(h);
-        hEst = h + Est_err;
-        y = y ./ hEst;
+        est_err_para = 0;
+        est_err = est_err_para * abs(h);
+        h_est = h + est_err;
+        y = y ./ h_est;
         
         [llr, ~] = modulation.compute_llr(y, n_0/snr);
         

@@ -10,9 +10,9 @@ n_0 = 1/2;
 max_power = 1; % Maximum transmit power
 layer_num = 4; % Number of HM layers
 
-Est_err_para = 0.5;
+est_err_para = 0.5;
 
-power = [0.4,0.3,0.2,0.1]; % Transmit power list
+power = [0.9,0.1,0.05,0.05]; % Transmit power list
 bit_num = [1296,1296,1296,1296];  % block length -> Should be one of 648, 1296, and 1944
 rate = 1/2; % LDPC coding rate -> Should be one of 1/2, 2/3, 3/4, 5/6
 info_length = bit_num * rate;
@@ -42,7 +42,7 @@ num_bit_err_hm = zeros(length(ebno_db_vec), 1); % Average BER of HM
 tic
 
 disp(['Running ', num2str(layer_num), ' layer Hierarchical Modulation with LDPC coding rate = ', num2str(rate)]);
-disp("Channel Estimation error = "); disp(num2str(Est_err_para));
+disp("Channel Estimation error = "); disp(num2str(est_err_para));
 disp("Power ratio = "); disp(num2str(power));
 disp('Bit number = '); disp(num2str(bit_num));
 disp('modulation method = '); disp(constellation_name);
@@ -90,9 +90,9 @@ for i_run = 1 : max_runs
         y =  h .* x_hm + noise/sqrt(snr);
 
         % Channel Equalization
-        Est_err = Est_err_para * abs(h);
-        hEst = h + Est_err + Est_err * 1i;
-        y = y ./ hEst;
+        est_err = est_err_para * abs(h);
+        h_est = h + est_err + est_err * 1i;
+        y = y ./ h_est;
 
         % SIC Demodulation
         llr = cell(1,layer_num);
@@ -155,7 +155,7 @@ end
 
 
 file_name = strcat("four_layers_data/snr_", num2str(ebno_db_min), "_", num2str(ebno_db_inter), "_", num2str(ebno_db_max), "_", num2str(constellation_name(1)), "_", ...
-    num2str(constellation_name(2)), "_", num2str(constellation_name(3)), "_", num2str(constellation_name(4)), "_esterr_", num2str(Est_err_para), "_rate_",num2str(rate), "_power_ratio_", ...
+    num2str(constellation_name(2)), "_", num2str(constellation_name(3)), "_", num2str(constellation_name(4)), "_esterr_", num2str(est_err_para), "_rate_",num2str(rate), "_power_ratio_", ...
     num2str(power(1)), "_", num2str(power(2)), "_", num2str(power(3)), "_", num2str(power(4)), ".mat");
 save(file_name);
 

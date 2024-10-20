@@ -13,7 +13,7 @@ power_ratio = 0.999;  % 0<=ratio<=1;
 power_1 = power_ratio * max_power;
 power_2 = max_power-power_1;
 
-Est_err_para = 0.3;
+est_err_para = 0.3;
 
 % Modulation for layer 1 (base layer)
 %Should be one of 'bpsk', 'ask4', 'ask8' (equivalently QPSK, 16-QAM, and 64-QAM)
@@ -60,7 +60,7 @@ ldpc_code_2.load_wifi_ldpc(bit_num_2, rate);
 
 info_length_1 = rate * bit_num_1;
 info_length_2 = rate * bit_num_2;
-disp(['Running Hierarchical Modulation with LDPC coding rate = ', num2str(rate), ' and power ratio = ' , num2str(power_ratio),' and channel estimation error = ' , num2str(Est_err_para)]);
+disp(['Running Hierarchical Modulation with LDPC coding rate = ', num2str(rate), ' and power ratio = ' , num2str(power_ratio),' and channel estimation error = ' , num2str(est_err_para)]);
 disp([ 'layer 1 bit number = ', num2str(bit_num_1), ' | layer 1 modulation method = ', constellation_name_1, ' | layer 1 symbol number = ', num2str(bit_num_1 / modulation_1.n_bits)]);   
 disp([ 'layer 2 bit number = ', num2str(bit_num_2), ' | layer 2 modulation method = ', constellation_name_2, ' | layer 2 symbol number = ', num2str(bit_num_2 / modulation_2.n_bits)]);
 snr_db_vec = ebno_db_vec + 10*log10(rate) + 10*log10(modulation_1.n_bits) + 10*log10(modulation_2.n_bits);
@@ -105,9 +105,9 @@ for i_run = 1 : max_runs
         y =  h .* x + noise/sqrt(snr);
         
         % Channel Equalization
-        Est_err = Est_err_para * abs(h);
-        hEst = h + Est_err + Est_err * 1i;
-        y = y ./ hEst;
+        est_err = est_err_para * abs(h);
+        h_est = h + est_err + est_err * 1i;
+        y = y ./ h_est;
         
 
         % Demodulate the layer 1 bits
@@ -237,7 +237,7 @@ end
 
 
 file_name = strcat("two_layers_data/snr_", num2str(ebno_db_min), "_", num2str(ebno_db_inter), "_", num2str(ebno_db_max), "_layer1_", constellation_name_1, ...
-    "_layer2_", constellation_name_2, "_esterr_", num2str(Est_err_para), "_rate_",num2str(rate_num), "_", num2str(rate_den), "_power_ratio_", num2str(power_ratio), ".mat");
+    "_layer2_", constellation_name_2, "_esterr_", num2str(est_err_para), "_rate_",num2str(rate_num), "_", num2str(rate_den), "_power_ratio_", num2str(power_ratio), ".mat");
 save(file_name);
 
 figure(1)

@@ -76,10 +76,10 @@ for nEbN0 = 1:length(EbN0_dB)
         receiveSignal = h .* transmitSignal + sigma * (randn(size(transmitSignal)) + 1i * randn(size(transmitSignal)));
 
         % Channel Equalization
-        Est_err_para = 0;
-        Est_err = Est_err_para * abs(h);
-        hEst = h + Est_err;
-        equalizedSignal = receiveSignal ./ hEst;
+        est_err_para = 0;
+        est_err = est_err_para * abs(h);
+        h_est = h + est_err;
+        equalizedSignal = receiveSignal ./ h_est;
 
         % Serial Interference Cancellation (SIC)
         % Demodulate Layer 1 (16-QAM)
@@ -95,10 +95,10 @@ for nEbN0 = 1:length(EbN0_dB)
         layer1_remod_signal = qammod(symbols1_remod, M1, 'UnitAveragePower', true);
 
         % Subtract Layer 1 signal from received signal
-        remainingSignal = receiveSignal - hEst .* layer1_remod_signal;
+        remainingSignal = receiveSignal - h_est .* layer1_remod_signal;
 
         % Demodulate Layer 2 (QPSK)
-        layer2_demodSymbols = pskdemod(remainingSignal ./ hEst, M2, pi/4);
+        layer2_demodSymbols = pskdemod(remainingSignal ./ h_est, M2, pi/4);
         layer2_receivedBits = de2bi(layer2_demodSymbols, k2, 'left-msb');
         layer2_receivedBits = layer2_receivedBits(:).';
 
