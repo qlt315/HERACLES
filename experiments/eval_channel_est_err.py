@@ -298,7 +298,7 @@ if __name__ == '__main__':
         amac_diff_est_err_matrix[2, e] = runner.acc_exp_list.item()
         amac_diff_est_err_matrix[3, e] = runner.acc_vio_num_list.item()
         amac_diff_est_err_matrix[4, e] = runner.re_trans_num_list.item()
-        amac_diff_est_err_matrix[5, e] = runner.reward_list.item()
+        amac_diff_est_err_matrix[5, e] = runner.reward_list[0, 0]
 
     # save all the data
     mat_name = "experiments/diff_est_err_data/diff_est_err_data.mat"

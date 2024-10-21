@@ -68,8 +68,6 @@ def obtain_cqi_and_snr(file_paths, slot_num):
     return snr_array, cqi_array
 
 
-
-
 class Amac:
     def __init__(self, is_test):
         self.is_test = is_test
@@ -104,7 +102,7 @@ class Amac:
 
     def run(self):
         for k in range(len(self.seed_list)):
-            print("seed:",self.seed_list[k])
+            print("seed:", self.seed_list[k])
             max_energy = 6000  # Maximum energy consumption (J)
             curr_energy = max_energy  # Available energy of current slot
             last_energy = 0  # Consumed energy of last slot
@@ -133,7 +131,8 @@ class Amac:
             context_interval = 100  # Interval for context to change
             context_num = int(self.slot_num / context_interval)
             if self.is_test:
-                context_train_list = [5,5,5,2,2,3,2,0,2,2,2,3,4,3,2,2,0,5,3,5,4,5,0,5,2,5,5,5,5,2]
+                context_train_list = [5, 5, 5, 2, 2, 3, 2, 0, 2, 2, 2, 3, 4, 3, 2, 2, 0, 5, 3, 5, 4, 5, 0, 5, 2, 5, 5,
+                                      5, 5, 2]
             else:
                 context_train_list = np.random.choice(list(range(len(context_list))), size=context_num, p=context_prob)
             # Data loading and fitting
@@ -248,10 +247,10 @@ class Amac:
                                     break
                                 else:
                                     re_trans_num_block = re_trans_num_block + 1
-                                    per_curr = 1 - (1 - ber_curr) ** (self.sub_block_length / (1-rate_curr))
+                                    per_curr = 1 - (1 - ber_curr) ** (self.sub_block_length / (1 - rate_curr))
                             re_trans_num = re_trans_num + re_trans_num_block
                         re_trans_delay = re_trans_num * (
-                                    (1 / rate_curr - 1) * self.sub_block_length / trans_rate)
+                                (1 / rate_curr - 1) * self.sub_block_length / trans_rate)
                         re_trans_energy = re_trans_delay * self.max_power
                     trans_delay = trans_delay + re_trans_delay
                     trans_energy = trans_energy + re_trans_energy
@@ -268,8 +267,6 @@ class Amac:
                     delay_curr_list.append(total_delay)
                     energy_curr_list.append(total_energy)
 
-
-
                 # Optimal scheme selection (select the one with the largest reward)
                 # print(reward_curr_list)
                 opt_index = reward_curr_list.index(np.max(reward_curr_list))
@@ -277,7 +274,7 @@ class Amac:
                 # print("re_trans_num:",re_trans_num)
 
                 self.step_reward_list[k, i] = np.max(reward_curr_list)
-                print("reward:", self.reward_list[k, i])
+                print("reward:", self.step_reward_list[k, i])
                 total_delay_list[0, i] = delay_curr_list[opt_index]
                 total_energy_list[0, i] = energy_curr_list[opt_index]
                 if acc_curr <= min_acc:
@@ -306,6 +303,8 @@ class Amac:
             self.remain_energy_list[0, k] = curr_energy
             self.re_trans_num_list[0, k] = re_trans_num
             self.acc_vio_num_list[0, k] = acc_vio_num
+
+            print(self.reward_list[0, 0])
 
 
 if __name__ == '__main__':

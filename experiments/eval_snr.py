@@ -32,7 +32,7 @@ np.random.seed(seed)
 random.seed(seed)
 seed_torch(seed)
 
-
+algorithm_list = []
 env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 env_num = len(set(type(obj) for obj in env_list))
 class Runner:
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     episode_number = 1  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
 
-    algorithm_list = ["rainbow_dqn", "dqn"]
+
     for algo_id in range(len(algorithm_list)):
         algorithm = algorithm_list[algo_id]
         parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
@@ -294,7 +294,7 @@ if __name__ == '__main__':
         amac_diff_snr_matrix[2, s] = runner.acc_exp_list.item()
         amac_diff_snr_matrix[3, s] = runner.acc_vio_num_list.item()
         amac_diff_snr_matrix[4, s] = runner.re_trans_num_list.item()
-        amac_diff_snr_matrix[5, s] = runner.reward_list.item()
+        amac_diff_snr_matrix[5, s] = runner.reward_list[0, 0]
 
     # save all the data
     mat_name = "experiments/diff_snr_data/diff_snr_data.mat"
