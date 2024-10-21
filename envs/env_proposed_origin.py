@@ -223,7 +223,7 @@ class EnvProposed_origin(gym.Env):
                 self.re_trans_num = 0
                 block_num = np.floor(data_size / self.sub_block_length)
                 tm_per = 1 - (1 - tm_ber) ** self.sub_block_length
-
+                # print("block num",block_num)
                 for j in range(int(block_num)):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -255,8 +255,9 @@ class EnvProposed_origin(gym.Env):
                 hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                 block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
                 block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
-
-                for j in range(int(max(block_num_1, block_num_2))):
+                block_num = int(max(block_num_1, block_num_2))
+                # print("block num", block_num)
+                for j in range(block_num):
                     re_trans_num_block = 0
                     is_trans_success = 0
                     while is_trans_success == 0:
@@ -306,6 +307,7 @@ class EnvProposed_origin(gym.Env):
         self.acc_exp_list[0, self.step_num] = acc_exp
         # Reward calculation
         reward_1 = acc_exp - min_acc
+        # reward_1 = ss.erf(acc_exp - min_acc)
         reward_2 = total_delay / max_delay
         reward_3 = total_energy / self.max_energy
         # reward_3 = total_energy
@@ -343,7 +345,7 @@ class EnvProposed_origin(gym.Env):
             print("Average episode reward", episode_reward)
             print("Delay violation slot number:", self.delay_vio_num)
             print("Retransmission number:", episode_re_trans_num)
-            print("Accuracy violation slot number:", self.acc_vio_num)
+            print("Accuracy violation rate:", self.acc_vio_num)
 
             self.episode_total_delay_list.append(episode_total_delay)
             self.episode_total_energy_list.append(episode_total_energy)

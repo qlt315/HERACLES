@@ -289,7 +289,7 @@ class Amac:
             print(f'Average Accuracy: {aver_acc:.2f}')
             print(f'Timeout Number: {delay_vio_num}')
             print(f'Retransmission Number: {re_trans_num}')
-            print(f'Accuracy Violation Number: {acc_vio_num}')
+            print(f'Accuracy Violation rate: {acc_vio_num}')
 
             self.total_delay_list[0, k] = aver_total_delay
             self.total_energy_list[0, k] = aver_total_energy

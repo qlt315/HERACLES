@@ -198,7 +198,7 @@ for s in range(len(snr_db_list)):
             print(f'Accuracy: {acc_curr:.2f}')
             print(f'Timeout Number: {delay_vio_num}')
             print(f'Retransmission Number: {re_trans_num}')
-            print(f'Accuracy violation slot number: {acc_vio_num}')
+            print(f'Accuracy violation rate: {acc_vio_num}')
 
             obs_energy[6,s] = total_energy_list[0, i]
             obs_delay[6,s] = total_delay_list[0, i]

@@ -303,7 +303,7 @@ class EnvSSE(gym.Env):
             print("Average episode reward", episode_reward)
             print("Delay violation slot number:", self.delay_vio_num)
             print("Retransmission number:", episode_re_trans_num)
-            print("Accuracy violation slot number:", self.acc_vio_num)
+            print("Accuracy violation rate:", self.acc_vio_num)
 
             self.episode_total_delay_list.append(episode_total_delay)
             self.episode_total_energy_list.append(episode_total_energy)

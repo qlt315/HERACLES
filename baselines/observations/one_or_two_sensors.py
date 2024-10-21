@@ -259,7 +259,7 @@ class EnvTEM(gym.Env):
             print("Average accuracy expectation", episode_acc_exp)
             print("Average episode reward", episode_reward)
             print("Delay violation slot number:", self.delay_vio_num)
-            print("Accuracy violation slot number:", self.acc_vio_num)
+            print("Accuracy violation rate:", self.acc_vio_num)
             print("Retransmission number:", self.re_trans_num)
 
             self.episode_total_delay_list.append(episode_total_delay)

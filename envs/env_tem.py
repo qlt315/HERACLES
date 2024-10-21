@@ -146,7 +146,7 @@ class EnvTEM(gym.Env):
         tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
-        tm_snr =  10 ** (tm_snr_db / 10)
+        tm_snr = 10 ** (tm_snr_db / 10)
 
         tm_ber = np.clip(self.tm_polynomial_model(tm_snr_db), 0.00001, 0.99999)
         tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
@@ -254,7 +254,7 @@ class EnvTEM(gym.Env):
             print("Average episode reward", episode_reward)
             print("Delay violation slot number:", self.delay_vio_num)
             print("Retransmission number:", episode_re_trans_num)
-            print("Accuracy violation slot number:", self.acc_vio_num)
+            print("Accuracy violation rate:", self.acc_vio_num)
 
             self.episode_total_delay_list.append(episode_total_delay)
             self.episode_total_energy_list.append(episode_total_energy)

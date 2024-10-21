@@ -19,9 +19,9 @@ class Runner:
 
         self.number = number
         self.seed = seed
-        # self.env = EnvProposed_origin()
+        self.env = EnvProposed_origin()
         # self.env = EnvProposed_erf()
-        self.env = EnvSSE()
+        # self.env = EnvSSE()
         # self.env = EnvTEM()
         # self.env.seed(seed)
         # self.env.action_space.seed(seed)

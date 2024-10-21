@@ -307,10 +307,10 @@ end
 
 
 %% Fig.7 Different Est Err
-% load("experiments\diff_est_err_data\diff_est_err_data.mat")
-ylabel_list = ["Average Delay Per Slot (S)", "Average Energy Consumption Per Slot (J)", "Average Accuracy Per Slot (mAP)", "Average Accuracy Violation Prob", "Average Re-transmission Number"];
+load("experiments\diff_est_err_data\diff_est_err_data.mat")
+ylabel_list = ["Average Delay Per Slot (S)", "Average Energy Consumption Per Slot (J)", "Average Accuracy Per Slot (mAP)", "Average Accuracy Violation Prob", "Average Re-transmission Number","Average Reward"];
 y_max_list = [0.5,3,1,0.1,40000];
-for i=1:5
+for i=1:6
     figure(14+i)
     data = zeros(6,3);
     data(1,:) = rainbow_env_proposed_erf_diff_est_err_matrix(i,:);
