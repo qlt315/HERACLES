@@ -16,6 +16,23 @@ import os
 time_start = time.time()
 env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 env_num = len(set(type(obj) for obj in env_list))
+
+seed = 666
+
+
+def seed_torch(seed):
+    torch.manual_seed(seed)
+    if torch.backends.cudnn.enabled:
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+
+
+np.random.seed(seed)
+random.seed(seed)
+seed_torch(seed)
+
+
 class Runner:
     def __init__(self, args, env, number, seed):
         self.args = args
@@ -133,16 +150,6 @@ if __name__ == '__main__':
     kappa_1_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # acc reward weight
     kappa_2_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # delay reward weight
     kappa_3_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # energy reward weight
-    seed = 666
-    def seed_torch(seed):
-        torch.manual_seed(seed)
-        if torch.backends.cudnn.enabled:
-            torch.cuda.manual_seed(seed)
-            torch.backends.cudnn.benchmark = False
-            torch.backends.cudnn.deterministic = True
-    np.random.seed(seed)
-    random.seed(seed)
-    seed_torch(seed)
 
     episode_length = 3000  # Number of steps / episode
     episode_number = 5  # Number of episode to train

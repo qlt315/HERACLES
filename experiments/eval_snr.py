@@ -151,12 +151,12 @@ class Runner:
 if __name__ == '__main__':
     snr_db_list = np.arange(0, 3.25, 0.25)
 
-    rainbow_env_proposed_erf_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
-    rainbow_env_proposed_origin_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
-    rainbow_env_sse_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
-    rainbow_env_tem_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
-    amac_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
-    dqn_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
+    rainbow_env_proposed_erf_diff_snr_matrix = np.zeros([6,len(snr_db_list)])
+    rainbow_env_proposed_origin_diff_snr_matrix = np.zeros([6,len(snr_db_list)])
+    rainbow_env_sse_diff_snr_matrix = np.zeros([6,len(snr_db_list)])
+    rainbow_env_tem_diff_snr_matrix = np.zeros([6,len(snr_db_list)])
+    amac_diff_snr_matrix = np.zeros([6,len(snr_db_list)])
+    dqn_diff_snr_matrix = np.zeros([6,len(snr_db_list)])
 
 
     episode_length = 3000  # Number of steps / episode
@@ -232,6 +232,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_proposed_origin_diff_snr_matrix[4, s] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_proposed_origin_diff_snr_matrix[5, s] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 1:
                     rainbow_env_proposed_erf_diff_snr_matrix[0, s] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -243,6 +245,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_proposed_erf_diff_snr_matrix[4, s] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_proposed_erf_diff_snr_matrix[5, s] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 2:
                     rainbow_env_sse_diff_snr_matrix[0, s] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -254,6 +258,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_sse_diff_snr_matrix[4, s] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_sse_diff_snr_matrix[5, s] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 3:
                     rainbow_env_tem_diff_snr_matrix[0, s] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -265,12 +271,15 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_tem_diff_snr_matrix[4, s] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_tem_diff_snr_matrix[5, s] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "dqn":
                     dqn_diff_snr_matrix[0, s] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     dqn_diff_snr_matrix[1, s] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     dqn_diff_snr_matrix[2, s] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     dqn_diff_snr_matrix[3, s] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
                     dqn_diff_snr_matrix[4, s] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
+                    dqn_diff_snr_matrix[5, s] = np.sum(runner.env.episode_reward_list) / episode_number
                 runner.env.reset()
 
     # amac evaluation
@@ -285,6 +294,7 @@ if __name__ == '__main__':
         amac_diff_snr_matrix[2, s] = runner.acc_exp_list.item()
         amac_diff_snr_matrix[3, s] = runner.acc_vio_num_list.item()
         amac_diff_snr_matrix[4, s] = runner.re_trans_num_list.item()
+        amac_diff_snr_matrix[5, s] = runner.reward_list.item()
 
     # save all the data
     mat_name = "experiments/diff_snr_data/diff_snr_data.mat"

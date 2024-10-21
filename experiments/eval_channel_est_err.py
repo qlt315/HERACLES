@@ -153,12 +153,12 @@ class Runner:
 if __name__ == '__main__':
     est_err_list = [0, 0.3, 0.5]
 
-    rainbow_env_proposed_erf_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
-    rainbow_env_proposed_origin_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
-    rainbow_env_sse_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
-    rainbow_env_tem_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
-    amac_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
-    dqn_diff_est_err_matrix = np.zeros([5, len(est_err_list)])
+    rainbow_env_proposed_erf_diff_est_err_matrix = np.zeros([6, len(est_err_list)])
+    rainbow_env_proposed_origin_diff_est_err_matrix = np.zeros([6, len(est_err_list)])
+    rainbow_env_sse_diff_est_err_matrix = np.zeros([6, len(est_err_list)])
+    rainbow_env_tem_diff_est_err_matrix = np.zeros([6, len(est_err_list)])
+    amac_diff_est_err_matrix = np.zeros([6, len(est_err_list)])
+    dqn_diff_est_err_matrix = np.zeros([6, len(est_err_list)])
 
 
 
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                 env_index = 0
                 env = env_list[env_id]
                 runner = Runner(args=args, env=env, number=1, seed=seed)
-                runner.env.reset()
+
                 # load the model
                 runner.agent.net, runner.agent.target_net = sl.load_nn_model(runner)
                 print("Loaded Model!")
@@ -235,6 +235,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_proposed_origin_diff_est_err_matrix[4, e] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_proposed_origin_diff_est_err_matrix[5, e] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 1:
                     rainbow_env_proposed_erf_diff_est_err_matrix[0, e] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -246,6 +248,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_proposed_erf_diff_est_err_matrix[4, e] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_proposed_erf_diff_est_err_matrix[5, e] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 2:
                     rainbow_env_sse_diff_est_err_matrix[0, e] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -257,6 +261,8 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_sse_diff_est_err_matrix[4, e] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_sse_diff_est_err_matrix[5, e] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "rainbow_dqn" and env_id == 3:
                     rainbow_env_tem_diff_est_err_matrix[0, e] = np.sum(
                         runner.env.episode_total_delay_list) / episode_number
@@ -268,13 +274,16 @@ if __name__ == '__main__':
                         runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_tem_diff_est_err_matrix[4, e] = np.sum(
                         runner.env.episode_re_trans_num_list) / episode_number
+                    rainbow_env_tem_diff_est_err_matrix[5, e] = np.sum(
+                        runner.env.episode_reward_list) / episode_number
                 elif algorithm == "dqn":
                     dqn_diff_est_err_matrix[0, e] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     dqn_diff_est_err_matrix[1, e] = np.sum(runner.env.episode_total_energy_list) / episode_number
                     dqn_diff_est_err_matrix[2, e] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     dqn_diff_est_err_matrix[3, e] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
                     dqn_diff_est_err_matrix[4, e] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
-
+                    dqn_diff_est_err_matrix[5, e] = np.sum(runner.env.episode_reward_list) / episode_number
+                runner.env.reset()
     print(dqn_diff_est_err_matrix[2, :])
     # amac evaluation
     print("Evaluating AMAC")
@@ -289,6 +298,7 @@ if __name__ == '__main__':
         amac_diff_est_err_matrix[2, e] = runner.acc_exp_list.item()
         amac_diff_est_err_matrix[3, e] = runner.acc_vio_num_list.item()
         amac_diff_est_err_matrix[4, e] = runner.re_trans_num_list.item()
+        amac_diff_est_err_matrix[5, e] = runner.reward_list.item()
 
     # save all the data
     mat_name = "experiments/diff_est_err_data/diff_est_err_data.mat"
