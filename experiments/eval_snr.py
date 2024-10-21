@@ -149,7 +149,7 @@ class Runner:
 
 
 if __name__ == '__main__':
-    snr_db_list = np.arange(0.5, 3, 0.5)
+    snr_db_list = np.arange(0, 3.25, 0.25)
 
     rainbow_env_proposed_erf_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
     rainbow_env_proposed_origin_diff_snr_matrix = np.zeros([5,len(snr_db_list)])
