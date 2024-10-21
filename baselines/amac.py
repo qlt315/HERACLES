@@ -130,11 +130,7 @@ class Amac:
             curr_context = None
             context_interval = 100  # Interval for context to change
             context_num = int(self.slot_num / context_interval)
-            if self.is_test:
-                context_train_list = [5, 5, 5, 2, 2, 3, 2, 0, 2, 2, 2, 3, 4, 3, 2, 2, 0, 5, 3, 5, 4, 5, 0, 5, 2, 5, 5,
-                                      5, 5, 2]
-            else:
-                context_train_list = np.random.choice(list(range(len(context_list))), size=context_num, p=context_prob)
+            context_train_list = np.random.choice(list(range(len(context_list))), size=context_num, p=context_prob)
             # Data loading and fitting
             platform_data = sio.loadmat('system_data/platform_data.mat')
 
@@ -321,5 +317,5 @@ if __name__ == '__main__':
              "amac_eval_episode_acc_vio_num": np.sum(runner.acc_vio_num_list) / len(runner.seed_list),
              "amac_eval_episode_remain_energy": np.sum(runner.remain_energy_list) / len(runner.seed_list),
              "amac_eval_episode_re_trans_number": np.sum(runner.re_trans_num_list) / len(runner.seed_list),
-             "amac_step_reward_list": runner.reward_list
+             "amac_step_reward_list": runner.step_reward_list
              })
