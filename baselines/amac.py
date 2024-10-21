@@ -89,7 +89,7 @@ class Amac:
         self.acc_vio_num_list = np.zeros([1, len(self.seed_list)])
         self.remain_energy_list = np.zeros([1, len(self.seed_list)])
         self.re_trans_num_list = np.zeros([1, len(self.seed_list)])
-        self.reward_list = np.zeros([len(self.seed_list), self.slot_num])
+        self.step_reward_list = np.zeros([len(self.seed_list), self.slot_num])
         self.sensor_num = 4  # Number of sensors
         self.bandwidth = 20e6  # System bandwidth (Hz)
         self.max_power = 1  # Maximum transmit power (W)
@@ -276,7 +276,7 @@ class Amac:
                 # print("opt idx:",opt_index)
                 # print("re_trans_num:",re_trans_num)
 
-                self.reward_list[k, i] = np.max(reward_curr_list)
+                self.step_reward_list[k, i] = np.max(reward_curr_list)
                 print("reward:", self.reward_list[k, i])
                 total_delay_list[0, i] = delay_curr_list[opt_index]
                 total_energy_list[0, i] = energy_curr_list[opt_index]
@@ -287,7 +287,7 @@ class Amac:
             aver_total_delay = np.sum(total_delay_list) / self.slot_num
             aver_total_energy = np.sum(total_energy_list) / self.slot_num
             aver_acc = acc_curr
-            aver_reward = np.sum(self.reward_list[k, :]) / self.slot_num
+            aver_reward = np.sum(self.step_reward_list[k, :]) / self.slot_num
 
             print(f'Average Total Delay (s): {aver_total_delay:.2f}')
             print(f'Average Total Energy Consumption (J): {aver_total_energy:.2f}')
