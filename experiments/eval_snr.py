@@ -32,7 +32,7 @@ np.random.seed(seed)
 random.seed(seed)
 seed_torch(seed)
 
-algorithm_list = []
+algorithm_list = ["rainbow_dqn", "dqn"]
 env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 env_num = len(set(type(obj) for obj in env_list))
 class Runner:
