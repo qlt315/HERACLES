@@ -17,7 +17,7 @@ import os
 from scipy.io import savemat
 time_start = time.time()
 
-seed = 37
+seed = 31
 def seed_torch(seed):
     torch.manual_seed(seed)
     if torch.backends.cudnn.enabled:
@@ -242,7 +242,6 @@ if __name__ == '__main__':
                     rainbow_env_proposed_origin_diff_kappa_matrix[2, w, 0] = np.sum(runner.env.episode_acc_exp_list) / episode_number
                     rainbow_env_proposed_origin_diff_kappa_matrix[3, w, 0] = np.sum(runner.env.episode_acc_vio_num_list) / episode_number
                     rainbow_env_proposed_origin_diff_kappa_matrix[4, w, 0] = np.sum(runner.env.episode_re_trans_num_list) / episode_number
-                    print(rainbow_env_proposed_origin_diff_kappa_matrix[:,:,0])
                 elif algorithm == "rainbow_dqn" and env_id == 1:
                     rainbow_env_proposed_erf_diff_kappa_matrix[0, w, 0] = np.sum(runner.env.episode_total_delay_list) / episode_number
                     rainbow_env_proposed_erf_diff_kappa_matrix[1, w, 0] = np.sum(runner.env.episode_total_energy_list) / episode_number
@@ -425,11 +424,11 @@ if __name__ == '__main__':
     # amac evaluation
     print("Evaluating AMAC")
     for w in range(len(kappa_1_list)):
-        print("Kappa 1:", runner.env.kappa_1, "Kappa 2:", runner.env.kappa_2, "Kappa 3", runner.env.kappa_3)
         runner = amac.Amac(is_test=True)
         runner.kappa_1 = kappa_1_list[w]
         runner.kappa_2 = 1
         runner.kappa_3 = 1
+        print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
         runner.run()
         amac_diff_kappa_matrix[0, w, 0] = runner.total_delay_list.item()
         amac_diff_kappa_matrix[1, w, 0] = runner.total_energy_list.item()
@@ -438,11 +437,12 @@ if __name__ == '__main__':
         amac_diff_kappa_matrix[4, w, 0] = runner.re_trans_num_list.item()
 
     for w in range(len(kappa_2_list)):
-        print("Kappa 1:", runner.env.kappa_1, "Kappa 2:", runner.env.kappa_2, "Kappa 3", runner.env.kappa_3)
+
         runner = amac.Amac(is_test=True)
         runner.kappa_1 = 1
         runner.kappa_2 = kappa_2_list[w]
         runner.kappa_3 = 1
+        print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
         runner.run()
 
         amac_diff_kappa_matrix[0, w, 1] = runner.total_delay_list.item()
@@ -452,11 +452,12 @@ if __name__ == '__main__':
         amac_diff_kappa_matrix[4, w, 1] = runner.re_trans_num_list.item()
 
     for w in range(len(kappa_3_list)):
-        print("Kappa 1:", runner.env.kappa_1, "Kappa 2:", runner.env.kappa_2, "Kappa 3", runner.env.kappa_3)
+
         runner = amac.Amac(is_test=True)
         runner.kappa_1 = 1
         runner.kappa_2 = 1
         runner.kappa_3 = kappa_3_list[w]
+        print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
         runner.run()
 
         amac_diff_kappa_matrix[0, w, 2] = runner.total_delay_list.item()
