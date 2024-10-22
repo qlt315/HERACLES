@@ -72,7 +72,7 @@ class Amac:
     def __init__(self, is_test):
         self.is_test = is_test
         if self.is_test:
-            self.seed_list = [37]
+            self.seed_list = [31]
             self.slot_num = 3000  # Number of time slots
             self.enable_re_trans = True
         else:
