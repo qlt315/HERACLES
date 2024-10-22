@@ -54,7 +54,7 @@ class EnvTEM(gym.Env):
                                                    size=self.context_num, p=self.context_prob)
         self.delay_vio_num = 0
         self.context_flag = 0
-        self.target_snr_db = 1
+        self.target_snr_db = 2
         self.show_fit_plot = False
         self.curr_context = None
         self.enable_re_trans = True  # Consider retransmission or not
@@ -142,8 +142,8 @@ class EnvTEM(gym.Env):
                                           self.curr_context, action)
 
         # Calculate SNR and trans rate
-        tm_snr_db = float(self.snr_array[self.step_num])
-        # tm_snr_db = self.target_snr_db
+        # tm_snr_db = float(self.snr_array[self.step_num])
+        tm_snr_db = self.target_snr_db
         tm_snr_db = np.clip(tm_snr_db, np.min(self.tm_snr_list), np.max(self.tm_snr_list))
         # print("SNR (dB):", tm_snr_db)
         tm_snr = 10 ** (tm_snr_db / 10)

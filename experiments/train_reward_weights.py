@@ -152,7 +152,7 @@ if __name__ == '__main__':
     kappa_3_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # energy reward weight
 
     episode_length = 3000  # Number of steps / episode
-    episode_number = 5  # Number of episode to train
+    episode_number = 10  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
 
     algorithm_list = ["dqn"]
