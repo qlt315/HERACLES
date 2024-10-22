@@ -16,7 +16,7 @@ import time
 import os
 from scipy.io import savemat
 
-seed = 37
+seed = 31
 
 
 def seed_torch(seed):
