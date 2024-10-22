@@ -179,7 +179,7 @@ class Amac:
 
             # Main simulation loop
             for i in range(self.slot_num):
-                print("slot num:", i)
+                # print("slot num:", i)
                 curr_context_id = context_train_list[context_flag]
                 curr_context = context_list[curr_context_id]
                 min_acc = util.obtain_min_acc(curr_context)
@@ -270,7 +270,7 @@ class Amac:
                 # print("re_trans_num:",re_trans_num)
 
                 self.step_reward_list[k, i] = np.max(reward_curr_list)
-                print("reward:", self.step_reward_list[k, i])
+                # print("reward:", self.step_reward_list[k, i])
                 total_delay_list[0, i] = delay_curr_list[opt_index]
                 total_energy_list[0, i] = energy_curr_list[opt_index]
                 if acc_curr <= min_acc:

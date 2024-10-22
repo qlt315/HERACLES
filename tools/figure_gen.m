@@ -286,8 +286,8 @@ end
 
 %% Fig.6 Different SNR
 load("experiments\diff_snr_data\diff_snr_data.mat")
-ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number"];
-for i=1:5
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward"];
+for i=1:6
     figure(9+i)
     plot(snr_db_list, rainbow_env_proposed_erf_diff_snr_matrix(i,:), "-+", 'LineWidth', 2,"Color",colors(1,:)); hold on;
     plot(snr_db_list, rainbow_env_proposed_origin_diff_snr_matrix(i,:), "-o", 'LineWidth', 2,"Color",colors(2,:)); hold on;

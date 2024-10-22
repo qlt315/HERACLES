@@ -34,7 +34,7 @@ class EnvSSE(gym.Env):
         # self.data_size[0, 2] = 1.8432e6
         # self.data_size[0, 3] = 1.73e6
 
-        self.target_snr_db = 1
+        self.target_snr_db = 2
 
         self.total_delay_list = np.zeros([1, self.slot_num])
         self.total_energy_list = np.zeros([1, self.slot_num])

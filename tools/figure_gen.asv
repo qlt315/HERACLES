@@ -211,65 +211,72 @@ ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};
 
 %% Fig.5 Different Reward Weight
 load("experiments\diff_reward_weights_data\diff_reward_weights_data.mat")
+
+data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
+    rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+   
 title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
     "Performance Comparison Under Different Delay Reward Weights",...
     "Performance Comparison Under Different Energy Consumption Reward Weights"];
 for i=1:3
     figure(6+i)
-    x = rainbow_env_proposed_erf_diff_kappa_matrix(1,:,i); % delay
-    y = rainbow_env_proposed_erf_diff_kappa_matrix(2,:,i); % energy
-    z = rainbow_env_proposed_erf_diff_kappa_matrix(4,:,i); % acc vio prob
-    [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-    surf(X, Y, Z, 'FaceColor', colors(1,:), 'FaceAlpha', 0.5); hold on;
-    
-    
-    x = rainbow_env_proposed_origin_diff_kappa_matrix(1,:,i); % delay
-    y = rainbow_env_proposed_origin_diff_kappa_matrix(2,:,i); % energy
-    z = rainbow_env_proposed_origin_diff_kappa_matrix(4,:,i); % acc vio prob
-    [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-    surf(X, Y, Z, 'FaceColor', colors(2,:), 'FaceAlpha', 0.5);
-    
-    
-    x = rainbow_env_proposed_sse_diff_kappa_matrix(1,:,i); % delay
-    y = rainbow_env_proposed_sse_diff_kappa_matrix(2,:,i); % energy
-    z = rainbow_env_proposed_sse_diff_kappa_matrix(4,:,i); % acc vio prob
-    [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-    surf(X, Y, Z, 'FaceColor', colors(3,:), 'FaceAlpha', 0.5);
-    
-    
-    x = rainbow_env_proposed_tem_diff_kappa_matrix(1,:,i); % delay
-    y = rainbow_env_proposed_tem_diff_kappa_matrix(2,:,i); % energy
-    z = rainbow_env_proposed_tem_diff_kappa_matrix(4,:,i); % acc vio prob
-    [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-    surf(X, Y, Z, 'FaceColor', colors(4,:), 'FaceAlpha', 0.5);
-    
-    
-    x = dqn_diff_kappa_matrix(1,:,i); % delay
-    y = dqn_diff_kappa_matrix(2,:,i); % energy
-    z = dqn_diff_kappa_matrix(4,:,i) ; % acc vio prob
-    [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-    surf(X, Y, Z, 'FaceColor', colors(5,:), 'FaceAlpha', 0.5);
-    
-    
-    x = amac_diff_kappa_matrix(1,:,i); % delay
-    y = amac_diff_kappa_matrix(2,:,i); % energy
-    z = amac_diff_kappa_matrix(4,:,i); % acc vio prob
-    [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-    surf(X, Y, Z, 'FaceColor', colors(6,:), 'FaceAlpha', 0.5);
-    
-    title(title_list(i));
-    xlabel('Delay (S)');
-    ylabel('Energy Consumption (J)');
-    zlabel('Accuracy Violation Rate');
+        for j=1:6
+            data_curr = data{j};
+            % Data cleaning
+            filtered_data_curr = remove_outliers(data_curr(:,:,i));
+            x = filtered_data_curr(1,:); % delay
+            y = filtered_data_curr(2,:); % energy
+            z = filtered_data_curr(4,:); % acc vio prob
+            [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
+            surf(X, Y, Z, 'FaceColor', colors(j,:), 'FaceAlpha', 0.5); hold on;
+        end
+            title(title_list(i));
+            xlabel('Delay (S)');
+            ylabel('Energy Consumption (J)');
+            zlabel('Accuracy Violation Rate');
+            legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+            legend(legend_names, 'Location', 'best');
+            set(gca,'gridlinestyle','--','Gridalpha',0.8);
+            set(gca,'FontName','Times New Roman','FontSize',12);
+end
+
+% Scatter
+data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
+    rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
+    "Performance Comparison Under Different Delay Reward Weights",...
+    "Performance Comparison Under Different Energy Consumption Reward Weights"];
+marklist = ["+","o","*","x","p","d"];
+for i=1:3
+    figure(6+i)
+    for j=1:6
+        data_curr = data{j};
+        % Data cleaning
+        filtered_data_curr = remove_outliers(data_curr(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio prob
+        scatter3(x,y,z, 50,'+','LineWidth',2); hold on;
+    end
+    grid on;
+
     legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
-    set(gca,'gridlinestyle','--','Gridalpha',0.8);
     set(gca,'FontName','Times New Roman','FontSize',12);
+    x_limits = xlim;
+    y_limits = ylim;
+    z_limits = zlim;
+    xlabel('Delay (S)'); 
+    ylabel("Energy Consumption (J)"); 
+    zlabel("Accuracy Violation Prob");
+    title(title_list(i))
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
 end
+        
 
 %% Fig.6 Different SNR
 load("experiments\diff_snr_data\diff_snr_data.mat")
-ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Rate", "Re-transmission Number"];
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number"];
 for i=1:5
     figure(9+i)
     plot(snr_db_list, rainbow_env_proposed_erf_diff_snr_matrix(i,:), "-+", 'LineWidth', 2,"Color",colors(1,:)); hold on;
@@ -290,9 +297,9 @@ end
 
 
 %% Fig.7 Different Est Err
-load("experiments\diff_est_err_data\diff_est_err_data.mat")
-ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number"];
-y_max_list = [1.5,3,1,500,40000];
+% load("experiments\diff_est_err_data\diff_est_err_data.mat")
+ylabel_list = ["Average Delay Per Slot (S)", "Average Energy Consumption Per Slot (J)", "Average Accuracy Per Slot (mAP)", "Average Accuracy Violation Prob", "Average Re-transmission Number"];
+y_max_list = [0.5,3,1,0.1,40000];
 for i=1:5
     figure(14+i)
     data = zeros(6,3);
