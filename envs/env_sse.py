@@ -164,8 +164,8 @@ class EnvSSE(gym.Env):
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
         # Calculate SNR and trans rate
-        hm_snr_db = float(self.snr_array[self.step_num])
-        # hm_snr_db = self.target_snr_db
+        # hm_snr_db = float(self.snr_array[self.step_num])
+        hm_snr_db = self.target_snr_db
         hm_snr_db = np.clip(hm_snr_db, np.min(self.hm_snr_list), np.max(self.hm_snr_list))
         hm_snr = 10 ** (hm_snr_db / 10)
         # power ratio = 0.5 / 0.4 / 0.3 / 0.2
