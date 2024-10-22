@@ -152,4 +152,35 @@ def save_train_data(runner,step_reward_matrix):
              })
 
 
-# def save_eval_data(runner):
+def save_eval_data(runner):
+    # save the data
+    if runner.algorithm == "rainbow_dqn":
+        if runner.env.name == "proposed_origin":
+            mat_name = "rainbow_dqn/eval_data/eval_proposed_origin_data.mat"
+        elif runner.env.name == "proposed_erf":
+            mat_name = "rainbow_dqn/eval_data/eval_proposed_erf_data.mat"
+        elif runner.env.name == "sse":
+            mat_name = "rainbow_dqn/eval_data/eval_sse_data.mat"
+        elif runner.env.name == "tem":
+            mat_name = "rainbow_dqn/eval_data/eval_tem_data.mat"
+
+    elif runner.algorithm == "dqn":
+        if runner.env.name == "proposed_origin":
+            mat_name = "baselines/dqn/eval_data/eval_proposed_origin_data.mat"
+        elif runner.env.name == "proposed_erf":
+            mat_name = "baselines/dqn/eval_data/eval_proposed_erf_data.mat"
+        elif runner.env.name == "sse":
+            mat_name = "baselines/dqn/eval_data/eval_sse_data.mat"
+        elif runner.env.name == "tem":
+            mat_name = "baselines/dqn/eval_data/eval_tem_data.mat"
+
+    savemat(mat_name,
+            {runner.algorithm + "_" + runner.env.name + "_eval_episode_total_delay": runner.env.episode_total_delay_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_episode_total_energy": runner.env.episode_total_energy_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_episode_reward": runner.env.episode_reward_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_episode_acc_exp": runner.env.episode_acc_exp_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_episode_remain_energy": runner.env.episode_remain_energy_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_episode_re_trans_number": runner.env.episode_re_trans_num_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_delay_vio_number": runner.env.episode_delay_vio_num_list,
+             runner.algorithm + "_" + runner.env.name + "_eval_acc_vio_number": runner.env.episode_acc_vio_num_list,
+             })

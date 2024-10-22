@@ -3,6 +3,8 @@ import numpy as np
 import gym
 from envs.env_proposed_origin import EnvProposed_origin
 from envs.env_proposed_erf import EnvProposed_erf
+from envs.env_tem import EnvTEM
+from envs.env_sse import EnvSSE
 from torch.utils.tensorboard import SummaryWriter
 from rainbow_replay_buffer import *
 from rainbow_agent import DQN
@@ -10,15 +12,19 @@ import argparse
 import random
 from scipy.io import savemat
 import time
+import tools.saving_loading as sl
+
 time_start = time.time()
+
+
 class Runner:
     def __init__(self, args, number, seed):
         self.args = args
 
         self.number = number
         self.seed = seed
-        self.env = EnvProposed_origin()
-
+        self.env = EnvProposed_erf()
+        # self.env = EnvProposed_origin()
         # self.env = EnvSSE()
         # self.env = EnvTEM()
         # self.env.seed(seed)
@@ -95,7 +101,8 @@ class Runner:
                 else:
                     terminal = False
 
-                self.replay_buffer.store_transition(state, action, reward, next_state, terminal, done)  # Store the transition
+                self.replay_buffer.store_transition(state, action, reward, next_state, terminal,
+                                                    done)  # Store the transition
                 state = next_state
 
                 if self.replay_buffer.current_size >= self.args.batch_size:
@@ -103,7 +110,6 @@ class Runner:
 
                 # if self.total_steps % self.args.evaluate_freq == 0:
                 #     self.evaluate_policy()
-
 
     # def evaluate_policy(self, ):
     #     evaluate_reward = 0
@@ -126,7 +132,8 @@ class Runner:
 
 
 if __name__ == '__main__':
-    seed_list = [37]
+    seed_list = [31]
+
 
     def seed_torch(seed):
         torch.manual_seed(seed)
@@ -135,26 +142,31 @@ if __name__ == '__main__':
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.deterministic = True
 
+
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to eval
     steps = episode_number * episode_length  # Total step number
 
     parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
     parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of evaling steps")
-    parser.add_argument("--evaluate_freq", type=float, default=1e3, help="Evaluate the policy every 'evaluate_freq' steps")
+    parser.add_argument("--evaluate_freq", type=float, default=1e3,
+                        help="Evaluate the policy every 'evaluate_freq' steps")
     parser.add_argument("--evaluate_times", type=float, default=3, help="Evaluate times")
 
     parser.add_argument("--buffer_capacity", type=int, default=int(1e5), help="The maximum replay-buffer capacity ")
     parser.add_argument("--batch_size", type=int, default=256, help="batch size")
-    parser.add_argument("--hidden_dim", type=int, default=256, help="The number of neurons in hidden layers of the neural network")
+    parser.add_argument("--hidden_dim", type=int, default=256,
+                        help="The number of neurons in hidden layers of the neural network")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate of actor")
     parser.add_argument("--gamma", type=float, default=0.99, help="Discount factor")
     parser.add_argument("--epsilon_init", type=float, default=0.5, help="Initial epsilon")
     parser.add_argument("--epsilon_min", type=float, default=0.1, help="Minimum epsilon")
-    parser.add_argument("--epsilon_decay_steps", type=int, default=int(1e5), help="How many steps before the epsilon decays to the minimum")
+    parser.add_argument("--epsilon_decay_steps", type=int, default=int(1e5),
+                        help="How many steps before the epsilon decays to the minimum")
     parser.add_argument("--tau", type=float, default=0.005, help="soft update the target network")
     parser.add_argument("--use_soft_update", type=bool, default=True, help="Whether to use soft update")
-    parser.add_argument("--target_update_freq", type=int, default=200, help="Update frequency of the target network(hard update)")
+    parser.add_argument("--target_update_freq", type=int, default=200,
+                        help="Update frequency of the target network(hard update)")
     parser.add_argument("--n_steps", type=int, default=5, help="n_steps")
     parser.add_argument("--alpha", type=float, default=0.6, help="PER parameter")
     parser.add_argument("--beta_init", type=float, default=0.4, help="Important sampling parameter in PER")
@@ -180,41 +192,12 @@ if __name__ == '__main__':
         runner = Runner(args=args, number=1, seed=seed)
 
         # load the model
-        if runner.env.name == "proposed":
-            runner.agent.net = torch.load('rainbow_dqn/models/rainbow_dqn_proposed.pth')
-            runner.agent.target_net = torch.load('rainbow_dqn/models/rainbow_dqn_target_proposed.pth')
-        elif runner.env.name == "sse":
-            runner.agent.net = torch.load('rainbow_dqn/models/rainbow_dqn_sse.pth')
-            runner.agent.target_ne = torch.load('rainbow_dqn/models/rainbow_dqn_target_sse.pth')
-        elif runner.env.name == "tem":
-            runner.agent.net = torch.load('rainbow_dqn/models/rainbow_dqn_tem.pth')
-            runner.agent.target_ne = torch.load('rainbow_dqn/models/rainbow_dqn_target_tem.pth')
-
+        sl.load_nn_model(runner)
         runner.run()
 
         # save the data
-        if runner.env.name == "proposed":
-            mat_name = "rainbow_dqn/eval_data/eval_proposed_data.mat"
-        elif runner.env.name == "sse":
-            mat_name = "rainbow_dqn/eval_data/eval_sse_data.mat"
-        elif runner.env.name == "tem":
-            mat_name = "rainbow_dqn/eval_data/eval_tem_data.mat"
-
-        print("Env Name:", mat_name)
-        savemat(mat_name,
-                {"rainbow_dqn" + runner.env.name + "_eval_episode_total_delay": np.mean(runner.env.episode_total_delay_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_total_energy": np.mean(runner.env.episode_total_energy_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_reward": np.mean(runner.env.episode_reward_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_acc_exp": np.mean(runner.env.episode_acc_exp_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_remain_energy": np.mean(runner.env.episode_remain_energy_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_re_trans_number": np.mean(runner.env.episode_re_trans_num_list),
-                 })
-
-
-
-        runner.env.step_reward_list = []
+        sl.save_eval_data(runner)
         runner.env.reset()
-
 
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + "Second")
