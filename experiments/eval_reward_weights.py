@@ -422,49 +422,49 @@ if __name__ == '__main__':
                 runner.env.reset()
 
     # amac evaluation
-    print("Evaluating AMAC")
-    for w in range(len(kappa_1_list)):
-        runner = amac.Amac(is_test=True)
-        runner.kappa_1 = kappa_1_list[w]
-        runner.kappa_2 = 1
-        runner.kappa_3 = 1
-        print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
-        runner.run()
-        amac_diff_kappa_matrix[0, w, 0] = runner.total_delay_list.item()
-        amac_diff_kappa_matrix[1, w, 0] = runner.total_energy_list.item()
-        amac_diff_kappa_matrix[2, w, 0] = runner.acc_exp_list.item()
-        amac_diff_kappa_matrix[3, w, 0] = runner.acc_vio_num_list.item()
-        amac_diff_kappa_matrix[4, w, 0] = runner.re_trans_num_list.item()
-
-    for w in range(len(kappa_2_list)):
-
-        runner = amac.Amac(is_test=True)
-        runner.kappa_1 = 1
-        runner.kappa_2 = kappa_2_list[w]
-        runner.kappa_3 = 1
-        print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
-        runner.run()
-
-        amac_diff_kappa_matrix[0, w, 1] = runner.total_delay_list.item()
-        amac_diff_kappa_matrix[1, w, 1] = runner.total_energy_list.item()
-        amac_diff_kappa_matrix[2, w, 1] = runner.acc_exp_list.item()
-        amac_diff_kappa_matrix[3, w, 1] = runner.acc_vio_num_list.item()
-        amac_diff_kappa_matrix[4, w, 1] = runner.re_trans_num_list.item()
-
-    for w in range(len(kappa_3_list)):
-
-        runner = amac.Amac(is_test=True)
-        runner.kappa_1 = 1
-        runner.kappa_2 = 1
-        runner.kappa_3 = kappa_3_list[w]
-        print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
-        runner.run()
-
-        amac_diff_kappa_matrix[0, w, 2] = runner.total_delay_list.item()
-        amac_diff_kappa_matrix[1, w, 2] = runner.total_energy_list.item()
-        amac_diff_kappa_matrix[2, w, 2] = runner.acc_exp_list.item()
-        amac_diff_kappa_matrix[3, w, 2] = runner.acc_vio_num_list.item()
-        amac_diff_kappa_matrix[4, w, 2] = runner.re_trans_num_list.item()
+    # print("Evaluating AMAC")
+    # for w in range(len(kappa_1_list)):
+    #     runner = amac.Amac(is_test=True)
+    #     runner.kappa_1 = kappa_1_list[w]
+    #     runner.kappa_2 = 1
+    #     runner.kappa_3 = 1
+    #     print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
+    #     runner.run()
+    #     amac_diff_kappa_matrix[0, w, 0] = runner.total_delay_list.item()
+    #     amac_diff_kappa_matrix[1, w, 0] = runner.total_energy_list.item()
+    #     amac_diff_kappa_matrix[2, w, 0] = runner.acc_exp_list.item()
+    #     amac_diff_kappa_matrix[3, w, 0] = runner.acc_vio_num_list.item()
+    #     amac_diff_kappa_matrix[4, w, 0] = runner.re_trans_num_list.item()
+    #
+    # for w in range(len(kappa_2_list)):
+    #
+    #     runner = amac.Amac(is_test=True)
+    #     runner.kappa_1 = 1
+    #     runner.kappa_2 = kappa_2_list[w]
+    #     runner.kappa_3 = 1
+    #     print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
+    #     runner.run()
+    #
+    #     amac_diff_kappa_matrix[0, w, 1] = runner.total_delay_list.item()
+    #     amac_diff_kappa_matrix[1, w, 1] = runner.total_energy_list.item()
+    #     amac_diff_kappa_matrix[2, w, 1] = runner.acc_exp_list.item()
+    #     amac_diff_kappa_matrix[3, w, 1] = runner.acc_vio_num_list.item()
+    #     amac_diff_kappa_matrix[4, w, 1] = runner.re_trans_num_list.item()
+    #
+    # for w in range(len(kappa_3_list)):
+    #
+    #     runner = amac.Amac(is_test=True)
+    #     runner.kappa_1 = 1
+    #     runner.kappa_2 = 1
+    #     runner.kappa_3 = kappa_3_list[w]
+    #     print("Kappa 1:", runner.kappa_1, "Kappa 2:", runner.kappa_2, "Kappa 3", runner.kappa_3)
+    #     runner.run()
+    #
+    #     amac_diff_kappa_matrix[0, w, 2] = runner.total_delay_list.item()
+    #     amac_diff_kappa_matrix[1, w, 2] = runner.total_energy_list.item()
+    #     amac_diff_kappa_matrix[2, w, 2] = runner.acc_exp_list.item()
+    #     amac_diff_kappa_matrix[3, w, 2] = runner.acc_vio_num_list.item()
+    #     amac_diff_kappa_matrix[4, w, 2] = runner.re_trans_num_list.item()
 
     # save all the data
     mat_name = "experiments/diff_reward_weights_data/diff_reward_weights_data.mat"
