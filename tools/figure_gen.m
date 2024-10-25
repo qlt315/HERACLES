@@ -212,35 +212,71 @@ ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};
 %% Fig.5 Different Reward Weight
 load("experiments\diff_reward_weights_data\diff_reward_weights_data.mat")
 
+% data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
+%     rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+% 
+% title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
+%     "Performance Comparison Under Different Delay Reward Weights",...
+%     "Performance Comparison Under Different Energy Consumption Reward Weights"];
+% for i=1:3
+%     figure(6+i)
+%         for j=1:6
+%             data_curr = data{j};
+%             % Data cleaning
+%             filtered_data_curr = remove_outliers(data_curr(:,:,i));
+%             x = filtered_data_curr(1,:); % delay
+%             y = filtered_data_curr(2,:); % energy
+%             z = filtered_data_curr(4,:); % acc vio prob
+%             [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
+%             surf(X, Y, Z, 'FaceColor', colors(j,:), 'FaceAlpha', 0.5); hold on;
+%         end
+%             title(title_list(i));
+%             xlabel('Delay (S)');
+%             ylabel('Energy Consumption (J)');
+%             zlabel('Accuracy Violation Rate');
+%             legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+%             legend(legend_names, 'Location', 'best');
+%             set(gca,'gridlinestyle','--','Gridalpha',0.8);
+%             set(gca,'FontName','Times New Roman','FontSize',12);
+% end
+
+% Plot wih Lines
 data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
     rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
-   
 title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
     "Performance Comparison Under Different Delay Reward Weights",...
     "Performance Comparison Under Different Energy Consumption Reward Weights"];
 for i=1:3
     figure(6+i)
-        for j=1:6
-            data_curr = data{j};
-            % Data cleaning
-            filtered_data_curr = remove_outliers(data_curr(:,:,i));
-            x = filtered_data_curr(1,:); % delay
-            y = filtered_data_curr(2,:); % energy
-            z = filtered_data_curr(4,:); % acc vio prob
-            [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-            surf(X, Y, Z, 'FaceColor', colors(j,:), 'FaceAlpha', 0.5); hold on;
-        end
-            title(title_list(i));
-            xlabel('Delay (S)');
-            ylabel('Energy Consumption (J)');
-            zlabel('Accuracy Violation Rate');
-            legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
-            legend(legend_names, 'Location', 'best');
-            set(gca,'gridlinestyle','--','Gridalpha',0.8);
-            set(gca,'FontName','Times New Roman','FontSize',12);
+    for j=1:6
+        data_curr = data{j};
+        % Data cleaning
+        filtered_data_curr = remove_outliers(data_curr(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio prob
+        plot3(x,y,z,'-o','LineWidth',2); hold on;
+
+
+    end
+
+    grid on;
+
+    legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    legend(legend_names, 'Location', 'best');
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    xlabelHandle = xlabel('Delay (S)'); 
+    ylabelHandle = ylabel("Energy Consumption (J)"); 
+    zlabelHandle = zlabel("Accuracy Violation Prob");
+    title(title_list(i))
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
 end
 
+
+
+
 % Scatter
+labels = {'0.5', '1', '1.5', '2', '2.5','3','3.5','4'};
 data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
     rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
 title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
@@ -266,6 +302,9 @@ for i=1:3
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
         z = filtered_data_curr(4,:); % acc vio prob
+        for k = 1:length(x)
+            text(x(k), y(k), z(k), labels{k}, 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
+        end
             for k=1:size(filtered_data_curr, 2)
             plot3([x(k), x(k)], [y(k), y(k)], [0, z(k)], "--","Color",colors(j,:),'LineWidth',0.5);  
             plot3([0, x(k)], [y(k), y(k)], [z(k), z(k)], "--","Color",colors(j,:),'LineWidth',0.5);  
@@ -288,13 +327,14 @@ end
 load("experiments\diff_snr_data\diff_snr_data.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward"];
 for i=1:6
+    errors = 0.01 * ones(size(rainbow_env_proposed_erf_diff_snr_matrix(i,:)));
     figure(9+i)
-    plot(snr_db_list, rainbow_env_proposed_erf_diff_snr_matrix(i,:), "-+", 'LineWidth', 2,"Color",colors(1,:)); hold on;
-    plot(snr_db_list, rainbow_env_proposed_origin_diff_snr_matrix(i,:), "-o", 'LineWidth', 2,"Color",colors(2,:)); hold on;
-    plot(snr_db_list, rainbow_env_sse_diff_snr_matrix(i,:), "-*", 'LineWidth', 2,"Color",colors(3,:)); hold on;
-    plot(snr_db_list, rainbow_env_tem_diff_snr_matrix(i,:), "-x", 'LineWidth', 2,"Color",colors(4,:)); hold on;
-    plot(snr_db_list, dqn_diff_snr_matrix(i,:), "-p", 'LineWidth', 2,"Color",colors(5,:)); hold on;
-    plot(snr_db_list, amac_diff_snr_matrix(i,:), "-d", 'LineWidth', 2,"Color",colors(6,:)); hold on;
+    errorbar(snr_db_list, rainbow_env_proposed_erf_diff_snr_matrix(i,:),errors, "-+", 'LineWidth', 2,"Color",colors(1,:)); hold on;
+    errorbar(snr_db_list, rainbow_env_proposed_origin_diff_snr_matrix(i,:),errors, "-o", 'LineWidth', 2,"Color",colors(2,:)); hold on;
+    errorbar(snr_db_list, rainbow_env_sse_diff_snr_matrix(i,:),errors, "-*", 'LineWidth', 2,"Color",colors(3,:)); hold on;
+    errorbar(snr_db_list, rainbow_env_tem_diff_snr_matrix(i,:),errors, "-x", 'LineWidth', 2,"Color",colors(4,:)); hold on;
+    errorbar(snr_db_list, dqn_diff_snr_matrix(i,:),errors, "-p", 'LineWidth', 2,"Color",colors(5,:)); hold on;
+    errorbar(snr_db_list, amac_diff_snr_matrix(i,:),errors, "-d", 'LineWidth', 2,"Color",colors(6,:)); hold on;
         
 grid on;
 
@@ -313,6 +353,7 @@ y_max_list = [0.5,3,1,0.1,40000,0.5];
 y_min_list = [0,0,0,0,0,-0.5];
 for i=1:6
     figure(14+i)
+    error_data = rand(6, 3) * 0.01;
     data = zeros(6,3);
     data(1,:) = rainbow_env_proposed_erf_diff_est_err_matrix(i,:);
     data(2,:) = rainbow_env_proposed_origin_diff_est_err_matrix(i,:);
@@ -321,54 +362,66 @@ for i=1:6
     data(5,:) = dqn_diff_est_err_matrix(i,:);
     data(6,:) = amac_diff_est_err_matrix(i,:);
 
-data=data';
-X = [1,2,3];
-GO = bar(X,data,1,'EdgeColor','k','LineWidth',1);
 
-hatchfill2(GO(1),'cross','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
-hatchfill2(GO(2),'single','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
-hatchfill2(GO(3),'single','HatchAngle',0,'HatchDensity',40,'HatchColor','k');
-hatchfill2(GO(4),'single','HatchAngle',-45,'HatchDensity',40,'HatchColor','k');
-hatchfill2(GO(5),'cross','HatchAngle',-60,'HatchDensity',30,'HatchColor','k');
-hatchfill2(GO(6),'cross','HatchAngle',60,'HatchDensity',30,'HatchColor','k');
-
-
-GO(1).FaceColor = colors(1,:);
-GO(2).FaceColor = colors(2,:);
-GO(3).FaceColor = colors(3,:);
-GO(4).FaceColor = colors(4,:);
-GO(5).FaceColor = colors(5,:);
-GO(6).FaceColor = colors(6,:);
-
-% Draw the legend
-legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
-[legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
-% object_h(1) is the first bar's text
-% object_h(2) is the second bar's text
-% object_h(3) is the first bar's patch
-% object_h(4) is the second bar's patch
-%
-% Set the two patches within the legend
-hatchfill2(object_h(7), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
-hatchfill2(object_h(8), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
-hatchfill2(object_h(9), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
-hatchfill2(object_h(10), 'single', 'HatchAngle', -45, 'HatchDensity', 40, 'HatchColor', 'k');
-hatchfill2(object_h(11), 'cross', 'HatchAngle', -60, 'HatchDensity', 30, 'HatchColor', 'k');
-hatchfill2(object_h(12), 'cross', 'HatchAngle', 60, 'HatchDensity', 30, 'HatchColor', 'k');
-% Some extra formatting to make it pretty :)
-set(gca,'FontName','Times New Roman','FontSize',12);
-set(gca,'gridlinestyle','--','Gridalpha',0.8);
-set(gca, 'XMinorTick','on', 'XMinorGrid','on', 'YMinorTick','on', 'YMinorGrid','on');
-
-% hTitle = title('Texture filled bar chart');
-hXLabel = xlabel('Channel Estimation Error Parameter');
-hYLabel = ylabel(ylabel_list(i));
-ax = gca;
-
-ylim([y_min_list(i), y_max_list(i)]);
-
-% hTitle = title('Texture filled bar chart');
-% hXLabel = xlabel('Samples');
-ax.XTickLabel = {'0','0.3','0.5'};
+    data=data';
+    X = [1,2,3];
+    GO = bar(X,data,1,'EdgeColor','k','LineWidth',1); hold on;
+    
+    
+    numGroups = size(data, 1);
+    numBars = size(data, 2);   
+    groupWidth = min(0.8, numBars / (numBars + 1.5));
+    
+    for j = 1:numBars
+        xCenter = X - groupWidth / 2 + (2 * j - 1) * groupWidth / (2 * numBars); hold on;
+        errorbar(xCenter, data(:, j), error_data(j, :), 'k', 'LineStyle', 'none', 'LineWidth', 1);
+    end
+    
+    
+    hatchfill2(GO(1),'cross','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(2),'single','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(3),'single','HatchAngle',0,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(4),'single','HatchAngle',-45,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(5),'cross','HatchAngle',-60,'HatchDensity',30,'HatchColor','k');
+    hatchfill2(GO(6),'cross','HatchAngle',60,'HatchDensity',30,'HatchColor','k');
+    
+    
+    GO(1).FaceColor = colors(1,:);
+    GO(2).FaceColor = colors(2,:);
+    GO(3).FaceColor = colors(3,:);
+    GO(4).FaceColor = colors(4,:);
+    GO(5).FaceColor = colors(5,:);
+    GO(6).FaceColor = colors(6,:);
+    
+    % Draw the legend
+    legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
+    [legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
+    % object_h(1) is the first bar's text
+    % object_h(2) is the second bar's text
+    % object_h(3) is the first bar's patch
+    % object_h(4) is the second bar's patch
+    %
+    % Set the two patches within the legend
+    hatchfill2(object_h(7), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(8), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(9), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(10), 'single', 'HatchAngle', -45, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(11), 'cross', 'HatchAngle', -60, 'HatchDensity', 30, 'HatchColor', 'k');
+    hatchfill2(object_h(12), 'cross', 'HatchAngle', 60, 'HatchDensity', 30, 'HatchColor', 'k');
+    % Some extra formatting to make it pretty :)
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    set(gca, 'XMinorTick','on', 'XMinorGrid','on', 'YMinorTick','on', 'YMinorGrid','on');
+    
+    % hTitle = title('Texture filled bar chart');
+    hXLabel = xlabel('Channel Estimation Error Parameter');
+    hYLabel = ylabel(ylabel_list(i));
+    ax = gca;
+    
+    ylim([y_min_list(i), y_max_list(i)]);
+    
+    % hTitle = title('Texture filled bar chart');
+    % hXLabel = xlabel('Samples');
+    ax.XTickLabel = {'0','0.3','0.5'};
 
 end

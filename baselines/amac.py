@@ -92,11 +92,12 @@ class Amac:
         self.bandwidth = 20e6  # System bandwidth (Hz)
         self.max_power = 1  # Maximum transmit power (W)
         self.est_err_para = 0.5
-
+        self.context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
         self.kappa_1 = 2
         self.kappa_2 = 1
         self.kappa_3 = 1
-
+        self.action_freq_list = []  # record the frequency of each action picked
+        self.bad_action_freq_list = []  # record the frequency of bad action (acc < acc_min)
         self.sub_block_length = 128
         self.target_snr_db = 2
 
@@ -125,12 +126,12 @@ class Amac:
             context_flag = 0
             consider_re_trans = 0  # 0 or 1
             max_re_trans_num = 200
-            context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
+
             context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
             curr_context = None
             context_interval = 100  # Interval for context to change
             context_num = int(self.slot_num / context_interval)
-            context_train_list = np.random.choice(list(range(len(context_list))), size=context_num, p=context_prob)
+            context_train_list = np.random.choice(list(range(len(self.context_list))), size=context_num, p=context_prob)
             # Data loading and fitting
             platform_data = sio.loadmat('system_data/platform_data.mat')
 
@@ -181,12 +182,12 @@ class Amac:
             for i in range(self.slot_num):
                 # print("slot num:", i)
                 curr_context_id = context_train_list[context_flag]
-                curr_context = context_list[curr_context_id]
+                curr_context = self.context_list[curr_context_id]
                 min_acc = util.obtain_min_acc(curr_context)
                 if i % context_interval == 0 and i != 0:
                     context_flag = context_flag + 1
                     curr_context_id = context_train_list[context_flag]
-                    curr_context = context_list[curr_context_id]
+                    curr_context = self.context_list[curr_context_id]
                 curr_energy = curr_energy - last_energy
                 max_delay = 0.5  # Maximum tolerant delay (s)
 
@@ -275,6 +276,8 @@ class Amac:
                 total_energy_list[0, i] = energy_curr_list[opt_index]
                 if acc_curr <= min_acc:
                     acc_vio_num = acc_vio_num + 1
+                    self.bad_action_freq_list.append(opt_index)
+                self.action_freq_list.append(opt_index)
             acc_vio_num = acc_vio_num / self.slot_num
             # Averages per episode
             aver_total_delay = np.sum(total_delay_list) / self.slot_num

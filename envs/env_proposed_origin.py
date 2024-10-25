@@ -72,7 +72,8 @@ class EnvProposed_origin(gym.Env):
         (self.action_sunny_list, self.action_rain_list, self.action_snow_list,
          self.action_motorway_list, self.action_fog_list, self.action_night_list) = util.action_gen()
         self.action_space = spaces.Discrete(33)
-
+        self.action_freq_list = np.zeros([1,33])  # record the frequency of each action picked
+        self.bad_action_freq_list = np.zeros([1, 33]) # record the frequency of bad action (acc < acc_min)
         # Obs: (1) Estimated CQI (1-15) (2) SNR in dB (0-20)   (3) Task context (0-5)  (4) Min accuracy
         obs_low = np.array([1, 0, 0, 0])
         obs_high = np.array([15, 20, 5, 1])
@@ -302,6 +303,8 @@ class EnvProposed_origin(gym.Env):
         if acc_exp < min_acc:
             # print("acc:",acc_exp, "acc_min:",min_acc)
             self.acc_vio_num = self.acc_vio_num + 1
+            self.bad_action_freq_list[0, action] += 1
+        self.action_freq_list[0, action] += 1
         # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
         self.acc_exp_list[0, self.step_num] = acc_exp

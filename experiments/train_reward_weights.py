@@ -18,7 +18,8 @@ env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
 env_num = len(set(type(obj) for obj in env_list))
 
 seed = 666
-
+kappa_num = 3
+kappa_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
 
 def seed_torch(seed):
     torch.manual_seed(seed)
@@ -147,10 +148,6 @@ class Runner:
 
 
 if __name__ == '__main__':
-    kappa_1_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # acc reward weight
-    kappa_2_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # delay reward weight
-    kappa_3_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # energy reward weight
-
     episode_length = 3000  # Number of steps / episode
     episode_number = 10  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
@@ -196,75 +193,44 @@ if __name__ == '__main__':
             parser.add_argument("--use_per", type=bool, default=False, help="Whether to use PER")
             parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
         args = parser.parse_args()
+        for kappa_flag in range(kappa_num):
+            for env_id in range(env_num):
+                if algorithm == "dqn" and env_id != 1:
+                    continue
+                for w in range(len(kappa_list)):
+                    env_index = 0
+                    env = env_list[env_id]
+                    runner = Runner(args=args, env=env, number=1, seed=seed)
 
-        for env_id in range(env_num):
-            if algorithm == "dqn" and env_id != 1:
-                continue
-            for w in range(len(kappa_1_list)):
-                # Path for the new folder
-                folder_path = "kappa1_" + str(kappa_1_list[w]) + "_kappa2_1_kappa3_1"
-                if not os.path.exists("experiments/diff_reward_weights_data/" + folder_path):
-                    os.makedirs("experiments/diff_reward_weights_data/" + folder_path)
-                    print(f'Folder "{folder_path}" has been created.')
-                else:
-                    print(f'Folder "{folder_path}" already exists.')
+                    if kappa_flag == 0:  # acc kappa
+                        runner.env.kappa_1 = kappa_list[w]
+                        runner.env.kappa_2 = 1
+                        runner.env.kappa_3 = 1
+                        folder_path = "kappa1_" + str(kappa_list[w]) + "_kappa2_1_kappa3_1"
+                    elif kappa_flag == 1:  # delay kappa
+                        runner.env.kappa_1 = 1
+                        runner.env.kappa_2 = kappa_list[w]
+                        runner.env.kappa_3 = 1
+                        folder_path = "kappa1_1" + "_kappa2_" + str(kappa_list[w]) + "_kappa3_1"
+                    elif kappa_flag == 2:
+                        runner.env.kappa_1 = 1
+                        runner.env.kappa_2 = 1
+                        runner.env.kappa_3 = kappa_list[w]
+                        folder_path = "kappa1_1_kappa2_1" + "_kappa3_" + str(kappa_list[w])
 
-                env_index = 0
-                env = env_list[env_id]
-                runner = Runner(args=args, env=env, number=1, seed=seed)
-                runner.env.kappa_1 = kappa_1_list[w]
-                runner.env.kappa_2 = 1
-                runner.env.kappa_3 = 1
-                print("algorithm:", runner.algorithm)
-                runner.run()
+                    # Path for the new folder
+                    if not os.path.exists("experiments/diff_reward_weights_data/" + folder_path):
+                        os.makedirs("experiments/diff_reward_weights_data/" + folder_path)
+                        print(f'Folder "{folder_path}" has been created.')
+                    else:
+                        print(f'Folder "{folder_path}" already exists.')
 
-                # save the model
-                sl.save_nn_model_diff_kappa(runner,folder_path)
-                runner.env.reset()
+                    print("algorithm:", runner.algorithm)
+                    runner.run()
 
-            for w in range(len(kappa_2_list)):
-                # Path for the new folder
-                folder_path = "kappa1_1" + "_kappa2_" + str(kappa_2_list[w]) + "_kappa3_1"
-                if not os.path.exists("experiments/diff_reward_weights_data/" + folder_path):
-                    os.makedirs("experiments/diff_reward_weights_data/" + folder_path)
-                    print(f'Folder "{folder_path}" has been created.')
-                else:
-                    print(f'Folder "{folder_path}" already exists.')
-
-                env_index = 0
-                env = env_list[env_id]
-                runner = Runner(args=args, env=env, number=1, seed=seed)
-                runner.env.kappa_1 = 1
-                runner.env.kappa_2 = kappa_2_list[w]
-                runner.env.kappa_3 = 1
-                print("algorithm:", runner.algorithm)
-                runner.run()
-
-                # save the model
-                sl.save_nn_model_diff_kappa(runner,folder_path)
-                runner.env.reset()
-
-            for w in range(len(kappa_3_list)):
-                # Path for the new folder
-                folder_path = "kappa1_1_kappa2_1" + "_kappa3_" + str(kappa_2_list[w])
-                if not os.path.exists("experiments/diff_reward_weights_data/" + folder_path):
-                    os.makedirs("experiments/diff_reward_weights_data/" + folder_path)
-                    print(f'Folder "{folder_path}" has been created.')
-                else:
-                    print(f'Folder "{folder_path}" already exists.')
-
-                env_index = 0
-                env = env_list[env_id]
-                runner = Runner(args=args, env=env, number=1, seed=seed)
-                runner.env.kappa_1 = 1
-                runner.env.kappa_2 = 1
-                runner.env.kappa_3 = kappa_3_list[w]
-                print("algorithm:", runner.algorithm)
-                runner.run()
-
-                # save the model
-                sl.save_nn_model_diff_kappa(runner,folder_path)
-                runner.env.reset()
+                    # save the model
+                    sl.save_nn_model_diff_kappa(runner,folder_path)
+                    runner.env.reset()
 
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + "Second")

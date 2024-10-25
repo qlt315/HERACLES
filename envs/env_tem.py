@@ -64,6 +64,8 @@ class EnvTEM(gym.Env):
         (self.action_sunny_list, self.action_rain_list, self.action_snow_list,
          self.action_motorway_list, self.action_fog_list, self.action_night_list) = util.action_gen()
         self.action_space = spaces.Discrete(21)
+        self.action_freq_list = np.zeros([1,21])  # record the frequency of each action picked
+        self.bad_action_freq_list = np.zeros([1, 21]) # record the frequency of bad action (acc < acc_min)
         self.done = False
         # Obs: (1) Estimated CQI (1-15) (2) SNR in dB (0-20)   (3) Task context (0-5)  (4) Min accuracy
         obs_low = np.array([1, 0, 0, 0])
@@ -234,6 +236,8 @@ class EnvTEM(gym.Env):
 
         if total_delay > max_delay:
             self.delay_vio_num = self.delay_vio_num + 1
+            self.bad_action_freq_list[0, action] += 1
+        self.action_freq_list[0, action] += 1
 
         if self.step_num >= self.slot_num - 1:
             print("Episode index:", self.episode_num)
