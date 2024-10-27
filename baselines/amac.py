@@ -100,7 +100,7 @@ class Amac:
         self.bad_action_freq_list = []  # record the frequency of bad action (acc < acc_min)
         self.sub_block_length = 128
         self.target_snr_db = 2
-
+        self.action_list = []
     def run(self):
         for k in range(len(self.seed_list)):
             print("seed:", self.seed_list[k])
@@ -205,7 +205,6 @@ class Amac:
 
                 for j in range(len(all_valid_file)):
                     p_curr = all_p[j]
-                    mod_method_curr = all_mod_method[j]
                     rate_curr = all_rate[j]
                     # BER Calculation
                     ber_curr = np.polyval(p_curr, snr_db)
@@ -269,7 +268,7 @@ class Amac:
                 opt_index = reward_curr_list.index(np.max(reward_curr_list))
                 # print("opt idx:",opt_index)
                 # print("re_trans_num:",re_trans_num)
-
+                self.action_list.append(all_mod_method[opt_index])
                 self.step_reward_list[k, i] = np.max(reward_curr_list)
                 # print("reward:", self.step_reward_list[k, i])
                 total_delay_list[0, i] = delay_curr_list[opt_index]

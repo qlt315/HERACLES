@@ -206,8 +206,8 @@ if __name__ == '__main__':
 
                 runner.env.context_list = [context_list[w]] * len(context_list)
                 # Path for the new folder
-                if not os.path.exists("experiments/diff_reward_weights_data/" + folder_path):
-                    os.makedirs("experiments/diff_reward_weights_data/" + folder_path)
+                if not os.path.exists("experiments/diff_context_data/" + folder_path):
+                    os.makedirs("experiments/diff_context_data/" + folder_path)
                     print(f'Folder "{folder_path}" has been created.')
                 else:
                     print(f'Folder "{folder_path}" already exists.')
@@ -222,4 +222,4 @@ if __name__ == '__main__':
                 runner.env.reset()
 
     time_end = time.time()
-    print("Running Time：" + str(time_end - time_start) + "Second")
+    print("Running Time：" + str(time_end - time_start) + " Second")

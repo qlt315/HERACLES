@@ -203,42 +203,41 @@ if __name__ == '__main__':
                 runner.run()
                 # save the data
                 if algorithm == "rainbow_dqn" and env_id == 0:
-                    rainbow_proposed_origin_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
-                    rainbow_proposed_origin_diff_est_err_matrix[1, e] = runner.env.episode_total_energy_list
-                    rainbow_proposed_origin_diff_est_err_matrix[2, e] = runner.env.episode_acc_exp_list
+                    rainbow_proposed_origin_diff_est_err_matrix[0, e] = runner.env.total_delay_list
+                    rainbow_proposed_origin_diff_est_err_matrix[1, e] = runner.env.total_energy_list
+                    rainbow_proposed_origin_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
                     rainbow_proposed_origin_diff_est_err_matrix[3, e] = runner.env.episode_acc_vio_num_list
                     rainbow_proposed_origin_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
-                    rainbow_proposed_origin_diff_est_err_matrix[5, e] = runner.env.episode_reward_list
+                    rainbow_proposed_origin_diff_est_err_matrix[5, e] = runner.env.reward_list
                 elif algorithm == "rainbow_dqn" and env_id == 1:
-                    rainbow_proposed_erf_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
-                    rainbow_proposed_erf_diff_est_err_matrix[1, e] = runner.env.episode_total_energy_list
-                    rainbow_proposed_erf_diff_est_err_matrix[2, e] = runner.env.episode_acc_exp_list
+                    rainbow_proposed_erf_diff_est_err_matrix[0, e] = runner.env.total_delay_list
+                    rainbow_proposed_erf_diff_est_err_matrix[1, e] = runner.env.total_energy_list
+                    rainbow_proposed_erf_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
                     rainbow_proposed_erf_diff_est_err_matrix[3, e] = runner.env.episode_acc_vio_num_list
                     rainbow_proposed_erf_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
-                    rainbow_proposed_erf_diff_est_err_matrix[5, e] = runner.env.episode_reward_list
+                    rainbow_proposed_erf_diff_est_err_matrix[5, e] = runner.env.reward_list
                 elif algorithm == "rainbow_dqn" and env_id == 2:
-                    rainbow_sse_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
-                    rainbow_sse_diff_est_err_matrix[1, e] = runner.env.episode_total_energy_list
-                    rainbow_sse_diff_est_err_matrix[2, e] = runner.env.episode_acc_exp_list
+                    rainbow_sse_diff_est_err_matrix[0, e] = runner.env.total_delay_list
+                    rainbow_sse_diff_est_err_matrix[1, e] = runner.env.total_energy_list
+                    rainbow_sse_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
                     rainbow_sse_diff_est_err_matrix[3, e] = runner.env.episode_acc_vio_num_list
                     rainbow_sse_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
-                    rainbow_sse_diff_est_err_matrix[5, e] = runner.env.episode_reward_list
+                    rainbow_sse_diff_est_err_matrix[5, e] = runner.env.reward_list
                 elif algorithm == "rainbow_dqn" and env_id == 3:
-                    rainbow_tem_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
-                    rainbow_tem_diff_est_err_matrix[1, e] = runner.env.episode_total_energy_list
-                    rainbow_tem_diff_est_err_matrix[2, e] = runner.env.episode_acc_exp_list
+                    rainbow_tem_diff_est_err_matrix[0, e] = runner.env.total_delay_list
+                    rainbow_tem_diff_est_err_matrix[1, e] = runner.env.total_energy_list
+                    rainbow_tem_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
                     rainbow_tem_diff_est_err_matrix[3, e] = runner.env.episode_acc_vio_num_list
                     rainbow_tem_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
-                    rainbow_tem_diff_est_err_matrix[5, e] = runner.env.episode_reward_list
+                    rainbow_tem_diff_est_err_matrix[5, e] = runner.env.reward_list
                 elif algorithm == "dqn":
-                    dqn_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
-                    dqn_diff_est_err_matrix[1, e] = runner.env.episode_total_energy_list
-                    dqn_diff_est_err_matrix[2, e] = runner.env.episode_acc_exp_list
+                    dqn_diff_est_err_matrix[0, e] = runner.env.total_delay_list
+                    dqn_diff_est_err_matrix[1, e] = runner.env.total_energy_list
+                    dqn_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
                     dqn_diff_est_err_matrix[3, e] = runner.env.episode_acc_vio_num_list
                     dqn_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
-                    dqn_diff_est_err_matrix[5, e] = runner.env.episode_reward_list
+                    dqn_diff_est_err_matrix[5, e] = runner.env.reward_list
                 runner.env.reset()
-    print(dqn_diff_est_err_matrix[2, :])
     # amac evaluation
     print("Evaluating AMAC")
     for e in range(len(est_err_list)):

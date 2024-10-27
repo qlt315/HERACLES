@@ -212,11 +212,12 @@ if __name__ == '__main__':
         sl.save_eval_data(runner)
         runner.env.reset()
 
-    index, values = get_top_k_values(runner.env.bad_action_freq_list, 10)
-    for i in range(10):
+    output_action_num = 10
+    index, values = get_top_k_values(runner.env.bad_action_freq_list, output_action_num)
+    for i in range(output_action_num):
         print("Bad Action:",index[i], "Pick Number:", values[i], "Freq:", values[i]/runner.env.slot_num)
 
-    
+
 
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + "Second")

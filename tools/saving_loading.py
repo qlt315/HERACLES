@@ -117,6 +117,36 @@ def load_nn_model_diff_kappa(runner,folder_path):
             target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_tem.pth')
     return net, target_net
 
+
+def load_nn_model_diff_context(runner,folder_path):
+    if runner.algorithm == "rainbow_dqn":
+        if runner.env.name == "proposed_origin":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
+        elif runner.env.name == "proposed_erf":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
+        elif runner.env.name == "sse":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_sse.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
+        elif runner.env.name == "tem":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_tem.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
+    elif runner.algorithm == "dqn":
+        if runner.env.name == "proposed_origin":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_target_proposed_origin.pth')
+        elif runner.env.name == "proposed_erf":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_proposed_target_erf.pth')
+        elif runner.env.name == "sse":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_sse.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_target_sse.pth')
+        elif runner.env.name == "tem":
+            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_tem.pth')
+            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_target_tem.pth')
+    return net, target_net
+
 def save_train_data(runner,step_reward_matrix):
     # save the data
     if runner.algorithm == "rainbow_dqn":

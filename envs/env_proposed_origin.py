@@ -379,7 +379,8 @@ class EnvProposed_origin(gym.Env):
         self.acc_exp_list = np.zeros([1, self.slot_num])
         self.reward_list = np.zeros([1, self.slot_num])
         self.re_trans_list = np.zeros([1, self.slot_num])
-
+        self.action_freq_list = np.zeros([1, 33])  # record the frequency of each action picked
+        self.bad_action_freq_list = np.zeros([1, 33])  # record the frequency of bad action (acc < acc_min)
         self.episode_total_delay_list = []
         self.episode_total_energy_list = []
         self.episode_acc_exp_list = []
@@ -468,3 +469,14 @@ class EnvProposed_origin(gym.Env):
 
     def input_snr(self, snr_db):
         self.target_snr_db = snr_db
+
+
+    def get_action_name(self, action):
+        (self.action_sunny_list, self.action_rain_list, self.action_snow_list,
+         self.action_motorway_list, self.action_fog_list, self.action_night_list) = util.action_gen()
+        action_info = util.action_mapping(self.action_sunny_list, self.action_rain_list, self.action_snow_list,
+                                          self.action_motorway_list, self.action_fog_list, self.action_night_list,
+                                          self.curr_context, action)
+
+        action_name = str(action_info.fusion_name) + "+Res" + action_info.backbone
+        return action_name

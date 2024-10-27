@@ -183,10 +183,11 @@ if __name__ == '__main__':
             parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
         args = parser.parse_args()
 
-        for env_id in range(env_num):
-            if algorithm == "dqn" and env_id != 1:
-                continue
-            for s in range(len(snr_db_list)):
+        for s in range(len(snr_db_list)):
+            scheme_id = 0
+            for env_id in range(env_num):
+                if algorithm == "dqn" and env_id != 1:
+                    continue
                 env_index = 0
                 env = env_list[env_id]
                 runner = Runner(args=args, env=env, number=1, seed=seed)
@@ -200,40 +201,40 @@ if __name__ == '__main__':
 
                 # save the data
                 if algorithm == "rainbow_dqn" and env_id == 0:
-                    rainbow_proposed_origin_diff_snr_matrix[0, s] = runner.env.episode_total_delay_list
-                    rainbow_proposed_origin_diff_snr_matrix[1, s] = runner.env.episode_total_energy_list
-                    rainbow_proposed_origin_diff_snr_matrix[2, s] = runner.env.episode_acc_exp_list
+                    rainbow_proposed_origin_diff_snr_matrix[0, s] = runner.env.total_delay_list
+                    rainbow_proposed_origin_diff_snr_matrix[1, s] = runner.env.total_energy_list
+                    rainbow_proposed_origin_diff_snr_matrix[2, s] = runner.env.acc_exp_list
                     rainbow_proposed_origin_diff_snr_matrix[3, s] = runner.env.episode_acc_vio_num_list
                     rainbow_proposed_origin_diff_snr_matrix[4, s] = runner.env.episode_re_trans_num_list
-                    rainbow_proposed_origin_diff_snr_matrix[5, s] = runner.env.episode_reward_list
+                    rainbow_proposed_origin_diff_snr_matrix[5, s] = runner.env.reward_list
                 elif algorithm == "rainbow_dqn" and env_id == 1:
-                    rainbow_proposed_erf_diff_snr_matrix[0, s] = runner.env.episode_total_delay_list
-                    rainbow_proposed_erf_diff_snr_matrix[1, s] = runner.env.episode_total_energy_list
-                    rainbow_proposed_erf_diff_snr_matrix[2, s] = runner.env.episode_acc_exp_list
+                    rainbow_proposed_erf_diff_snr_matrix[0, s] = runner.env.total_delay_list
+                    rainbow_proposed_erf_diff_snr_matrix[1, s] = runner.env.total_energy_list
+                    rainbow_proposed_erf_diff_snr_matrix[2, s] = runner.env.acc_exp_list
                     rainbow_proposed_erf_diff_snr_matrix[3, s] = runner.env.episode_acc_vio_num_list
                     rainbow_proposed_erf_diff_snr_matrix[4, s] = runner.env.episode_re_trans_num_list
-                    rainbow_proposed_erf_diff_snr_matrix[5, s] = runner.env.episode_reward_list
+                    rainbow_proposed_erf_diff_snr_matrix[5, s] = runner.env.reward_list
                 elif algorithm == "rainbow_dqn" and env_id == 2:
-                    rainbow_sse_diff_snr_matrix[0, s] = runner.env.episode_total_delay_list
-                    rainbow_sse_diff_snr_matrix[1, s] = runner.env.episode_total_energy_list
-                    rainbow_sse_diff_snr_matrix[2, s] = runner.env.episode_acc_exp_list
+                    rainbow_sse_diff_snr_matrix[0, s] = runner.env.total_delay_list
+                    rainbow_sse_diff_snr_matrix[1, s] = runner.env.total_energy_list
+                    rainbow_sse_diff_snr_matrix[2, s] = runner.env.acc_exp_list
                     rainbow_sse_diff_snr_matrix[3, s] = runner.env.episode_acc_vio_num_list
                     rainbow_sse_diff_snr_matrix[4, s] = runner.env.episode_re_trans_num_list
-                    rainbow_sse_diff_snr_matrix[5, s] = runner.env.episode_reward_list
+                    rainbow_sse_diff_snr_matrix[5, s] = runner.env.reward_list
                 elif algorithm == "rainbow_dqn" and env_id == 3:
-                    rainbow_tem_diff_snr_matrix[0, s] = runner.env.episode_total_delay_list
-                    rainbow_tem_diff_snr_matrix[1, s] = runner.env.episode_total_energy_list
-                    rainbow_tem_diff_snr_matrix[2, s] = runner.env.episode_acc_exp_list
+                    rainbow_tem_diff_snr_matrix[0, s] = runner.env.total_delay_list
+                    rainbow_tem_diff_snr_matrix[1, s] = runner.env.total_energy_list
+                    rainbow_tem_diff_snr_matrix[2, s] = runner.env.acc_exp_list
                     rainbow_tem_diff_snr_matrix[3, s] = runner.env.episode_acc_vio_num_list
                     rainbow_tem_diff_snr_matrix[4, s] = runner.env.episode_re_trans_num_list
-                    rainbow_tem_diff_snr_matrix[5, s] = runner.env.episode_reward_list
+                    rainbow_tem_diff_snr_matrix[5, s] = runner.env.reward_list
                 elif algorithm == "dqn":
-                    dqn_diff_snr_matrix[0, s] = runner.env.episode_total_delay_list
-                    dqn_diff_snr_matrix[1, s] = runner.env.episode_total_energy_list
-                    dqn_diff_snr_matrix[2, s] = runner.env.episode_acc_exp_list
+                    dqn_diff_snr_matrix[0, s] = runner.env.total_delay_list
+                    dqn_diff_snr_matrix[1, s] = runner.env.total_energy_list
+                    dqn_diff_snr_matrix[2, s] = runner.env.acc_exp_list
                     dqn_diff_snr_matrix[3, s] = runner.env.episode_acc_vio_num_list
                     dqn_diff_snr_matrix[4, s] = runner.env.episode_re_trans_num_list
-                    dqn_diff_snr_matrix[5, s] = runner.env.episode_reward_list
+                    dqn_diff_snr_matrix[5, s] = runner.env.reward_list
                 runner.env.reset()
 
     # amac evaluation

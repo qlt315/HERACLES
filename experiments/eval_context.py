@@ -13,16 +13,19 @@ import argparse
 import random
 import tools.saving_loading as sl
 import time
+import pandas as pd
 import os
+from experiments.eval_bad_actions import get_top_k_values
+from collections import Counter
 from scipy.io import savemat
 time_start = time.time()
-env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
-env_num = len(set(type(obj) for obj in env_list))
 
 seed = 31
 context_num = 3
+show_action_num = 3
 context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
-
+algorithms = ["Proposed_erf", "Proposed_origin", "SSE", "TEM", "DQN", "AMAC"]
+columns = ["Reward", "Delay", "Energy", "Accuracy", "Accuracy Vio Rate", "Re-trans Num", "Most Picked " + str(show_action_num) + " Action"]
 
 def seed_torch(seed):
     torch.manual_seed(seed)
@@ -36,13 +39,17 @@ np.random.seed(seed)
 random.seed(seed)
 seed_torch(seed)
 
+table_data = np.empty([len(context_list), len(algorithms), len(columns)],dtype='<U10000')
+
+
+env_list = [ EnvProposed_erf(), EnvProposed_origin(), EnvSSE(), EnvTEM()]
+env_num = len(set(type(obj) for obj in env_list))
 
 class Runner:
     def __init__(self, args, env, number, seed):
         self.args = args
         self.number = number
         self.seed = seed
-
         self.env = env
         # self.env = EnvSSE()
         # self.env = EnvTEM()
@@ -54,11 +61,11 @@ class Runner:
         torch.manual_seed(seed)
         self.args.state_dim = self.env.observation_space.shape[0]
         self.args.action_dim = self.env.action_space.n
-        self.args.episode_limit = self.env.slot_num  # Maximum number of steps per episode
+        self.args.limit = self.env.slot_num  # Maximum number of steps per episode
         print("env name:", self.env.name)
         print("state_dim={}".format(self.args.state_dim))
         print("action_dim={}".format(self.args.action_dim))
-        print("episode_limit={}".format(self.args.episode_limit))
+        print("limit={}".format(self.args.limit))
 
         if args.use_per and args.use_n_steps:
             self.replay_buffer = N_Steps_Prioritized_ReplayBuffer(args)
@@ -103,7 +110,7 @@ class Runner:
         while self.total_steps < self.args.max_train_steps:
             state = self.env.reset()
             done = False
-            episode_steps = 0
+            steps = 0
             while not done:
                 action = self.agent.choose_action(state, epsilon=self.epsilon)
                 next_state, reward, done = self.env.step(action)
@@ -112,10 +119,10 @@ class Runner:
                 if not self.args.use_noisy:  # Decay epsilon
                     self.epsilon = self.epsilon - self.epsilon_decay if self.epsilon - self.epsilon_decay > self.epsilon_min else self.epsilon_min
 
-                # When dead or win or reaching the max_episode_steps, done will be Ture, we need to distinguish them;
+                # When dead or win or reaching the max_steps, done will be Ture, we need to distinguish them;
                 # terminal means dead or win,there is no next state s';
-                # but when reaching the max_episode_steps,there is a next state s' actually.
-                if done and episode_steps != self.args.episode_limit:
+                # but when reaching the max_steps,there is a next state s' actually.
+                if done and steps != self.args.limit:
                     terminal = True
                 else:
                     terminal = False
@@ -129,22 +136,47 @@ class Runner:
 
 
 
+def create_excel(table_data, file_name):
+    # Assume data is a 3D array with shape (6 contexts, 6 algorithms, 7 metrics)
+    # 6 contexts: ["snow", "fog", "motorway", "night", "rain", "sunny"]
+    # 6 algorithms: each context includes 6 rows of data
+    # 7 metrics: ["Reward", "Delay", "Energy", "Accuracy", "Accuracy", "Re-trans", "Actions"]
+
+
+
+    # Create an empty DataFrame
+    df = pd.DataFrame(columns=["Context", "Algorithm"] + columns)
+
+    # Fill in the data
+    for i, context in enumerate(context_list):
+        for j, algo in enumerate(algorithms):
+            # Get the corresponding data values, assuming data has shape (6, 6, 7)
+            row_data = table_data[i, j, :]
+            # Create the row
+            row = [context, algo] + list(row_data)
+            # Add the row to the DataFrame
+            df.loc[len(df)] = row
+
+
+    # Output to an Excel file
+    df.to_excel(file_name, index=False)
+
 if __name__ == '__main__':
-    # Reward, Delay, Energy, Accuracy, Accuracy, Re-trans, Actions
-    rainbow_proposed_erf_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
-    rainbow_proposed_origin_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
-    rainbow_sse_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
-    rainbow_tem_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
-    amac_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
-    dqn_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
+    # Reward, Delay, Energy, Accuracy, Accuracy Vio, Re-trans, Actions
+    # rainbow_proposed_erf_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
+    # rainbow_proposed_origin_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
+    # rainbow_sse_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
+    # rainbow_tem_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
+    # amac_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
+    # dqn_diff_context_matrix = np.zeros([7,len(context_list)],dtype=object)
 
-    episode_length = 3000  # Number of steps / episode
-    episode_number = 1  # Number of episode to train
-    steps = episode_number * episode_length  # Total step number
+    length = 3000  # Number of steps / episode
+    number = 1  # Number of episode to train
+    steps = number * length  # Total step number
 
-    algorithm_list = ["dqn"]
-    for algo_id in range(len(algorithm_list)):
-        algorithm = algorithm_list[algo_id]
+    drl_algorithm_list = ["rainbow_dqn", "dqn"]
+    for dql_algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[dql_algo_id]
         parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
         parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
         parser.add_argument("--evaluate_freq", type=float, default=1e3,
@@ -183,23 +215,18 @@ if __name__ == '__main__':
             parser.add_argument("--use_per", type=bool, default=False, help="Whether to use PER")
             parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
         args = parser.parse_args()
-        for env_id in range(env_num):
-            if algorithm == "dqn" and env_id != 1:
-                continue
-            for w in range(len(context_list)):
+
+        for w in range(len(context_list)):
+            scheme_id = 0
+            for env_id in range(env_num):
+                if algorithm == "dqn" and env_id != 1:
+                    continue
                 env_index = 0
                 env = env_list[env_id]
                 runner = Runner(args=args, env=env, number=1, seed=seed)
                 folder_path = context_list[w] + "_models"
 
                 runner.env.context_list = [context_list[w]] * len(context_list)
-                # Path for the new folder
-                if not os.path.exists("experiments/diff_reward_weights_data/" + folder_path):
-                    os.makedirs("experiments/diff_reward_weights_data/" + folder_path)
-                    print(f'Folder "{folder_path}" has been created.')
-                else:
-                    print(f'Folder "{folder_path}" already exists.')
-
                 # load the model
                 runner.agent.net, runner.agent.target_net = sl.load_nn_model_diff_context(runner, folder_path)
                 print("env name:", env.name)
@@ -208,76 +235,102 @@ if __name__ == '__main__':
                 runner.run()
 
                 # save the data
-                if algorithm == "rainbow_dqn" and env_id == 0:
-                    rainbow_proposed_origin_diff_context_matrix[0, w] = runner.env.episode_total_delay_list
-                    rainbow_proposed_origin_diff_context_matrix[1, w] = runner.env.episode_total_energy_list
-                    rainbow_proposed_origin_diff_context_matrix[2, w] = runner.env.episode_acc_exp_list
-                    rainbow_proposed_origin_diff_context_matrix[3, w] = runner.env.episode_acc_vio_num_list
-                    rainbow_proposed_origin_diff_context_matrix[4, w] = runner.env.episode_re_trans_num_list
-                    rainbow_proposed_origin_diff_context_matrix[5, w] = runner.env.episode_reward_list
-                elif algorithm == "rainbow_dqn" and env_id == 1:
-                    rainbow_proposed_erf_diff_context_matrix[0, w] = runner.env.episode_total_delay_list
-                    rainbow_proposed_erf_diff_context_matrix[1, w] = runner.env.episode_total_energy_list
-                    rainbow_proposed_erf_diff_context_matrix[2, w] = runner.env.episode_acc_exp_list
-                    rainbow_proposed_erf_diff_context_matrix[3, w] = runner.env.episode_acc_vio_num_list
-                    rainbow_proposed_erf_diff_context_matrix[4, w] = runner.env.episode_re_trans_num_list
-                    rainbow_proposed_erf_diff_context_matrix[5, w] = runner.env.episode_reward_list
-                elif algorithm == "rainbow_dqn" and env_id == 2:
-                    rainbow_sse_diff_context_matrix[0, w] = runner.env.episode_total_delay_list
-                    rainbow_sse_diff_context_matrix[1, w] = runner.env.episode_total_energy_list
-                    rainbow_sse_diff_context_matrix[2, w] = runner.env.episode_acc_exp_list
-                    rainbow_sse_diff_context_matrix[3, w] = runner.env.episode_acc_vio_num_list
-                    rainbow_sse_diff_context_matrix[4, w] = runner.env.episode_re_trans_num_list
-                    rainbow_sse_diff_context_matrix[5, w] = runner.env.episode_reward_list
-                elif algorithm == "rainbow_dqn" and env_id == 3:
-                    rainbow_tem_diff_context_matrix[0, w] = runner.env.episode_total_delay_list
-                    rainbow_tem_diff_context_matrix[1, w] = runner.env.episode_total_energy_list
-                    rainbow_tem_diff_context_matrix[2, w] = runner.env.episode_acc_exp_list
-                    rainbow_tem_diff_context_matrix[3, w] = runner.env.episode_acc_vio_num_list
-                    rainbow_tem_diff_context_matrix[4, w] = runner.env.episode_re_trans_num_list
-                    rainbow_tem_diff_context_matrix[5, w] = runner.env.episode_reward_list
-                elif algorithm == "dqn":
-                    dqn_diff_context_matrix[0, w] = runner.env.episode_total_delay_list
-                    dqn_diff_context_matrix[1, w] = runner.env.episode_total_energy_list
-                    dqn_diff_context_matrix[2, w] = runner.env.episode_acc_exp_list
-                    dqn_diff_context_matrix[3, w] = runner.env.episode_acc_vio_num_list
-                    dqn_diff_context_matrix[4, w] = runner.env.episode_re_trans_num_list
-                    dqn_diff_context_matrix[5, w] = runner.env.episode_reward_list
+                delay_mean = np.mean(runner.env.total_delay_list)
+                delay_std  = np.std(runner.env.total_delay_list)
+                delay_str = str(delay_mean) + "\u00B1" + str(delay_std)
+                table_data[w,scheme_id,0] = delay_str
 
-                runner.env.reset()
-    # amac evaluation
-    print("Evaluating AMAC")
-    for w in range(len(context_list)):
-        runner = amac.Amac(is_test=True)
-        runner.context_list = [context_list[w]] * len(context_list)
-        runner.run()
-        amac_diff_context_matrix[0, w] = runner.total_delay_list
-        amac_diff_context_matrix[1, w] = runner.total_energy_list
-        amac_diff_context_matrix[2, w] = runner.acc_exp_list
-        amac_diff_context_matrix[3, w] = runner.acc_vio_num_list
-        amac_diff_context_matrix[4, w] = runner.re_trans_num_list
-        amac_diff_context_matrix[5, w] = runner.reward_list
-    
-    # data processing
+                energy_mean = np.mean(runner.env.total_energy_list)
+                energy_std  = np.std(runner.env.total_energy_list)
+                energy_str = str(energy_mean) + "\u00B1" + str(energy_std)
+                table_data[w,scheme_id,1] = energy_str
 
+                acc_mean = np.mean(runner.env.acc_exp_list)
+                acc_std  = np.std(runner.env.acc_exp_list)
+                acc_str = str(acc_mean) + "\u00B1" + str(acc_std)
+                table_data[w,scheme_id,2] = acc_str
+
+                acc_vio_mean = np.mean(runner.env.episode_acc_vio_num_list)
+                # acc_vio_std = np.std(runner.env.episode_acc_vio_num_list)
+                acc_vio_str = str(acc_vio_mean)
+                table_data[w, scheme_id, 3] = acc_vio_str
+
+                re_trans_mean = np.mean(runner.env.episode_re_trans_num_list)
+                # re_trans_std = np.std(runner.env.episode_re_trans_num_list)
+                re_trans_str = str(re_trans_mean)
+                table_data[w, scheme_id, 4] = re_trans_str
+
+                reward_mean = np.mean(runner.env.reward_list)
+                reward_std = np.std(runner.env.reward_list)
+                reward_str = str(reward_mean) + "\u00B1" + str(reward_std)
+                table_data[w, scheme_id, 5] = reward_str
+
+
+                action_str = ""
+                index, values = most_picked_action = get_top_k_values(runner.env.action_freq_list, show_action_num)
+                for act in range(show_action_num-1, -1, -1):
+                    action_index = index[act]
+                    action_freq = round(values[act] / runner.env.slot_num * 100, 2)
+                    if action_str == "":
+                        action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+                    else:
+                        action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+                print(action_str)
+                table_data[w, scheme_id, 6] = action_str
+            scheme_id += 1
+            runner.env.reset()
+
+            # amac evaluation
+            print("Evaluating AMAC")  # amac
+            action_str = "[1,2,3,4]"
+            runner = amac.Amac(is_test=True)
+            runner.context_list = [context_list[w]] * len(context_list)
+            runner.run()
+            delay_mean = np.mean(runner.total_delay_list)
+            delay_std = np.std(runner.total_delay_list)
+            delay_str = str(delay_mean) + "\u00B1" + str(delay_std)
+            table_data[w, scheme_id, 0] = delay_str
+
+            energy_mean = np.mean(runner.total_energy_list)
+            energy_std = np.std(runner.total_energy_list)
+            energy_str = str(energy_mean) + "\u00B1" + str(energy_std)
+            table_data[w, scheme_id, 1] = energy_str
+
+            acc_mean = np.mean(runner.acc_exp_list)
+            acc_std = np.std(runner.acc_exp_list)
+            acc_str = str(acc_mean) + "\u00B1" + str(acc_std)
+            table_data[w, scheme_id, 2] = acc_str
+
+            acc_vio_mean = np.mean(runner.acc_vio_num_list)
+            acc_vio_std = np.std(runner.acc_vio_num_list)
+            acc_vio_str = str(acc_vio_mean) + "\u00B1" + str(acc_vio_std)
+            table_data[w, scheme_id, 3] = acc_vio_str
+
+            re_trans_mean = np.mean(runner.re_trans_num_list)
+            re_trans_std = np.std(runner.re_trans_num_list)
+            re_trans_str = str(re_trans_mean) + "\u00B1" + str(re_trans_std)
+            table_data[w, scheme_id, 4] = re_trans_str
+
+            reward_mean = np.mean(runner.reward_list)
+            reward_std = np.std(runner.reward_list)
+            reward_str = str(reward_mean) + "\u00B1" + str(reward_std)
+            table_data[w, scheme_id, 5] = reward_str
+
+            counter = Counter(runner.action_list)
+            most_common_elements = counter.most_common(show_action_num)
+            for act, freq in most_common_elements:
+                action_freq = round(freq / runner.slot_num * 100, 2)
+                if action_str == "[1,2,3,4]":
+                    action_str = action_str + act + "(" + str(action_freq) + ")"
+                else:
+                    action_str = action_str + ";" + act + "(" + str(action_freq) + ")"
+            print(action_str)
+            table_data[w, scheme_id, 6] = action_str
 
 
     # output the table as an Excel file
+    create_excel(table_data, "experiments/diff_context_data/performance_table_diff_context.xlsx")
 
-
-
-
-
-    # mat_name = "experiments/diff_context_data/diff_context_data.mat"
-    # savemat(mat_name,
-    #         {"rainbow_proposed_erf_diff_context_matrix": rainbow_proposed_erf_diff_context_matrix,
-    #          "rainbow_proposed_origin_diff_context_matrix": rainbow_proposed_origin_diff_context_matrix,
-    #          "rainbow_sse_diff_context_matrix": rainbow_sse_diff_context_matrix,
-    #          "rainbow_tem_diff_context_matrix": rainbow_tem_diff_context_matrix,
-    #          "dqn_diff_context_matrix": dqn_diff_context_matrix,
-    #          "amac_diff_context_matrix": amac_diff_context_matrix,
-    #          "context_list_list":context_list
-    #          })
 
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + "Second")
