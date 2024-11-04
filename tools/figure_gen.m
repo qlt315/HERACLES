@@ -10,7 +10,7 @@ load("rainbow_dqn/train_data/train_tem_data.mat")
 load("rainbow_dqn/train_data/train_sse_data.mat")
 load("baselines/dqn/train_data/train_proposed_erf_data.mat")
 load("baselines/random_reward.mat")
-load("baselines/eval_amac_data.mat")
+load("baselines/amac_data.mat")
 
 
 colors = lines(7);         % Generate distinct colors for each curve
@@ -212,8 +212,8 @@ ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};
 %% Fig.5 Different Reward Weight
 load("experiments\diff_reward_weights_data\diff_reward_weights_data.mat")
 
-% data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
-%     rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+% data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
+%     rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
 % 
 % title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
 %     "Performance Comparison Under Different Delay Reward Weights",...
@@ -241,8 +241,8 @@ load("experiments\diff_reward_weights_data\diff_reward_weights_data.mat")
 % end
 
 % Plot wih Lines
-data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
-    rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
+    rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
 title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
     "Performance Comparison Under Different Delay Reward Weights",...
     "Performance Comparison Under Different Energy Consumption Reward Weights"];
@@ -277,8 +277,8 @@ end
 
 % Scatter
 labels = {'0.5', '1', '1.5', '2', '2.5','3','3.5','4'};
-data = {rainbow_env_proposed_erf_diff_kappa_matrix, rainbow_env_proposed_origin_diff_kappa_matrix, rainbow_env_sse_diff_kappa_matrix,...
-    rainbow_env_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
+    rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
 title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
     "Performance Comparison Under Different Delay Reward Weights",...
     "Performance Comparison Under Different Energy Consumption Reward Weights"];
@@ -288,7 +288,11 @@ for i=1:3
     for j=1:6
         data_curr = data{j};
         % Data cleaning
-        filtered_data_curr = remove_outliers(data_curr(:,:,i));
+        data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
         z = filtered_data_curr(4,:); % acc vio prob
@@ -298,7 +302,11 @@ for i=1:3
     for j=1:6
         data_curr = data{j};
         % Data cleaning
-        filtered_data_curr = remove_outliers(data_curr(:,:,i));
+                data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
         z = filtered_data_curr(4,:); % acc vio prob
@@ -312,7 +320,7 @@ for i=1:3
             end
     end
     grid on;
-
+       
     legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
@@ -321,24 +329,87 @@ for i=1:3
     zlabelHandle = zlabel("Accuracy Violation Prob");
     title(title_list(i))
     set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    set(gca, 'ZScale', 'log');
 end
 
 %% Fig.6 Different SNR
 load("experiments\diff_snr_data\diff_snr_data.mat")
-ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward"];
-for i=1:6
-    errors = 0.01 * ones(size(rainbow_env_proposed_erf_diff_snr_matrix(i,:)));
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward","Accuracy Violation"];
+line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
+snr_num = size(snr_db_list, 2);
+for i=1:7
     figure(9+i)
-    errorbar(snr_db_list, rainbow_env_proposed_erf_diff_snr_matrix(i,:),errors, "-+", 'LineWidth', 2,"Color",colors(1,:)); hold on;
-    errorbar(snr_db_list, rainbow_env_proposed_origin_diff_snr_matrix(i,:),errors, "-o", 'LineWidth', 2,"Color",colors(2,:)); hold on;
-    errorbar(snr_db_list, rainbow_env_sse_diff_snr_matrix(i,:),errors, "-*", 'LineWidth', 2,"Color",colors(3,:)); hold on;
-    errorbar(snr_db_list, rainbow_env_tem_diff_snr_matrix(i,:),errors, "-x", 'LineWidth', 2,"Color",colors(4,:)); hold on;
-    errorbar(snr_db_list, dqn_diff_snr_matrix(i,:),errors, "-p", 'LineWidth', 2,"Color",colors(5,:)); hold on;
-    errorbar(snr_db_list, amac_diff_snr_matrix(i,:),errors, "-d", 'LineWidth', 2,"Color",colors(6,:)); hold on;
+    % proposed erf
+    mean_list = zeros(1,snr_num);
+    std_list = zeros(1,snr_num);
+    for j=1:snr_num
+        mean_list(1,j) = mean(rainbow_proposed_erf_diff_snr_matrix{i,j});
+        std_list(1,j) = std(rainbow_proposed_erf_diff_snr_matrix{i,j});
+    end
+    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,1), 'LineWidth', 2,"Color",colors(1,:)); hold on;
+    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,1), colors(1,:)); hold on;
+    plot(snr_db_list, mean_list,line_style_list(1,1),'LineWidth', 2,"Color",colors(1,:)); hold on;
+
         
+    % proposed origin
+    for j=1:snr_num
+        mean_list(1,j) = mean(rainbow_proposed_origin_diff_snr_matrix{i,j});
+        std_list(1,j) = std(rainbow_proposed_origin_diff_snr_matrix{i,j});
+    end
+    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,2), 'LineWidth', 2,"Color",colors(2,:)); hold on;
+    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,2), colors(2,:));
+    plot(snr_db_list, mean_list,line_style_list(1,2),'LineWidth', 2,"Color",colors(2,:)); hold on;
+
+    % sse
+    for j=1:snr_num
+        mean_list(1,j) = mean(rainbow_sse_diff_snr_matrix{i,j});
+        std_list(1,j) = std(rainbow_sse_diff_snr_matrix{i,j});
+    end
+    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,3), 'LineWidth', 2,"Color",colors(3,:)); hold on;
+    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,3), colors(3,:));
+    plot(snr_db_list, mean_list,line_style_list(1,3),'LineWidth', 2,"Color",colors(3,:)); hold on;
+
+
+    % tem
+    for j=1:snr_num
+        mean_list(1,j) = mean(rainbow_tem_diff_snr_matrix{i,j});
+        std_list(1,j) = std(rainbow_tem_diff_snr_matrix{i,j});
+    end
+    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,4), 'LineWidth', 2,"Color",colors(4,:)); hold on;
+    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,4), colors(4,:));
+    plot(snr_db_list, mean_list,line_style_list(1,4),'LineWidth', 2,"Color",colors(4,:)); hold on;
+
+
+    % dqn
+    for j=1:snr_num
+        mean_list(1,j) = mean(dqn_diff_snr_matrix{i,j});
+        std_list(1,j) = std(dqn_diff_snr_matrix{i,j});
+    end
+    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,5), 'LineWidth', 2,"Color",colors(5,:)); hold on;
+    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,5), colors(5,:));
+    plot(snr_db_list, mean_list,line_style_list(1,5),'LineWidth', 2,"Color",colors(5,:)); hold on;
+
+    % amac
+    for j=1:snr_num
+        mean_list(1,j) = mean(amac_diff_snr_matrix{i,j});
+        std_list(1,j) = std(amac_diff_snr_matrix{i,j});
+    end
+    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,6), 'LineWidth', 2,"Color",colors(6,:)); hold on;
+    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,6), colors(6,:));
+    plot(snr_db_list, mean_list,line_style_list(1,6),'LineWidth', 2,"Color",colors(6,:)); hold on;
+    
+    if i==4  % acc vio use log Y-axis
+        set(gca, 'YScale', 'log')
+    end
+
 grid on;
 
-legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    if i==3 % acc add aver_min_acc
+        plot(snr_db_list, aver_min_acc*ones(size(snr_db_list)),"Color",[0 0 0],'LineWidth', 2); hold on;
+        legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC","Accuracy Threshold"};
+    else
+        legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    end
 legend(legend_names, 'Location', 'best');
 set(gca,'FontName','Times New Roman','FontSize',12);
 xlabel('SNR (dB)'),ylabel(ylabel_list(i));
@@ -348,34 +419,49 @@ end
 
 %% Fig.7 Different Est Err
 load("experiments\diff_est_err_data\diff_est_err_data.mat")
-ylabel_list = ["Average Delay Per Slot (S)", "Average Energy Consumption Per Slot (J)", "Average Accuracy Per Slot (mAP)", "Average Accuracy Violation Prob", "Average Re-transmission Number","Average Reward"];
-y_max_list = [0.5,3,1,0.1,40000,0.5];
-y_min_list = [0,0,0,0,0,-0.5];
-for i=1:6
-    figure(14+i)
-    error_data = rand(6, 3) * 0.01;
-    data = zeros(6,3);
-    data(1,:) = rainbow_env_proposed_erf_diff_est_err_matrix(i,:);
-    data(2,:) = rainbow_env_proposed_origin_diff_est_err_matrix(i,:);
-    data(3,:) = rainbow_env_sse_diff_est_err_matrix(i,:);
-    data(4,:) = rainbow_env_tem_diff_est_err_matrix(i,:);
-    data(5,:) = dqn_diff_est_err_matrix(i,:);
-    data(6,:) = amac_diff_est_err_matrix(i,:);
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward", "Accuracy Violation",];
+y_max_list = [0.5,3,1,0.1,40000,0.5,0.001];
+y_min_list = [0,0,0,0,0,-0.5,0];
+est_err_num = 3;
+for i=7
+    figure(15+i)
+    error_data = zeros(6, est_err_num);
+    data = zeros(6,est_err_num);
+    for j=1:est_err_num
+        data(1,j) = mean(rainbow_proposed_erf_diff_est_err_matrix{i,j});
+        % error_data(1,j) = std(rainbow_proposed_erf_diff_est_err_matrix{i,j});
 
+        data(2,j) = mean(rainbow_proposed_origin_diff_est_err_matrix{i,j});
+        % error_data(2,j) = std(rainbow_proposed_origin_diff_est_err_matrix{i,j});
+
+        data(3,j) = mean(rainbow_sse_diff_est_err_matrix{i,j});
+        % error_data(3,j) = std(rainbow_sse_diff_est_err_matrix{i,j});
+
+        data(4,j) = mean(rainbow_tem_diff_est_err_matrix{i,j});
+        % error_data(4,j) = std(rainbow_tem_diff_est_err_matrix{i,j});
+
+        data(5,j) = mean(dqn_diff_est_err_matrix{i,j});
+        % error_data(5,j) = std(dqn_diff_est_err_matrix{i,j});
+
+        data(6,j) = mean(amac_diff_est_err_matrix{i,j});
+        % error_data(6,j) = std(amac_diff_est_err_matrix{i,j});
+    end
 
     data=data';
     X = [1,2,3];
     GO = bar(X,data,1,'EdgeColor','k','LineWidth',1); hold on;
     
-    
-    numGroups = size(data, 1);
-    numBars = size(data, 2);   
-    groupWidth = min(0.8, numBars / (numBars + 1.5));
-    
-    for j = 1:numBars
-        xCenter = X - groupWidth / 2 + (2 * j - 1) * groupWidth / (2 * numBars); hold on;
-        errorbar(xCenter, data(:, j), error_data(j, :), 'k', 'LineStyle', 'none', 'LineWidth', 1);
+    if i==4  % acc vio use log Y-axis
+        set(gca, 'YScale', 'log')
     end
+
+    % numGroups = size(data, 1);
+    % numBars = size(data, 2);   
+    % groupWidth = min(0.8, numBars / (numBars + 1.5));
+    % for j = 1:numBars
+    %     xCenter = X - groupWidth / 2 + (2 * j - 1) * groupWidth / (2 * numBars); hold on;
+    %     errorbar(xCenter, data(:, j), error_data(j, :), 'k', 'LineStyle', 'none', 'LineWidth', 1);
+    % end
     
     
     hatchfill2(GO(1),'cross','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
@@ -423,5 +509,6 @@ for i=1:6
     % hTitle = title('Texture filled bar chart');
     % hXLabel = xlabel('Samples');
     ax.XTickLabel = {'0','0.3','0.5'};
+
 
 end
