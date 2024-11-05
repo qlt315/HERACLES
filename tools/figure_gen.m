@@ -210,8 +210,13 @@ ax = gca;
 ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};
 
 %% Fig.5 Different Reward Weight
-load("experiments\diff_reward_weights_data\diff_reward_weights_data.mat")
-
+% load("experiments\diff_kappa_data\diff_kappa_data.mat")
+load("experiments\diff_kappa_data\rainbow_proposed_erf_diff_kappa_matrix.mat")
+load("experiments\diff_kappa_data\rainbow_proposed_origin_diff_kappa_matrix.mat")
+load("experiments\diff_kappa_data\rainbow_sse_diff_kappa_matrix.mat")
+load("experiments\diff_kappa_data\rainbow_tem_diff_kappa_matrix.mat")
+load("experiments\diff_kappa_data\dqn_diff_kappa_matrix.mat")
+load("experiments\diff_kappa_data\amac_diff_kappa_matrix.mat")
 % data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
 %     rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
 % 
@@ -333,7 +338,14 @@ for i=1:3
 end
 
 %% Fig.6 Different SNR
-load("experiments\diff_snr_data\diff_snr_data.mat")
+% load("experiments\diff_snr_data\diff_snr_data.mat")
+load("experiments\diff_snr_data\rainbow_proposed_erf_diff_snr_matrix.mat")
+load("experiments\diff_snr_data\rainbow_proposed_origin_diff_snr_matrix.mat")
+load("experiments\diff_snr_data\rainbow_sse_diff_snr_matrix.mat")
+load("experiments\diff_snr_data\rainbow_tem_diff_snr_matrix.mat")
+load("experiments\diff_snr_data\dqn_diff_snr_matrix.mat")
+load("experiments\diff_snr_data\amac_diff_snr_matrix.mat")
+
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward","Accuracy Violation"];
 line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
 snr_num = size(snr_db_list, 2);
@@ -344,7 +356,7 @@ for i=1:7
     std_list = zeros(1,snr_num);
     for j=1:snr_num
         mean_list(1,j) = mean(rainbow_proposed_erf_diff_snr_matrix{i,j});
-        std_list(1,j) = std(rainbow_proposed_erf_diff_snr_matrix{i,j});
+        % std_list(1,j) = std(rainbow_proposed_erf_diff_snr_matrix{i,j});
     end
     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,1), 'LineWidth', 2,"Color",colors(1,:)); hold on;
     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,1), colors(1,:)); hold on;
@@ -354,7 +366,7 @@ for i=1:7
     % proposed origin
     for j=1:snr_num
         mean_list(1,j) = mean(rainbow_proposed_origin_diff_snr_matrix{i,j});
-        std_list(1,j) = std(rainbow_proposed_origin_diff_snr_matrix{i,j});
+        % std_list(1,j) = std(rainbow_proposed_origin_diff_snr_matrix{i,j});
     end
     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,2), 'LineWidth', 2,"Color",colors(2,:)); hold on;
     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,2), colors(2,:));
@@ -363,7 +375,7 @@ for i=1:7
     % sse
     for j=1:snr_num
         mean_list(1,j) = mean(rainbow_sse_diff_snr_matrix{i,j});
-        std_list(1,j) = std(rainbow_sse_diff_snr_matrix{i,j});
+        % std_list(1,j) = std(rainbow_sse_diff_snr_matrix{i,j});
     end
     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,3), 'LineWidth', 2,"Color",colors(3,:)); hold on;
     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,3), colors(3,:));
@@ -373,7 +385,7 @@ for i=1:7
     % tem
     for j=1:snr_num
         mean_list(1,j) = mean(rainbow_tem_diff_snr_matrix{i,j});
-        std_list(1,j) = std(rainbow_tem_diff_snr_matrix{i,j});
+        % std_list(1,j) = std(rainbow_tem_diff_snr_matrix{i,j});
     end
     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,4), 'LineWidth', 2,"Color",colors(4,:)); hold on;
     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,4), colors(4,:));
@@ -383,7 +395,7 @@ for i=1:7
     % dqn
     for j=1:snr_num
         mean_list(1,j) = mean(dqn_diff_snr_matrix{i,j});
-        std_list(1,j) = std(dqn_diff_snr_matrix{i,j});
+        % std_list(1,j) = std(dqn_diff_snr_matrix{i,j});
     end
     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,5), 'LineWidth', 2,"Color",colors(5,:)); hold on;
     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,5), colors(5,:));
@@ -392,7 +404,7 @@ for i=1:7
     % amac
     for j=1:snr_num
         mean_list(1,j) = mean(amac_diff_snr_matrix{i,j});
-        std_list(1,j) = std(amac_diff_snr_matrix{i,j});
+        % std_list(1,j) = std(amac_diff_snr_matrix{i,j});
     end
     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,6), 'LineWidth', 2,"Color",colors(6,:)); hold on;
     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,6), colors(6,:));
@@ -418,12 +430,18 @@ end
 
 
 %% Fig.7 Different Est Err
-load("experiments\diff_est_err_data\diff_est_err_data.mat")
+% load("experiments\diff_est_err_data\diff_est_err_data.mat")
+load("experiments\diff_est_err_data\rainbow_proposed_erf_diff_est_err_matrix.mat")
+load("experiments\diff_est_err_data\rainbow_proposed_origin_diff_est_err_matrix.mat")
+load("experiments\diff_est_err_data\rainbow_sse_diff_est_err_matrix.mat")
+load("experiments\diff_est_err_data\rainbow_tem_diff_est_err_matrix.mat")
+load("experiments\diff_est_err_data\dqn_diff_est_err_matrix.mat")
+load("experiments\diff_est_err_data\amac_diff_est_err_matrix.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward", "Accuracy Violation",];
 y_max_list = [0.5,3,1,0.1,40000,0.5,0.001];
 y_min_list = [0,0,0,0,0,-0.5,0];
 est_err_num = 3;
-for i=7
+for i=1:7
     figure(15+i)
     error_data = zeros(6, est_err_num);
     data = zeros(6,est_err_num);

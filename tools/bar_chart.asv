@@ -2,11 +2,8 @@
 %try to type this "applyhatch(gcf,'.-++/||xx');" instedly. 
 %So you can avoid the duplicated pattern at least, even order problem is still not solved. 
 data=[43.37,37.77,15.87;
-      38.2, 33.63, 14.1;
-      15.47,15.4,14.73;
-      77.8,10.2,4.4;
-      21.27,13.6,7.93;
-      47.43,26.97,25.6];
+      38.2, 33.63,, 555;
+      ];
 X = [1,2,3,4,5,6];
 
 GO = bar(X,data,1,'EdgeColor','k','LineWidth',1);
@@ -14,13 +11,19 @@ GO = bar(X,data,1,'EdgeColor','k','LineWidth',1);
 hatchfill2(GO(1),'cross','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
 hatchfill2(GO(2),'single','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
 hatchfill2(GO(3),'single','HatchAngle',0,'HatchDensity',40,'HatchColor','k');
+hatchfill2(GO(4),'single','HatchAngle',-45,'HatchDensity',40,'HatchColor','k');
+hatchfill2(GO(5),'cross','HatchAngle',-60,'HatchDensity',30,'HatchColor','k');
+hatchfill2(GO(6),'cross','HatchAngle',60,'HatchDensity',30,'HatchColor','k');
 
 GO(1).FaceColor = colors(1,:);
 GO(2).FaceColor = colors(2,:);
 GO(3).FaceColor = colors(3,:);
+GO(4).FaceColor = colors(4,:);
+GO(5).FaceColor = colors(5,:);
+GO(6).FaceColor = colors(6,:);
 
 % Draw the legend
-legendData = {};
+legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
 [legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
 % object_h(1) is the first bar's text
 % object_h(2) is the second bar's text
@@ -28,9 +31,12 @@ legendData = {};
 % object_h(4) is the second bar's patch
 %
 % Set the two patches within the legend
-hatchfill2(object_h(4), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
-hatchfill2(object_h(5), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
-hatchfill2(object_h(6), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(8), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(9), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(10), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(11), 'single', 'HatchAngle', -45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(12), 'cross', 'HatchAngle', -60, 'HatchDensity', 30, 'HatchColor', 'k');
+hatchfill2(object_h(13), 'cross', 'HatchAngle', 60, 'HatchDensity', 30, 'HatchColor', 'k');
 % Some extra formatting to make it pretty :)
 set(gca,'FontName','Times New Roman','FontSize',12);
 set(gca,'gridlinestyle','--','Gridalpha',0.8);
@@ -42,4 +48,4 @@ ylim([0, 100]);
 % hXLabel = xlabel('Samples');
 hYLabel = ylabel('Pick Probability (%)');
 ax = gca;
-ax.XTickLabel = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
+ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};

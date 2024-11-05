@@ -11,7 +11,7 @@ import random
 from scipy.io import savemat
 import time
 time_start = time.time()
-
+import tools.saving_loading as sl
 
 class Runner:
     def __init__(self, args, number, seed):
@@ -162,11 +162,11 @@ if __name__ == '__main__':
     parser.add_argument("--use_lr_decay", type=bool, default=True, help="Learning rate Decay")
     parser.add_argument("--grad_clip", type=float, default=10.0, help="Gradient clip")
 
-    parser.add_argument("--use_double", type=bool, default=True, help="Whether to use double Q-learning")
-    parser.add_argument("--use_dueling", type=bool, default=True, help="Whether to use dueling network")
-    parser.add_argument("--use_noisy", type=bool, default=True, help="Whether to use noisy network")
-    parser.add_argument("--use_per", type=bool, default=True, help="Whether to use PER")
-    parser.add_argument("--use_n_steps", type=bool, default=True, help="Whether to use n_steps Q-learning")
+    parser.add_argument("--use_double", type=bool, default=False, help="Whether to use double Q-learning")
+    parser.add_argument("--use_dueling", type=bool, default=False, help="Whether to use dueling network")
+    parser.add_argument("--use_noisy", type=bool, default=False, help="Whether to use noisy network")
+    parser.add_argument("--use_per", type=bool, default=False, help="Whether to use PER")
+    parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
 
     args = parser.parse_args()
 
@@ -194,23 +194,8 @@ if __name__ == '__main__':
         runner.run()
 
         # save the data
-        if runner.env.name == "proposed":
-            mat_name = "rainbow_dqn/eval_data/eval_proposed_data.mat"
-        elif runner.env.name == "sse":
-            mat_name = "rainbow_dqn/eval_data/eval_sse_data.mat"
-        elif runner.env.name == "tem":
-            mat_name = "rainbow_dqn/eval_data/eval_tem_data.mat"
-
-        print("Env Name:", mat_name)
-        savemat(mat_name,
-                {"rainbow_dqn" + runner.env.name + "_eval_episode_total_delay": np.mean(runner.env.episode_total_delay_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_total_energy": np.mean(runner.env.episode_total_energy_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_reward": np.mean(runner.env.episode_reward_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_acc_exp": np.mean(runner.env.episode_acc_exp_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_remain_energy": np.mean(runner.env.episode_remain_energy_list),
-                 "rainbow_dqn" + runner.env.name + "_eval_episode_re_trans_number": np.mean(runner.env.episode_re_trans_num_list),
-                 })
-
+        sl.save_eval_data(runner)
+        runner.env.reset()
 
 
         runner.env.step_reward_list = []
