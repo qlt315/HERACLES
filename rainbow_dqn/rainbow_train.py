@@ -1,10 +1,17 @@
 import torch
 import numpy as np
 import gym
+from experiments.eval_bad_actions import get_top_k_values
 from envs.env_proposed_origin import EnvProposed_origin
 from envs.env_proposed_erf import EnvProposed_erf
 from envs.env_tem import EnvTEM
 from envs.env_sse import EnvSSE
+
+# from envs_wo_one.env_proposed_origin import EnvProposed_origin
+# from envs_wo_one.env_proposed_erf import EnvProposed_erf
+# from envs_wo_one.env_tem import EnvTEM
+from envs_wo_one.env_sse import EnvSSE
+
 from torch.utils.tensorboard import SummaryWriter
 from rainbow_replay_buffer import *
 from rainbow_agent import DQN
@@ -20,9 +27,9 @@ class Runner:
         self.number = number
         self.seed = seed
         # self.env = EnvProposed_origin()
-        self.env = EnvProposed_erf()
+        # self.env = EnvProposed_erf()
         # self.env = EnvSSE()
-        # self.env = EnvTEM()
+        self.env = EnvTEM()
         # self.env.seed(seed)
         # self.env.action_space.seed(seed)
         # self.env_evaluate.seed(seed)
@@ -128,7 +135,7 @@ class Runner:
 
 
 if __name__ == '__main__':
-    seed_list = [666, 555, 444, 333, 111]
+    seed_list = [666,555,444,333,111]
 
     def seed_torch(seed):
         torch.manual_seed(seed)
@@ -138,7 +145,7 @@ if __name__ == '__main__':
             torch.backends.cudnn.deterministic = True
 
     episode_length = 3000  # Number of steps / episode
-    episode_number = 20  # Number of episode to train
+    episode_number = 10  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
     step_reward_matrix = np.zeros([len(seed_list), int(steps)])
 
@@ -184,6 +191,17 @@ if __name__ == '__main__':
         runner = Runner(args=args, number=1, seed=seed)
         print("algorithm:", runner.algorithm)
         runner.run()
+        action_str = ""
+        show_action_num = 3
+        index, values = most_picked_action = get_top_k_values(runner.env.action_freq_list, show_action_num)
+        for act in range(show_action_num - 1, -1, -1):
+            action_index = index[act]
+            action_freq = round(values[act] / runner.env.slot_num * 100, 2)
+            if action_str == "":
+                action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+            else:
+                action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+        print(action_str)
         step_reward_matrix[k, :] = np.array(runner.env.step_reward_list)
 
 

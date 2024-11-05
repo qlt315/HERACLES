@@ -72,22 +72,14 @@ class Amac:
     def __init__(self, is_test):
         self.is_test = is_test
         if self.is_test:
-            self.seed_list = [31]
+            self.seed_list = [40]
             self.slot_num = 3000  # Number of time slots
             self.enable_re_trans = True
         else:
-            self.seed_list = [666, 555, 444, 333, 111]
-            self.slot_num = 20 * 3000  # Number of time slots
+            self.seed_list = [666,555,444,333,111]
+            self.slot_num = 10 * 3000  # Number of time slots
             self.enable_re_trans = False
-        self.total_delay_list = np.zeros([1, len(self.seed_list)])
-        self.total_energy_list = np.zeros([1, len(self.seed_list)])
-        self.reward_list = np.zeros([1, len(self.seed_list)])
-        self.acc_exp_list = np.zeros([1, len(self.seed_list)])
-        self.delay_vio_num_list = np.zeros([1, len(self.seed_list)])
-        self.acc_vio_num_list = np.zeros([1, len(self.seed_list)])
-        self.remain_energy_list = np.zeros([1, len(self.seed_list)])
-        self.re_trans_num_list = np.zeros([1, len(self.seed_list)])
-        self.step_reward_list = np.zeros([len(self.seed_list), self.slot_num])
+
         self.sensor_num = 4  # Number of sensors
         self.bandwidth = 20e6  # System bandwidth (Hz)
         self.max_power = 1  # Maximum transmit power (W)
@@ -101,6 +93,28 @@ class Amac:
         self.sub_block_length = 128
         self.target_snr_db = 2
         self.action_list = []
+        # Initialize lists
+        self.episode_total_delay_list = np.zeros([1, len(self.seed_list)])
+        self.episode_total_energy_list = np.zeros([1, len(self.seed_list)])
+        self.episode_reward_list = np.zeros([1, len(self.seed_list)])
+        self.episode_acc_exp_list = np.zeros([1, len(self.seed_list)])
+        self.episode_delay_vio_num_list = np.zeros([1, len(self.seed_list)])
+        self.episode_acc_vio_num_list = np.zeros([1, len(self.seed_list)])
+        self.episode_remain_energy_list = np.zeros([1, len(self.seed_list)])
+        self.episode_re_trans_num_list = np.zeros([1, len(self.seed_list)])
+        self.episode_acc_vio_list = np.zeros([1, len(self.seed_list)])
+        self.step_reward_list = np.zeros([len(self.seed_list), self.slot_num])
+
+
+        self.total_delay_list = np.zeros([1, self.slot_num])
+        self.total_energy_list = np.zeros([1, self.slot_num])
+        self.total_acc_list = np.zeros([1, self.slot_num])
+        self.re_trans_num_list = np.zeros([1, self.slot_num])
+        self.acc_vio_list = np.zeros([1, self.slot_num])
+
+        self.acc_vio_num = 0
+        self.delay_vio_num = 0
+        self.re_trans_num = np.nan
     def run(self):
         for k in range(len(self.seed_list)):
             print("seed:", self.seed_list[k])
@@ -116,16 +130,9 @@ class Amac:
             data_size = np.zeros([1, self.sensor_num])
             for i in range(self.sensor_num):
                 data_size[0, i] = np.random.rand() * 10000
-            # Initialize lists
-            total_delay_list = np.zeros([1, self.slot_num])
-            total_energy_list = np.zeros([1, self.slot_num])
-            total_acc_list = np.zeros([1, self.slot_num])
-            acc_vio_num = 0
-            delay_vio_num = 0
-            re_trans_num = np.nan
             context_flag = 0
             consider_re_trans = 0  # 0 or 1
-            max_re_trans_num = 200
+            max_re_trans_num = 500
 
             context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
             curr_context = None
@@ -146,6 +153,7 @@ class Amac:
 
             all_p = []  # Polynomial coefficients
             all_mod_method = []
+            all_mod_order = []
             all_rate = []
 
             wireless_data_paths = ['system_data/5G_dataset/Netflix/Driving/animated-RickandMorty',
@@ -175,15 +183,25 @@ class Amac:
                     p = np.polyfit(snr_list, ber_data['bler'].flatten(), 5)
 
                     all_p.append(p)
+
                     all_mod_method.append(mod_method)
+                    if mod_method == "qpsk":
+                        mod_order = 2
+                    elif mod_method == "16qam":
+                        mod_order = 4
+                    elif mod_method == "64qam":
+                        mod_order = 6
+                    all_mod_order.append(mod_order)
                     all_rate.append(rate)
 
             # Main simulation loop
+            min_acc_list = []
             for i in range(self.slot_num):
                 # print("slot num:", i)
                 curr_context_id = context_train_list[context_flag]
                 curr_context = self.context_list[curr_context_id]
                 min_acc = util.obtain_min_acc(curr_context)
+                min_acc_list.append(min_acc)
                 if i % context_interval == 0 and i != 0:
                     context_flag = context_flag + 1
                     curr_context_id = context_train_list[context_flag]
@@ -211,7 +229,7 @@ class Amac:
                     ber_curr = np.clip(ber_curr, 0, 1)
                     acc_curr = platform_data[curr_context][22, 0] / 100
                     # Delay Calculation
-                    trans_rate = self.bandwidth * np.log2(1 + snr)
+                    trans_rate = all_mod_order[j] * self.bandwidth * np.log2(1 + snr)
                     # print("trans rate:",trans_rate)
                     coded_data_size = math.floor(np.sum(data_size) / rate_curr)
 
@@ -226,7 +244,7 @@ class Amac:
 
                     # Retransmission simulation
                     if self.enable_re_trans:
-                        re_trans_num = 0
+                        self.re_trans_num = 0
                         block_num = np.floor(coded_data_size / self.sub_block_length)
                         per_curr = 1 - (1 - ber_curr) ** self.sub_block_length
                         # print("Using TM")
@@ -243,16 +261,16 @@ class Amac:
                                     break
                                 else:
                                     re_trans_num_block = re_trans_num_block + 1
-                                    per_curr = 1 - (1 - ber_curr) ** (self.sub_block_length / (1 - rate_curr))
-                            re_trans_num = re_trans_num + re_trans_num_block
-                        re_trans_delay = re_trans_num * (
-                                (1 / rate_curr - 1) * self.sub_block_length / trans_rate)
+                                    per_curr = 1 - (1 - ber_curr) ** (self.sub_block_length * (1 - rate_curr))
+                            self.re_trans_num = self.re_trans_num + re_trans_num_block
+                        re_trans_delay = self.re_trans_num * (
+                                self.sub_block_length * (1 - rate_curr)/ trans_rate)
                         re_trans_energy = re_trans_delay * self.max_power
                     trans_delay = trans_delay + re_trans_delay
                     trans_energy = trans_energy + re_trans_energy
                     total_delay = stem_com_delay.item() + trans_delay + branch_com_delay.item()
                     total_energy = stem_com_energy.item() + trans_energy + branch_com_energy.item()
-                    last_energy = total_energy_list[0, i]
+                    last_energy = self.total_energy_list[0, i]
                     reward_1 = ss.erf(acc_curr - min_acc)
                     reward_2 = total_delay / max_delay
                     # reward_3 = self.remain_energy / self.max_energy
@@ -267,42 +285,51 @@ class Amac:
                 # print(reward_curr_list)
                 opt_index = reward_curr_list.index(np.max(reward_curr_list))
                 # print("opt idx:",opt_index)
-                # print("re_trans_num:",re_trans_num)
+                # print("self.re_trans_num:",self.re_trans_num)
                 self.action_list.append(all_mod_method[opt_index])
                 self.step_reward_list[k, i] = np.max(reward_curr_list)
                 # print("reward:", self.step_reward_list[k, i])
-                total_delay_list[0, i] = delay_curr_list[opt_index]
-                total_energy_list[0, i] = energy_curr_list[opt_index]
+                self.total_delay_list[0, i] = delay_curr_list[opt_index]
+                self.total_energy_list[0, i] = energy_curr_list[opt_index]
+                self.re_trans_num_list[0,i] = self.re_trans_num
+                self.total_acc_list[0,i] = acc_curr
                 if acc_curr <= min_acc:
-                    acc_vio_num = acc_vio_num + 1
+                    self.acc_vio_num = self.acc_vio_num + 1
                     self.bad_action_freq_list.append(opt_index)
+                    self.acc_vio_list[0, i] = np.abs(acc_curr - min_acc)
                 self.action_freq_list.append(opt_index)
-            acc_vio_num = acc_vio_num / self.slot_num
+
+
             # Averages per episode
-            aver_total_delay = np.sum(total_delay_list) / self.slot_num
-            aver_total_energy = np.sum(total_energy_list) / self.slot_num
+            aver_total_delay = np.sum(self.total_delay_list) / self.slot_num
+            aver_total_energy = np.sum(self.total_energy_list) / self.slot_num
+            aver_re_trans_num = np.sum(self.re_trans_num_list) / self.slot_num
             aver_acc = acc_curr
             aver_reward = np.sum(self.step_reward_list[k, :]) / self.slot_num
+            aver_acc_vio = np.sum(self.acc_vio_list) / self.acc_vio_num
+
+            self.acc_vio_num = self.acc_vio_num / self.slot_num
 
             print(f'Average Total Delay (s): {aver_total_delay:.2f}')
             print(f'Average Total Energy Consumption (J): {aver_total_energy:.2f}')
             print(f'Remaining Energy Consumption (J): {curr_energy:.2f}')
             print(f'Average Reward: {aver_reward:.2f}')
             print(f'Average Accuracy: {aver_acc:.2f}')
-            print(f'Timeout Number: {delay_vio_num}')
-            print(f'Retransmission Number: {re_trans_num}')
-            print(f'Accuracy Violation rate: {acc_vio_num}')
+            print(f'Timeout Number: {self.delay_vio_num}')
+            print(f'Retransmission Number: {aver_re_trans_num}')
+            print(f'Accuracy Violation rate: {self.acc_vio_num}')
+            print(f'Accuracy Violation: {aver_acc_vio}')
+            print(f'min acc: {np.mean(min_acc_list)}')
 
-            self.total_delay_list[0, k] = aver_total_delay
-            self.total_energy_list[0, k] = aver_total_energy
-            self.reward_list[0, k] = aver_reward
-            self.acc_exp_list[0, k] = aver_acc
-            self.delay_vio_num_list[0, k] = delay_vio_num
-            self.remain_energy_list[0, k] = curr_energy
-            self.re_trans_num_list[0, k] = re_trans_num
-            self.acc_vio_num_list[0, k] = acc_vio_num
-
-            print(self.reward_list[0, 0])
+            self.episode_total_delay_list[0, k] = aver_total_delay
+            self.episode_total_energy_list[0, k] = aver_total_energy
+            self.episode_reward_list[0, k] = aver_reward
+            self.episode_acc_exp_list[0, k] = aver_acc
+            self.episode_delay_vio_num_list[0, k] = self.delay_vio_num
+            self.episode_remain_energy_list[0, k] = curr_energy
+            self.episode_re_trans_num_list[0, k] = aver_re_trans_num
+            self.episode_acc_vio_num_list[0, k] = self.acc_vio_num
+            self.episode_acc_vio_list[0, k] = aver_acc_vio
 
 
 if __name__ == '__main__':
@@ -311,13 +338,13 @@ if __name__ == '__main__':
 
     mat_name = "baselines/amac_data.mat"
     savemat(mat_name,
-            {"amac_eval_episode_total_delay": np.sum(runner.total_delay_list) / len(runner.seed_list),
-             "amac_eval_episode_total_energy": np.sum(runner.total_energy_list) / len(runner.seed_list),
-             "amac_eval_episode_reward": np.sum(runner.reward_list) / len(runner.seed_list),
-             "amac_eval_episode_acc_exp": np.sum(runner.acc_exp_list) / len(runner.seed_list),
-             "amac_eval_episode_delay_vio_num": np.sum(runner.delay_vio_num_list) / len(runner.seed_list),
-             "amac_eval_episode_acc_vio_num": np.sum(runner.acc_vio_num_list) / len(runner.seed_list),
-             "amac_eval_episode_remain_energy": np.sum(runner.remain_energy_list) / len(runner.seed_list),
-             "amac_eval_episode_re_trans_number": np.sum(runner.re_trans_num_list) / len(runner.seed_list),
+            {"amac_eval_episode_total_delay": np.sum(runner.episode_total_delay_list) / len(runner.seed_list),
+             "amac_eval_episode_total_energy": np.sum(runner.episode_total_energy_list) / len(runner.seed_list),
+             "amac_eval_episode_reward": np.sum(runner.episode_reward_list) / len(runner.seed_list),
+             "amac_eval_episode_acc_exp": np.sum(runner.episode_acc_exp_list) / len(runner.seed_list),
+             "amac_eval_episode_delay_vio_num": np.sum(runner.episode_delay_vio_num_list) / len(runner.seed_list),
+             "amac_eval_episode_acc_vio_num": np.sum(runner.episode_acc_vio_num_list) / len(runner.seed_list),
+             "amac_eval_episode_remain_energy": np.sum(runner.episode_remain_energy_list) / len(runner.seed_list),
+             "amac_eval_episode_re_trans_number": np.sum(runner.episode_re_trans_num_list) / len(runner.seed_list),
              "amac_step_reward_list": runner.step_reward_list
              })

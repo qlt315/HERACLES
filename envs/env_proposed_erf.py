@@ -11,7 +11,6 @@ import random
 import matplotlib.pyplot as plt
 import scipy.special as ss
 
-
 # import envs.mobile_channel_gen
 
 class EnvProposed_erf(gym.Env):
@@ -43,6 +42,8 @@ class EnvProposed_erf(gym.Env):
         self.acc_exp_list = np.zeros([1, self.slot_num])
         self.reward_list = np.zeros([1, self.slot_num])
         self.re_trans_list = np.zeros([1, self.slot_num])
+        self.acc_vio_list = np.zeros([1, self.slot_num])
+        self.min_acc_list = np.zeros([1, self.slot_num])
 
         self.episode_total_delay_list = []
         self.episode_total_energy_list = []
@@ -52,6 +53,7 @@ class EnvProposed_erf(gym.Env):
         self.episode_remain_energy_list = []
         self.episode_re_trans_num_list = []
         self.episode_acc_vio_num_list = []
+        self.episode_acc_vio_list = []
         np.seterr(over='ignore')
         self.context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
         # self.context_list = ["sunny", "sunny", "sunny", "sunny", "sunny", "sunny"]
@@ -80,7 +82,7 @@ class EnvProposed_erf(gym.Env):
         self.observation_space = spaces.Box(obs_low, obs_high, dtype=np.float32)
         self.step_num = 0
         self.episode_num = 0
-        self.max_re_trans_num = 200
+        self.max_re_trans_num = 500
         self.kappa_1 = 2  # acc reward coefficient
         self.kappa_2 = 1  # delay reward coefficient
         self.kappa_3 = 1  # energy consumption reward coefficient
@@ -175,6 +177,7 @@ class EnvProposed_erf(gym.Env):
             curr_context_id = self.context_train_list[self.context_flag]
             self.curr_context = self.context_list[curr_context_id]
         min_acc = util.obtain_min_acc(self.curr_context)
+        self.min_acc_list[0,self.step_num] = min_acc
         # h = (np.random.randn(1) + 1j  # Wireless channel
         #      * np.random.randn(1)) / np.sqrt(2)
         # h = mobile_channel_gen.calculate_channel_gain(self.step_num)
@@ -186,6 +189,7 @@ class EnvProposed_erf(gym.Env):
         action_info = util.action_mapping(self.action_sunny_list, self.action_rain_list, self.action_snow_list,
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
+        # print("action:",action_info.fusion_name)
         # self.action_name = self.get_action_name(action)
         # Calculate SNR and trans rate
         # tm_snr_db = float(self.snr_array[self.step_num])
@@ -195,10 +199,19 @@ class EnvProposed_erf(gym.Env):
         tm_snr = 10 ** (tm_snr_db / 10)
 
         tm_ber = np.clip(self.tm_polynomial_model(tm_snr_db), 0.00001, 0.99999)
-        tm_trans_rate = self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
+        if self.tm_mod == "qpsk":
+            mod_order = 2
+        elif self.tm_mod == "16qam":
+            mod_order = 4
+        elif self.tm_mod == "64qam":
+            mod_order = 6
+        tm_trans_rate = mod_order * self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
 
-        hm_snr_1 = tm_snr * self.hm_power_ratio
-        hm_snr_2 = tm_snr * (1 - self.hm_power_ratio)
+        # hm_snr_1 = tm_snr * self.hm_power_ratio
+        # hm_snr_2 = tm_snr * (1 - self.hm_power_ratio)
+
+        hm_snr_1 = tm_snr
+        hm_snr_2 = tm_snr
 
         hm_snr_1_db = 10 * np.log10(hm_snr_1)
         hm_snr_2_db = 10 * np.log10(hm_snr_2)
@@ -207,7 +220,7 @@ class EnvProposed_erf(gym.Env):
         hm_ber_1 = np.clip(self.hm_polynomial_model_1(hm_snr_1_db), 0.00001, 0.99999)
         hm_ber_2 = np.clip(self.hm_polynomial_model_2(hm_snr_2_db), 0.00001, 0.99999)
 
-        hm_trans_rate = tm_trans_rate
+        hm_trans_rate = (4+2) * self.bandwidth * np.log2(1 + tm_snr)
 
         # Calculate PER of each branch (totally 21 branches)
         # print(tm_ber, hm_ber_1, hm_ber_2)
@@ -253,12 +266,16 @@ class EnvProposed_erf(gym.Env):
 
             # Retransmission simulation
             if self.enable_re_trans:
+                self.re_trans_num = 0
                 order = action_info.fusion_name
                 hm_per_1 = 1 - (1 - hm_ber_1) ** self.sub_block_length
                 hm_per_2 = 1 - (1 - hm_ber_2) ** self.sub_block_length
                 hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                 block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
                 block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
+
+                # print("block num",max(block_num_1, block_num_2))
+                # print("HM PER:", hm_per)
                 for j in range(int(max(block_num_1, block_num_2))):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -270,17 +287,17 @@ class EnvProposed_erf(gym.Env):
                             break
                         else:
                             re_trans_num_block = re_trans_num_block + 1
-                            hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length / (1 - self.tm_coding_rate))
-                            hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length / (1 - self.tm_coding_rate))
+                            hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length * (1 - self.tm_coding_rate))
+                            hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length * (1 - self.tm_coding_rate))
                             hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
+                            # print("Changed:",hm_per_1,hm_per_2,hm_per)
                     self.re_trans_num = self.re_trans_num + re_trans_num_block
-                re_trans_delay = self.re_trans_num * (
-                            (1 / self.hm_coding_rate - 1) * self.sub_block_length / hm_trans_rate)
+                re_trans_delay = self.re_trans_num * (self.sub_block_length * (1 - self.tm_coding_rate) / hm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
                 # print("re trans delay:",re_trans_delay)
             trans_delay = data_size / hm_trans_rate + re_trans_delay
         # print("Re-trans number:", self.re_trans_num)
-        # print(re_trans_delay,re_trans_energy)
+        # print("trans delay:",trans_delay, "re_trans_delay",re_trans_delay)
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
@@ -304,6 +321,7 @@ class EnvProposed_erf(gym.Env):
             # print("acc:",acc_exp, "acc_min:",min_acc)
             self.acc_vio_num = self.acc_vio_num + 1
             self.bad_action_freq_list[0,action] +=1
+            self.acc_vio_list[0, self.step_num] = np.abs(acc_exp - min_acc)
         # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
         self.acc_exp_list[0, self.step_num] = acc_exp
@@ -332,13 +350,14 @@ class EnvProposed_erf(gym.Env):
             self.episode_num = self.episode_num + 1
             self.done = True
 
-            self.acc_vio_num = self.acc_vio_num / self.slot_num
-
             episode_total_delay = np.sum(self.total_delay_list) / self.slot_num
             episode_total_energy = np.sum(self.total_energy_list) / self.slot_num
             episode_acc_exp = np.sum(self.acc_exp_list) / self.slot_num
             episode_reward = np.sum(self.reward_list) / self.slot_num
             episode_re_trans_num = np.sum(self.re_trans_list) / self.slot_num
+            episode_acc_vio = np.sum(self.acc_vio_list) / self.acc_vio_num
+
+            self.acc_vio_num = self.acc_vio_num / self.slot_num
 
             print("Average total delay (s) of current episode:", episode_total_delay)
             print("Average total energy consumption (J)", episode_total_energy, "Remain energy (J)", self.remain_energy)
@@ -347,6 +366,7 @@ class EnvProposed_erf(gym.Env):
             print("Delay violation slot number:", self.delay_vio_num)
             print("Retransmission number:", episode_re_trans_num)
             print("Accuracy violation rate:", self.acc_vio_num)
+            print("Accuracy violation:", episode_acc_vio)
 
             self.episode_total_delay_list.append(episode_total_delay)
             self.episode_total_energy_list.append(episode_total_energy)
@@ -356,6 +376,7 @@ class EnvProposed_erf(gym.Env):
             self.episode_remain_energy_list.append(self.remain_energy.item())
             self.episode_re_trans_num_list.append(episode_re_trans_num)
             self.episode_acc_vio_num_list.append(self.acc_vio_num)
+            self.episode_acc_vio_list.append(episode_acc_vio)
 
         self.step_num = self.step_num + 1
         self.action_freq_list[0, action] +=1
@@ -379,6 +400,7 @@ class EnvProposed_erf(gym.Env):
         self.acc_exp_list = np.zeros([1, self.slot_num])
         self.reward_list = np.zeros([1, self.slot_num])
         self.re_trans_list = np.zeros([1, self.slot_num])
+        self.acc_vio_list = np.zeros([1, self.slot_num])
         self.action_freq_list = np.zeros([1, 33])  # record the frequency of each action picked
         self.bad_action_freq_list = np.zeros([1, 33])  # record the frequency of bad action (acc < acc_min)
         self.episode_total_delay_list = []
@@ -389,6 +411,7 @@ class EnvProposed_erf(gym.Env):
         self.episode_remain_energy_list = []
         self.episode_re_trans_num_list = []
         self.episode_acc_vio_num_list = []
+        self.episode_acc_vio_list = []
         return np.array(state_init)
 
     def input_est_err(self, est_err_para):

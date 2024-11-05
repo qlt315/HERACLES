@@ -15,13 +15,13 @@ import time
 import os
 
 time_start = time.time()
-env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
+env_list = [ EnvProposed_erf(), EnvProposed_origin(), EnvSSE(), EnvTEM()]
 env_num = len(set(type(obj) for obj in env_list))
 
 seed = 666
 kappa_num = 3
 context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
-algorithm_list = ["rainbow_   dqn"]
+algorithm_list = ["rainbow_dqn", "dqn"]
 
 def seed_torch(seed):
     torch.manual_seed(seed)
@@ -151,7 +151,7 @@ class Runner:
 
 if __name__ == '__main__':
     episode_length = 3000  # Number of steps / episode
-    episode_number = 10  # Number of episode to train
+    episode_number = 6  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
 
 
@@ -218,7 +218,7 @@ if __name__ == '__main__':
                 runner.run()
 
                 # save the model
-                sl.save_nn_model_diff_kappa(runner, folder_path)
+                sl.save_nn_model_diff_context(runner, folder_path)
                 runner.env.reset()
 
     time_end = time.time()

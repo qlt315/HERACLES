@@ -42,7 +42,7 @@ class EnvSSE(gym.Env):
         self.acc_exp_list = np.zeros([1, self.slot_num])
         self.reward_list = np.zeros([1, self.slot_num])
         self.re_trans_list = np.zeros([1, self.slot_num])
-
+        self.acc_vio_list = np.zeros([1, self.slot_num])
         self.step_reward_list = []
         self.episode_total_delay_list = []
         self.episode_total_energy_list = []
@@ -52,6 +52,7 @@ class EnvSSE(gym.Env):
         self.episode_remain_energy_list = []
         self.episode_re_trans_num_list = []
         self.episode_acc_vio_num_list = []
+        self.episode_acc_vio_list = []
         self.context_list = ["snow", "fog", "motorway", "night", "rain", "sunny"]
         # self.context_list = ["sunny", "sunny", "sunny", "sunny", "sunny", "sunny"]
         self.context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
@@ -79,7 +80,7 @@ class EnvSSE(gym.Env):
 
         self.step_num = 0
         self.episode_num = 0
-        self.max_re_trans_num = 200
+        self.max_re_trans_num = 500
         self.kappa_1 = 2  # acc reward coefficient
         self.kappa_2 = 1  # delay reward coefficient
         self.kappa_3 = 1  # energy consumption reward coefficient
@@ -191,7 +192,7 @@ class EnvSSE(gym.Env):
         hm_ber_3 = np.clip(self.hm_polynomial_model_3(hm_snr_3_db), 0.00001, 0.99999)
         hm_ber_4 = np.clip(self.hm_polynomial_model_4(hm_snr_4_db), 0.00001, 0.99999)
 
-        hm_trans_rate = self.bandwidth * np.log2(1 + hm_snr)  # Bit / s
+        hm_trans_rate = 2*4 * self.bandwidth * np.log2(1 + hm_snr)  # Bit / s
 
         # Calculate accuracy expectation
         # acc_exp = acc_exp_gen(per, self.curr_context)
@@ -267,6 +268,7 @@ class EnvSSE(gym.Env):
             # print("acc:",acc_exp, "acc_min:",min_acc)
             self.acc_vio_num = self.acc_vio_num + 1
             self.bad_action_freq_list[0,action] +=1
+            self.acc_vio_list[0, self.step_num] = np.abs(acc_exp - min_acc)
         self.action_freq_list[0, action] +=1
         # acc_exp = util.acc_normalize(acc_exp, self.curr_context)
 
@@ -293,13 +295,16 @@ class EnvSSE(gym.Env):
             self.episode_num = self.episode_num + 1
             done = True
 
-            self.acc_vio_num = self.acc_vio_num / self.slot_num
+
 
             episode_total_delay = np.sum(self.total_delay_list) / self.slot_num
             episode_total_energy = np.sum(self.total_energy_list) / self.slot_num
             episode_acc_exp = np.sum(self.acc_exp_list) / self.slot_num
             episode_reward = np.sum(self.reward_list) / self.slot_num
             episode_re_trans_num = np.sum(self.re_trans_list) / self.slot_num
+            episode_acc_vio = np.sum(self.acc_vio_list) / self.acc_vio_num
+
+            self.acc_vio_num = self.acc_vio_num / self.slot_num
 
             print("Average total delay (s) of current episode:", episode_total_delay)
             print("Average total energy consumption (J)", episode_total_energy, "Remain energy (J)", self.remain_energy)
@@ -308,6 +313,7 @@ class EnvSSE(gym.Env):
             print("Delay violation slot number:", self.delay_vio_num)
             print("Retransmission number:", episode_re_trans_num)
             print("Accuracy violation rate:", self.acc_vio_num)
+            print("Accuracy violation:", episode_acc_vio)
 
             self.episode_total_delay_list.append(episode_total_delay)
             self.episode_total_energy_list.append(episode_total_energy)
@@ -317,6 +323,7 @@ class EnvSSE(gym.Env):
             self.episode_remain_energy_list.append(self.remain_energy)
             self.episode_re_trans_num_list.append(episode_re_trans_num)
             self.episode_acc_vio_num_list.append(self.acc_vio_num)
+            self.episode_acc_vio_list.append(episode_acc_vio)
         else:
             done = False
 
@@ -340,6 +347,7 @@ class EnvSSE(gym.Env):
         self.acc_exp_list = np.zeros([1, self.slot_num])
         self.reward_list = np.zeros([1, self.slot_num])
         self.re_trans_list = np.zeros([1, self.slot_num])
+        self.acc_vio_list = np.zeros([1, self.slot_num])
         self.action_freq_list = np.zeros([1, 24])  # record the frequency of each action picked
         self.bad_action_freq_list = np.zeros([1, 24])  # record the frequency of bad action (acc < acc_min)
         self.episode_total_delay_list = []
@@ -350,6 +358,7 @@ class EnvSSE(gym.Env):
         self.episode_remain_energy_list = []
         self.episode_re_trans_num_list = []
         self.episode_acc_vio_num_list = []
+        self.episode_acc_vio_list = []
         return np.array(state_init)
 
     def input_est_err(self, est_err_para):

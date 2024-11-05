@@ -17,8 +17,8 @@ def load_nn_model(runner):
             target_net = torch.load('rainbow_dqn/models/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('baselines/dqn/models/rainbow_dqn_proposed_origin.pth')
-            target_net = torch.load('baselines/dqn/models/rainbow_dqn_target_proposed_origin.pth')
+            net = torch.load('baselines/dqn/models/dqn_proposed_erf.pth')
+            target_net = torch.load('baselines/dqn/models/dqn_target_proposed_erf.pth')
         elif runner.env.name == "proposed_erf":
             net = torch.load('baselines/dqn/models/rainbow_dqn_proposed_erf.pth')
             target_net = torch.load('baselines/dqn/models/rainbow_dqn_target_proposed_erf.pth')
@@ -46,8 +46,8 @@ def save_nn_model(runner):
             torch.save(runner.agent.target_net, 'rainbow_dqn/models/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'baselines/dqn/models/rainbow_dqn_proposed_origin".pth')
-            torch.save(runner.agent.target_net, 'baselines/dqn/models/rainbow_dqn_target_proposed_origin.pth')
+            torch.save(runner.agent.net, 'baselines/dqn/models/dqn_proposed_erf".pth')
+            torch.save(runner.agent.target_net, 'baselines/dqn/models/dqn_target_proposed_erf.pth')
         elif runner.env.name == "proposed_erf":
             torch.save(runner.agent.net, 'baselines/dqn/models/rainbow_dqn_proposed_erf.pth')
             torch.save(runner.agent.target_net, 'baselines/dqn/models/rainbow_dqn_target_proposed_erf.pth')
@@ -86,6 +86,34 @@ def save_nn_model_diff_kappa(runner,folder_path):
         elif runner.env.name == "tem":
             torch.save(runner.agent.net,  'experiments/diff_reward_weights_data/' + folder_path + '/dqn_tem.pth')
             torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_tem.pth')
+
+def save_nn_model_diff_context(runner,folder_path):
+    if runner.algorithm == "rainbow_dqn":
+        if runner.env.name == "proposed_origin":
+            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
+        elif runner.env.name == "proposed_erf":
+            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
+        elif runner.env.name == "sse":
+            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_sse.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
+        elif runner.env.name == "tem":
+            torch.save(runner.agent.net,  'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_tem.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
+    elif runner.algorithm == "dqn":
+        if runner.env.name == "proposed_origin":
+            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_target_proposed_origin.pth')
+        elif runner.env.name == "proposed_erf":
+            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_proposed_target_erf.pth')
+        elif runner.env.name == "sse":
+            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/dqn_sse.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_target_sse.pth')
+        elif runner.env.name == "tem":
+            torch.save(runner.agent.net,  'experiments/diff_context_data/' + folder_path + '/dqn_tem.pth')
+            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_target_tem.pth')
 
 
 def load_nn_model_diff_kappa(runner,folder_path):

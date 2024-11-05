@@ -15,13 +15,28 @@ import time
 import tools.saving_loading as sl
 
 time_start = time.time()
-seed_list = [31]
+seed = 31
+context_list = ["sunny", "snow", "fog", "motorway", "night", "rain", "mix"]
 
+algorithm = ["rainbow_dqn"]  # or dqn
+# algorithm = ["dqn"]
 
 def get_top_k_values(array, K):
     top_k_indices = np.argsort(array[0,:])[-K:]
     top_k_values = array[0, top_k_indices]
     return top_k_indices, top_k_values
+
+def seed_torch(seed):
+        torch.manual_seed(seed)
+        if torch.backends.cudnn.enabled:
+            torch.cuda.manual_seed(seed)
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+
+np.random.seed(seed)
+random.seed(seed)
+seed_torch(seed)
+
 
 class Runner:
     def __init__(self, args, number, seed):
@@ -141,20 +156,13 @@ if __name__ == '__main__':
 
 
 
-    def seed_torch(seed):
-        torch.manual_seed(seed)
-        if torch.backends.cudnn.enabled:
-            torch.cuda.manual_seed(seed)
-            torch.backends.cudnn.benchmark = False
-            torch.backends.cudnn.deterministic = True
+
 
 
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to eval
     steps = episode_number * episode_length  # Total step number
 
-    algorithm = ["rainbow_dqn"] # or dqn
-    # algorithm = ["dqn"]
     parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
     parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
     parser.add_argument("--evaluate_freq", type=float, default=1e3,
@@ -194,30 +202,35 @@ if __name__ == '__main__':
         parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
     args = parser.parse_args()
 
-    for k in range(len(seed_list)):
-        seed = seed_list[k]
-        print("Eval index:", k, "seed", seed)
-        np.random.seed(seed)
-        random.seed(seed)
-        seed_torch(seed)
+    for w in range(len(context_list)):
         env_index = 0
 
         runner = Runner(args=args, number=1, seed=seed)
 
         # load the model
         sl.load_nn_model(runner)
+
+        # choose the context
+        if context_list[w] != "mix":
+            runner.env.context_list = [context_list[w]] * len(context_list)
+        print("current context:", context_list[w])
         runner.run()
+        action_str = ""
+        show_action_num = 10
+        index, values = get_top_k_values(runner.env.bad_action_freq_list, show_action_num)
+        for act in range(show_action_num - 1, -1, -1):
+            action_index = index[act]
+            action_freq = round(values[act] / runner.env.slot_num * 100, 2)
+            if action_str == "":
+                action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+            else:
+                action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+        print(action_str)
+
 
         # save the data
-        sl.save_eval_data(runner)
-        runner.env.reset()
-
-    output_action_num = 10
-    index, values = get_top_k_values(runner.env.bad_action_freq_list, output_action_num)
-    for i in range(output_action_num):
-        print("Bad Action:",index[i], "Pick Number:", values[i], "Freq:", values[i]/runner.env.slot_num)
-
-
+        # sl.save_eval_data(runner)
+        # runner.env.reset()
 
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + "Second")

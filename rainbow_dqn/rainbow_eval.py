@@ -14,6 +14,16 @@ from scipy.io import savemat
 import time
 import tools.saving_loading as sl
 
+seed_list = [40]
+
+
+def seed_torch(seed):
+    torch.manual_seed(seed)
+    if torch.backends.cudnn.enabled:
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+
 time_start = time.time()
 
 
@@ -23,10 +33,10 @@ class Runner:
 
         self.number = number
         self.seed = seed
-        self.env = EnvProposed_erf()
+        # self.env = EnvProposed_erf()
         # self.env = EnvProposed_origin()
         # self.env = EnvSSE()
-        # self.env = EnvTEM()
+        self.env = EnvTEM()
         # self.env.seed(seed)
         # self.env.action_space.seed(seed)
         # self.env_evaluate.seed(seed)
@@ -132,16 +142,13 @@ class Runner:
 
 
 if __name__ == '__main__':
-    seed_list = [31]
 
 
-    def seed_torch(seed):
-        torch.manual_seed(seed)
-        if torch.backends.cudnn.enabled:
-            torch.cuda.manual_seed(seed)
-            torch.backends.cudnn.benchmark = False
-            torch.backends.cudnn.deterministic = True
 
+    def get_top_k_values(array, K):
+        top_k_indices = np.argsort(array[0, :])[-K:]
+        top_k_values = array[0, top_k_indices]
+        return top_k_indices, top_k_values
 
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to eval
@@ -194,6 +201,18 @@ if __name__ == '__main__':
         # load the model
         sl.load_nn_model(runner)
         runner.run()
+
+        action_str = ""
+        show_action_num = 10
+        index, values = most_picked_action = get_top_k_values(runner.env.action_freq_list, show_action_num)
+        for act in range(show_action_num - 1, -1, -1):
+            action_index = index[act]
+            action_freq = round(values[act] / runner.env.slot_num * 100, 2)
+            if action_str == "":
+                action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+            else:
+                action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+        print(action_str)
 
         # save the data
         sl.save_eval_data(runner)

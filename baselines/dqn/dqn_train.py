@@ -5,6 +5,11 @@ from envs.env_proposed_origin import EnvProposed_origin
 from envs.env_proposed_erf import EnvProposed_erf
 from envs.env_tem import EnvTEM
 from envs.env_sse import EnvSSE
+
+# from envs_wo_one.env_proposed_origin import EnvProposed_origin
+# from envs_wo_one.env_proposed_erf import EnvProposed_erf
+# from envs_wo_one.env_tem import EnvTEM
+
 from torch.utils.tensorboard import SummaryWriter
 from rainbow_dqn.rainbow_replay_buffer import *
 from rainbow_dqn.rainbow_agent import DQN
@@ -127,7 +132,7 @@ class Runner:
 
 
 if __name__ == '__main__':
-    seed_list = [666, 555, 444, 333, 111]
+    seed_list = [666,555,444,333,111]
 
     def seed_torch(seed):
         torch.manual_seed(seed)
@@ -137,7 +142,7 @@ if __name__ == '__main__':
             torch.backends.cudnn.deterministic = True
 
     episode_length = 3000  # Number of steps / episode
-    episode_number = 20  # Number of episode to train
+    episode_number = 10  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
     step_reward_matrix = np.zeros([len(seed_list), int(steps)])
 

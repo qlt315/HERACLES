@@ -1,16 +1,24 @@
-import numpy as np
-from scipy.io import loadmat
 import os
 import pandas as pd
+import numpy as np
+from numpy.ma.core import shape
+from scipy.io import loadmat
 
-def per_list_gen(tm_ber, data_size, tm_rate):
+
+def per_list_gen(tm_ber, hm_ber_1, hm_ber_2, data_size, tm_rate, hm_rate):
     camera_per = 1 - (1 - tm_ber) ** (
             data_size[0, 0] / tm_rate)  # data_size[1] = data_size[2] as we have 2 same cameras
     radar_per = 1 - (1 - tm_ber) ** (data_size[0, 2] / tm_rate)
     lidar_per = 1 - (1 - tm_ber) ** (data_size[0, 3] / tm_rate)
-    dual_camera_per = 1 - ((1 - tm_ber) ** (2 * data_size[0, 0]))
-    radar_lidar_per = 1 - ((1 - tm_ber) ** ((data_size[0, 2] + data_size[0, 3]) / tm_rate))
-    camera_lidar_per = 1 - ((1 - tm_ber) ** ((data_size[0, 0] + data_size[0, 3]) / tm_rate))
+    dual_camera_per = 1 - ((1 - tm_ber) ** data_size[0, 0]) ** 2
+    radar_lidar_per = (1 - ((1 - hm_ber_1) ** (data_size[0, 2] / hm_rate)) *
+                       (1 - hm_ber_2) ** (data_size[0, 3] / hm_rate) +
+                       (1 - (1 - hm_ber_2) ** (data_size[0, 2] / hm_rate) * (
+                               (1 - hm_ber_1) ** (data_size[0, 3] / hm_rate)))) / 2
+    camera_lidar_per = (((1 - ((1 - hm_ber_1) ** (data_size[0, 0] / hm_rate)) * (
+            (1 - hm_ber_2) ** (data_size[0, 3] / hm_rate))) +
+                         (1 - ((1 - hm_ber_2) ** (data_size[0, 0] / hm_rate)) * (
+                                 (1 - hm_ber_1) ** (data_size[0, 3] / hm_rate))))) / 2
     radar_lidar_fusion_radar_per = radar_lidar_per
     dual_camera_fusion_camera_per = dual_camera_per
     camera_lidar_fusion_lidar_per = camera_lidar_per
@@ -31,6 +39,12 @@ def per_list_gen(tm_ber, data_size, tm_rate):
     # print(per_list)
     assert not np.any(per_list < 0), "PER CALCULATION ERROR!"
     return per_list
+
+
+def normalize_list(input_list):
+    inv_list = 1 / (input_list + 1e-10)
+    return inv_list / np.sum(inv_list)
+
 
 def acc_normalize(acc_exp, current_context):
     platform_data = loadmat("system_data/platform_data.mat")
@@ -61,9 +75,6 @@ def acc_normalize(acc_exp, current_context):
         print("Acc exp calculation failed!")
     return acc_exp_nor
 
-def normalize_list(input_list):
-    inv_list = 1 / (input_list + 1e-10)
-    return inv_list / np.sum(inv_list)
 
 
 def acc_exp_gen(per_list, current_context):
@@ -74,7 +85,16 @@ def acc_exp_gen(per_list, current_context):
     acc_motorway_list = platform_data["motorway"][:21]
     acc_fog_list = platform_data["fog"][:21]
     acc_night_list = platform_data["night"][:21]
+
+    # print(acc_sunny_list)
+    # print(acc_rain_list)
+    # print(acc_snow_list)
+    # print(acc_motorway_list)
+    # print(acc_fog_list)
+    # print(acc_night_list)
+
     normalized_per_list = normalize_list(per_list)
+    # print(normalized_per_list)
     acc_exp = 0
     try:
         if current_context == "sunny":
@@ -91,7 +111,6 @@ def acc_exp_gen(per_list, current_context):
             acc_exp = np.sum(np.multiply(normalized_per_list, acc_night_list.T))
     except:
         print("Acc exp calculation failed!")
-
     return acc_exp
 
 
@@ -107,26 +126,39 @@ def action_gen():
             self.com_energy = None  # Computing energy consumption
 
     # Adding action manually :)
-    action_sunny_list = [ActionDic(i) for i in range(1, 22)]  # 21 actions for each context
-    action_rain_list = [ActionDic(i) for i in range(1, 22)]
-    action_snow_list = [ActionDic(i) for i in range(1, 22)]
-    action_motorway_list = [ActionDic(i) for i in range(1, 22)]
-    action_fog_list = [ActionDic(i) for i in range(1, 22)]
-    action_night_list = [ActionDic(i) for i in range(1, 22)]
+    action_sunny_list = [ActionDic(i) for i in range(1, 34)]  # 21 + 12 = 33 actions for each context
+    action_rain_list = [ActionDic(i) for i in range(1, 34)]
+    action_snow_list = [ActionDic(i) for i in range(1, 34)]
+    action_motorway_list = [ActionDic(i) for i in range(1, 34)]
+    action_fog_list = [ActionDic(i) for i in range(1, 34)]
+    action_night_list = [ActionDic(i) for i in range(1, 34)]
 
     #  1,2--Camera 3--Radar 4--Lidar
     #  Array order represents modulation order
-    fusion_name_list = [[1], [3], [4], [1, 2], [3, 4], [1, 4],
-                        [1], [3], [4], [1, 2], [3, 4], [1, 4],
-                        [1], [3], [4], [1, 2], [3, 4], [1, 4],
-                        [3, 4], [1, 2], [1, 4]]
+    fusion_name_list = [[1], [3], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
+                        [1], [3], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
+                        [1], [3], [4], [1, 2], [2, 1], [3, 4], [4, 3], [1, 4], [4, 1],
+                        [3, 4], [4, 3], [1, 2], [2, 1], [1, 4], [4, 1]]
 
-    mod_type_list = ["TM"] * 21
+    mod_type_list = ["TM"] * 33
 
-    backbone_list = ["18", "18", "18", "18", "18", "18",
-                     "50", "50", "50", "50", "50", "50",
-                     "101", "101", "101", "101", "101", "101",
-                     "18", "18", "18", ]
+    backbone_list = ["18", "18", "18", "18", "18", "18", "18", "18", "18",
+                     "50", "50", "50", "50", "50", "50", "50", "50", "50",
+                     "101", "101", "101", "101", "101", "101", "101", "101", "101",
+                     "18", "18", "18", "18", "18", "18"]
+
+    platform_data = loadmat("system_data/platform_data.mat")
+
+    def action_list_gen(acc_list):
+        # Generate a list corresponding to each action,
+        # such as accuracy and latency, energy consumption
+        a = acc_list
+        action_acc_list = [a[0], a[1], a[2], a[3], a[3], a[4], a[4], a[5], a[5],
+                           a[6], a[7], a[8], a[9], a[9], a[10], a[10], a[11], a[11],
+                           a[12], a[13], a[14], a[15], a[15], a[16], a[16], a[17], a[17],
+                           a[18], a[18], a[19], a[19], a[20], a[20]
+                           ]
+        return action_acc_list
 
     platform_data = loadmat("system_data/platform_data.mat")
     acc_sunny_list = platform_data["sunny"][:21]
@@ -135,6 +167,13 @@ def action_gen():
     acc_motorway_list = platform_data["motorway"][:21]
     acc_fog_list = platform_data["fog"][:21]
     acc_night_list = platform_data["night"][:21]
+
+    acc_sunny_list = action_list_gen(acc_sunny_list)
+    acc_rain_list = action_list_gen(acc_rain_list)
+    acc_snow_list = action_list_gen(acc_snow_list)
+    acc_motorway_list = action_list_gen(acc_motorway_list)
+    acc_fog_list = action_list_gen(acc_fog_list)
+    acc_night_list = action_list_gen(acc_night_list)
 
     stem_camera_delay = platform_data["stem_delay"][0]
     stem_radar_delay = platform_data["stem_delay"][2]
@@ -146,13 +185,18 @@ def action_gen():
     stem_dual_camera_fusion_camera_delay = stem_dual_camera_delay
     stem_camera_lidar_fusion_lidar_delay = stem_camera_lidar_delay
     stem_delay_list = [stem_camera_delay, stem_radar_delay, stem_lidar_delay, stem_dual_camera_delay,
-                       stem_radar_lidar_delay, stem_camera_lidar_delay,
+                       stem_dual_camera_delay,
+                       stem_radar_lidar_delay, stem_radar_lidar_delay, stem_camera_lidar_delay, stem_camera_lidar_delay,
                        stem_camera_delay, stem_radar_delay, stem_lidar_delay, stem_dual_camera_delay,
-                       stem_radar_lidar_delay, stem_camera_lidar_delay,
+                       stem_dual_camera_delay,
+                       stem_radar_lidar_delay, stem_radar_lidar_delay, stem_camera_lidar_delay, stem_camera_lidar_delay,
                        stem_camera_delay, stem_radar_delay, stem_lidar_delay, stem_dual_camera_delay,
-                       stem_radar_lidar_delay, stem_camera_lidar_delay,
-                       stem_radar_lidar_fusion_radar_delay, stem_dual_camera_fusion_camera_delay,
-                       stem_camera_lidar_fusion_lidar_delay]
+                       stem_dual_camera_delay,
+                       stem_radar_lidar_delay, stem_radar_lidar_delay, stem_camera_lidar_delay, stem_camera_lidar_delay,
+                       stem_radar_lidar_fusion_radar_delay, stem_radar_lidar_fusion_radar_delay,
+                       stem_dual_camera_fusion_camera_delay, stem_dual_camera_fusion_camera_delay,
+                       stem_camera_lidar_fusion_lidar_delay, stem_camera_lidar_fusion_lidar_delay,
+                       ]
 
     stem_camera_energy = platform_data["stem_energy"][0]
     stem_radar_energy = platform_data["stem_energy"][2]
@@ -164,16 +208,25 @@ def action_gen():
     stem_dual_camera_fusion_camera_energy = stem_dual_camera_energy
     stem_camera_lidar_fusion_lidar_energy = stem_camera_lidar_energy
     stem_energy_list = [stem_camera_energy, stem_radar_energy, stem_lidar_energy, stem_dual_camera_energy,
-                        stem_radar_lidar_energy, stem_camera_lidar_energy,
+                        stem_dual_camera_energy,
+                        stem_radar_lidar_energy, stem_radar_lidar_energy, stem_camera_lidar_energy,
+                        stem_camera_lidar_energy,
                         stem_camera_energy, stem_radar_energy, stem_lidar_energy, stem_dual_camera_energy,
-                        stem_radar_lidar_energy, stem_camera_lidar_energy,
+                        stem_dual_camera_energy,
+                        stem_radar_lidar_energy, stem_radar_lidar_energy, stem_camera_lidar_energy,
+                        stem_camera_lidar_energy,
                         stem_camera_energy, stem_radar_energy, stem_lidar_energy, stem_dual_camera_energy,
-                        stem_radar_lidar_energy, stem_camera_lidar_energy,
-                        stem_radar_lidar_fusion_radar_energy, stem_dual_camera_fusion_camera_energy,
-                        stem_camera_lidar_fusion_lidar_energy]
-
+                        stem_dual_camera_energy,
+                        stem_radar_lidar_energy, stem_radar_lidar_energy, stem_camera_lidar_energy,
+                        stem_camera_lidar_energy,
+                        stem_radar_lidar_fusion_radar_energy, stem_radar_lidar_fusion_radar_energy,
+                        stem_dual_camera_fusion_camera_energy, stem_dual_camera_fusion_camera_energy,
+                        stem_camera_lidar_fusion_lidar_energy, stem_camera_lidar_fusion_lidar_energy,
+                        ]
     branch_delay_list = platform_data["branch_delay"][:21]
     branch_energy_list = platform_data["branch_energy"][:21]
+    branch_delay_list = action_list_gen(branch_delay_list)
+    branch_energy_list = action_list_gen(branch_energy_list)
 
     for i in range(len(action_sunny_list)):
         action_sunny_list[i].fusion_name = fusion_name_list[i]
@@ -243,6 +296,9 @@ def action_mapping(action_sunny_list, action_rain_list, action_snow_list,
 
     return action_info
 
+import os
+import pandas as pd
+import numpy as np
 
 def obtain_cqi_and_snr(directory_path, slot_num):
 
@@ -273,8 +329,6 @@ def obtain_cqi_and_snr(directory_path, slot_num):
     cqi_array = np.random.choice(cqi_array, size=slot_num, replace=False)
     return snr_array, cqi_array
 
-
-import numpy as np
 
 
 def estimate_cqi(cqi_true, est_err_para, min_cqi=1, max_cqi=15):
@@ -324,4 +378,4 @@ def obtain_min_acc(current_context):
     except:
         print("min acc calcualtion failed!")
 
-    return min_acc / 150
+    return min_acc / 125
