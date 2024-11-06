@@ -72,7 +72,7 @@ class Runner:
                 self.algorithm += "_n_steps"
 
         # self.writer = SummaryWriter(
-        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, env_name, number, seed))
+        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, scheme_name, number, seed))
 
         self.evaluate_num = 0  # Record the number of evaluations
         self.evaluate_rewards = []  # Record the rewards during the evaluating
@@ -355,7 +355,7 @@ def run_all(seed):
     create_excel(table_data, "experiments/diff_context_data/performance_table_diff_context.xlsx")
 
 
-def run_single(seed, env_name):
+def run_single(seed, scheme_name):
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -375,15 +375,22 @@ def run_single(seed, env_name):
 
     table_data = np.empty([len(context_list), len(algorithms), len(columns)], dtype='U100')
     env_list = []
-    if env_name == "proposed_erf" or env_name == "dqn":
+    drl_algorithm_list = []
+    if scheme_name == "proposed_erf":
         env_list = [EnvProposed_erf()]
-    elif env_name == "proposed_origin":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "proposed_origin":
         env_list = [EnvProposed_origin()]
-    elif env_name == "sse":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "sse":
         env_list = [EnvSSE()]
-    elif env_name == "tem":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "dqn":
+        env_list = [EnvProposed_erf()]
+        drl_algorithm_list = ["dqn"]
+    elif scheme_name == "tem":
         env_list = [EnvTEM()]
-    drl_algorithm_list = ["rainbow_dqn", "dqn"]
+        drl_algorithm_list = ["rainbow_dqn"]
     env_num = len(set(type(obj) for obj in env_list))
 
     def create_excel(table_data, file_name):
@@ -455,10 +462,7 @@ def run_single(seed, env_name):
             args = parser.parse_args()
 
             for env_id in range(env_num):
-                env_index = 0
                 env = env_list[env_id]
-                if algorithm == "dqn" and env.name != "proposed_erf":
-                    continue
                 runner = Runner(args=args, env=env, number=1, seed=seed)
                 folder_path = context_list[w] + "_models"
                 if context_list[w]=="mix":
@@ -535,7 +539,7 @@ def run_single(seed, env_name):
                 scheme_id = scheme_id + 1
                 runner.env.reset()
         # amac evaluation
-        if env_name == "amac":
+        if scheme_name == "amac":
             print("Evaluating AMAC")  # amac
             action_str = "[1,2,3,4]"
             runner = amac.Amac(is_test=True)
@@ -598,7 +602,7 @@ def run_single(seed, env_name):
     # output the table as an Excel file
     mat_name = "experiments/diff_context_data/performance_table_diff_context.mat"
     savemat(mat_name,{"performance_table_diff_context": table_data})
-    create_excel(table_data, "experiments/diff_context_data/performance_table_diff_context_" + env_name + ".xlsx")
+    create_excel(table_data, "experiments/diff_context_data/performance_table_diff_context_" + scheme_name + ".xlsx")
 
 
 

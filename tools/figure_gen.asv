@@ -210,7 +210,7 @@ ax = gca;
 ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};
 
 %% Fig.5 Different Reward Weight
-load("experiments\diff_kappa_data\diff_kappa_data.mat")
+% load("experiments\diff_kappa_data\diff_kappa_data.mat")
 load("experiments\diff_kappa_data\rainbow_proposed_erf_diff_kappa_matrix.mat")
 load("experiments\diff_kappa_data\rainbow_proposed_origin_diff_kappa_matrix.mat")
 load("experiments\diff_kappa_data\rainbow_sse_diff_kappa_matrix.mat")
@@ -349,7 +349,7 @@ load("experiments\diff_snr_data\amac_diff_snr_matrix.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward","Accuracy Violation"];
 line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
 snr_num = size(snr_db_list, 2);
-for i=3
+for i=1:7
     figure(9+i)
     % proposed erf
     mean_list = zeros(1,snr_num);
@@ -430,7 +430,7 @@ end
 
 
 %% Fig.7 Different Est Err
-load("experiments\diff_est_err_data\diff_est_err_data.mat")
+% load("experiments\diff_est_err_data\diff_est_err_data.mat")
 load("experiments\diff_est_err_data\rainbow_proposed_erf_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\rainbow_proposed_origin_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\rainbow_sse_diff_est_err_matrix.mat")
@@ -438,10 +438,10 @@ load("experiments\diff_est_err_data\rainbow_tem_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\dqn_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\amac_diff_est_err_matrix.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward", "Accuracy Violation",];
-y_max_list = [0.5,3,1,0.1,40000,0.5,0.001];
+y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 est_err_num = 3;
-for i=7
+for i=1:7
     figure(15+i)
     error_data = zeros(6, est_err_num);
     data = zeros(6,est_err_num);
@@ -523,6 +523,7 @@ for i=7
     ax = gca;
     
     ylim([y_min_list(i), y_max_list(i)]);
+    
     
     % hTitle = title('Texture filled bar chart');
     % hXLabel = xlabel('Samples');

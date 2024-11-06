@@ -91,7 +91,7 @@ class Amac:
         self.action_freq_list = []  # record the frequency of each action picked
         self.bad_action_freq_list = []  # record the frequency of bad action (acc < acc_min)
         self.sub_block_length = 128
-        self.target_snr_db = 2
+        self.target_snr_db = 1
         self.action_list = []
         # Initialize lists
         self.episode_total_delay_list = np.zeros([1, len(self.seed_list)])
@@ -131,7 +131,6 @@ class Amac:
             for i in range(self.sensor_num):
                 data_size[0, i] = np.random.rand() * 10000
             context_flag = 0
-            consider_re_trans = 0  # 0 or 1
             max_re_trans_num = 500
 
             context_prob = [0.05, 0.05, 0.2, 0.1, 0.2, 0.4]
@@ -304,7 +303,7 @@ class Amac:
             aver_total_delay = np.sum(self.total_delay_list) / self.slot_num
             aver_total_energy = np.sum(self.total_energy_list) / self.slot_num
             aver_re_trans_num = np.sum(self.re_trans_num_list) / self.slot_num
-            aver_acc = acc_curr
+            aver_acc = np.sum(self.total_acc_list) / self.slot_num
             aver_reward = np.sum(self.step_reward_list[k, :]) / self.slot_num
             aver_acc_vio = np.sum(self.acc_vio_list) / self.acc_vio_num
 

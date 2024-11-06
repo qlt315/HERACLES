@@ -71,7 +71,7 @@ class Runner:
                 self.algorithm += "_n_steps"
 
         # self.writer = SummaryWriter(
-        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, env_name, number, seed))
+        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, scheme_name, number, seed))
 
         self.evaluate_num = 0  # Record the number of evaluations
         self.evaluate_rewards = []  # Record the rewards during the evaluating
@@ -125,7 +125,7 @@ def run_all(seed):
     seed_torch(seed)
     est_err_list = [0, 0.3, 0.5]
     env_list = [EnvProposed_erf(), EnvProposed_origin(), EnvSSE(), EnvTEM()]
-    dql_algorithm_list = ["rainbow_dqn", "dqn"]
+    drl_algorithm_list = ["rainbow_dqn", "dqn"]
     env_num = len(set(type(obj) for obj in env_list))
     rainbow_proposed_erf_diff_est_err_matrix = np.zeros([7, len(est_err_list)],dtype=object)
     rainbow_proposed_origin_diff_est_err_matrix = np.zeros([7, len(est_err_list)],dtype=object)
@@ -138,8 +138,8 @@ def run_all(seed):
     episode_number = 1  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
 
-    for algo_id in range(len(dql_algorithm_list)):
-        algorithm = dql_algorithm_list[algo_id]
+    for algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[algo_id]
         parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
         parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
         parser.add_argument("--evaluate_freq", type=float, default=1e3,
@@ -180,7 +180,7 @@ def run_all(seed):
         args = parser.parse_args()
 
         for env_id in range(env_num):
-            if algorithm == "dqn" and env_id != 1:
+            if algorithm == "dqn" and env.name != "proposed_erf":
                 continue
             for e in range(len(est_err_list)):
                 env_index = 0
@@ -282,7 +282,7 @@ def run_all(seed):
     print("Running Time：" + str(time_end - time_start) + " Second")
 
 
-def run_single(seed, env_name):
+def run_single(seed, scheme_name):
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -295,15 +295,22 @@ def run_single(seed, env_name):
     seed_torch(seed)
     est_err_list = [0, 0.3, 0.5]
     env_list = []
-    if env_name == "proposed_erf" or env_name == "dqn":
+    drl_algorithm_list = []
+    if scheme_name == "proposed_erf":
         env_list = [EnvProposed_erf()]
-    elif env_name == "proposed_origin":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "proposed_origin":
         env_list = [EnvProposed_origin()]
-    elif env_name == "sse":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "sse":
         env_list = [EnvSSE()]
-    elif env_name == "tem":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "dqn":
+        env_list = [EnvProposed_erf()]
+        drl_algorithm_list = ["dqn"]
+    elif scheme_name == "tem":
         env_list = [EnvTEM()]
-    dql_algorithm_list = ["rainbow_dqn", "dqn"]
+        drl_algorithm_list = ["rainbow_dqn"]
     env_num = len(set(type(obj) for obj in env_list))
     rainbow_proposed_erf_diff_est_err_matrix = np.zeros([7, len(est_err_list)], dtype=object)
     rainbow_proposed_origin_diff_est_err_matrix = np.zeros([7, len(est_err_list)], dtype=object)
@@ -315,9 +322,8 @@ def run_single(seed, env_name):
     episode_length = 3000  # Number of steps / episode
     episode_number = 1  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
-
-    for algo_id in range(len(dql_algorithm_list)):
-        algorithm = dql_algorithm_list[algo_id]
+    for algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[algo_id]
         parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
         parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
         parser.add_argument("--evaluate_freq", type=float, default=1e3,
@@ -358,8 +364,6 @@ def run_single(seed, env_name):
         args = parser.parse_args()
 
         for env_id in range(env_num):
-            if algorithm == "dqn" and env_id != 1:
-                continue
             for e in range(len(est_err_list)):
                 env_index = 0
                 env = env_list[env_id]
@@ -386,7 +390,7 @@ def run_single(seed, env_name):
                             action_freq) + "%)"
                 print(action_str)
                 # save the data
-                if algorithm == "rainbow_dqn" and env_id == 0:
+                if algorithm == "rainbow_dqn" and env.name == "proposed_origin":
                     rainbow_proposed_origin_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
                     rainbow_proposed_origin_diff_est_err_matrix[1, e] = runner.env.total_energy_list
                     rainbow_proposed_origin_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
@@ -394,8 +398,7 @@ def run_single(seed, env_name):
                     rainbow_proposed_origin_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
                     rainbow_proposed_origin_diff_est_err_matrix[5, e] = runner.env.reward_list
                     rainbow_proposed_origin_diff_est_err_matrix[6, e] = runner.env.episode_acc_vio_list
-                    aver_min_acc = np.mean(runner.env.min_acc_list[0, :])
-                elif algorithm == "rainbow_dqn" and env_id == 1:
+                elif algorithm == "rainbow_dqn" and env.name == "proposed_erf":
                     rainbow_proposed_erf_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
                     rainbow_proposed_erf_diff_est_err_matrix[1, e] = runner.env.total_energy_list
                     rainbow_proposed_erf_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
@@ -403,7 +406,8 @@ def run_single(seed, env_name):
                     rainbow_proposed_erf_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
                     rainbow_proposed_erf_diff_est_err_matrix[5, e] = runner.env.reward_list
                     rainbow_proposed_erf_diff_est_err_matrix[6, e] = runner.env.episode_acc_vio_list
-                elif algorithm == "rainbow_dqn" and env_id == 2:
+                    aver_min_acc = np.mean(runner.env.min_acc_list[0, :])
+                elif algorithm == "rainbow_dqn" and env.name == "sse":
                     rainbow_sse_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
                     rainbow_sse_diff_est_err_matrix[1, e] = runner.env.total_energy_list
                     rainbow_sse_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
@@ -411,7 +415,7 @@ def run_single(seed, env_name):
                     rainbow_sse_diff_est_err_matrix[4, e] = runner.env.episode_re_trans_num_list
                     rainbow_sse_diff_est_err_matrix[5, e] = runner.env.reward_list
                     rainbow_sse_diff_est_err_matrix[6, e] = runner.env.episode_acc_vio_list
-                elif algorithm == "rainbow_dqn" and env_id == 3:
+                elif algorithm == "rainbow_dqn" and env.name == "tem":
                     rainbow_tem_diff_est_err_matrix[0, e] = runner.env.episode_total_delay_list
                     rainbow_tem_diff_est_err_matrix[1, e] = runner.env.total_energy_list
                     rainbow_tem_diff_est_err_matrix[2, e] = runner.env.acc_exp_list
@@ -430,7 +434,7 @@ def run_single(seed, env_name):
 
                 runner.env.reset()
     # amac evaluation
-    if env_name == "amac":
+    if scheme_name == "amac":
         print("Evaluating AMAC")
         for e in range(len(est_err_list)):
             runner = amac.Amac(is_test=True)
@@ -446,29 +450,29 @@ def run_single(seed, env_name):
             amac_diff_est_err_matrix[5, e] = runner.step_reward_list
             amac_diff_est_err_matrix[6, e] = runner.episode_acc_vio_list
     
-    if env_name == "proposed_erf":
+    if scheme_name == "proposed_erf":
         mat_name = "experiments/diff_est_err_data/rainbow_proposed_erf_diff_est_err_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_erf_diff_est_err_matrix": rainbow_proposed_erf_diff_est_err_matrix,
                            "aver_min_acc": aver_min_acc})
-    elif env_name == "proposed_origin":
+    elif scheme_name == "proposed_origin":
         mat_name = "experiments/diff_est_err_data/rainbow_proposed_origin_diff_est_err_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_origin_diff_est_err_matrix": rainbow_proposed_origin_diff_est_err_matrix})
-    elif env_name == "sse":
+    elif scheme_name == "sse":
         mat_name = "experiments/diff_est_err_data/rainbow_sse_diff_est_err_matrix.mat"
         savemat(mat_name, {"rainbow_sse_diff_est_err_matrix": rainbow_sse_diff_est_err_matrix})
-    elif env_name == "tem":
+    elif scheme_name == "tem":
         mat_name = "experiments/diff_est_err_data/rainbow_tem_diff_est_err_matrix.mat"
         savemat(mat_name, {"rainbow_tem_diff_est_err_matrix": rainbow_tem_diff_est_err_matrix})
-    elif env_name == "dqn":
+    elif scheme_name == "dqn":
         mat_name = "experiments/diff_est_err_data/dqn_diff_est_err_matrix.mat"
         savemat(mat_name, {"dqn_diff_est_err_matrix": dqn_diff_est_err_matrix})
-    elif env_name == "amac":
+    elif scheme_name == "amac":
         mat_name = "experiments/diff_est_err_data/amac_diff_est_err_matrix.mat"
         savemat(mat_name, {"amac_diff_est_err_matrix": amac_diff_est_err_matrix})
 
 
 if __name__ == '__main__':
     time_start = time.time()
-    run_single(40,"sse")
+    run_single(40,"amac")
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + " Second")

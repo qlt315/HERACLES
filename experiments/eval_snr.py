@@ -63,7 +63,7 @@ class Runner:
                 self.algorithm += "_n_steps"
 
         # self.writer = SummaryWriter(
-        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, env_name, number, seed))
+        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, scheme_name, number, seed))
 
         self.evaluate_num = 0  # Record the number of evaluations
         self.evaluate_rewards = []  # Record the rewards during the evaluating
@@ -181,7 +181,7 @@ def run_all(seed):
         for s in range(len(snr_db_list)):
             scheme_id = 0
             for env_id in range(env_num):
-                if algorithm == "dqn" and env_id != 1:
+                if algorithm == "dqn" and env.name != "proposed_erf":
                     continue
                 env_index = 0
                 env = env_list[env_id]
@@ -291,7 +291,7 @@ def run_all(seed):
              })
 
 
-def run_single(seed, env_name):
+def run_single(seed, scheme_name):
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -304,16 +304,24 @@ def run_single(seed, env_name):
     seed_torch(seed)
     # snr_db_list = np.arange(1.5, 4.25, 0.25)
     snr_db_list = np.arange(1, 3.5, 0.5)
-    drl_algorithm_list = ["rainbow_dqn", "dqn"]
+
     env_list = []
-    if env_name == "proposed_erf" or env_name == "dqn":
+    drl_algorithm_list = []
+    if scheme_name == "proposed_erf":
         env_list = [EnvProposed_erf()]
-    elif env_name == "proposed_origin":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "proposed_origin":
         env_list = [EnvProposed_origin()]
-    elif env_name == "sse":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "sse":
         env_list = [EnvSSE()]
-    elif env_name == "tem":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "dqn":
+        env_list = [EnvProposed_erf()]
+        drl_algorithm_list = ["dqn"]
+    elif scheme_name == "tem":
         env_list = [EnvTEM()]
+        drl_algorithm_list = ["rainbow_dqn"]
     env_num = len(set(type(obj) for obj in env_list))
 
     rainbow_proposed_erf_diff_snr_matrix = np.zeros([7, len(snr_db_list)], dtype=object)
@@ -371,8 +379,6 @@ def run_single(seed, env_name):
         for s in range(len(snr_db_list)):
             scheme_id = 0
             for env_id in range(env_num):
-                if algorithm == "dqn" and env_id != 1:
-                    continue
                 env_index = 0
                 env = env_list[env_id]
                 runner = Runner(args=args, env=env, number=1, seed=seed)
@@ -440,7 +446,7 @@ def run_single(seed, env_name):
                     dqn_diff_snr_matrix[6, s] = runner.env.episode_acc_vio_list
                 runner.env.reset()
 
-    if env_name == "amac":
+    if scheme_name == "amac":
         # amac evaluation
         print("Evaluating AMAC")
         for s in range(len(snr_db_list)):
@@ -467,23 +473,23 @@ def run_single(seed, env_name):
             amac_diff_snr_matrix[5, s] = runner.step_reward_list
             amac_diff_snr_matrix[6, s] = runner.episode_acc_vio_list
 
-    if env_name == "proposed_erf":
+    if scheme_name == "proposed_erf":
         mat_name = "experiments/diff_snr_data/rainbow_proposed_erf_diff_snr_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_erf_diff_snr_matrix": rainbow_proposed_erf_diff_snr_matrix,
                            "aver_min_acc": aver_min_acc})
-    elif env_name == "proposed_origin":
+    elif scheme_name == "proposed_origin":
         mat_name = "experiments/diff_snr_data/rainbow_proposed_origin_diff_snr_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_origin_diff_snr_matrix": rainbow_proposed_origin_diff_snr_matrix})
-    elif env_name == "sse":
+    elif scheme_name == "sse":
         mat_name = "experiments/diff_snr_data/rainbow_sse_diff_snr_matrix.mat"
         savemat(mat_name, {"rainbow_sse_diff_snr_matrix": rainbow_sse_diff_snr_matrix})
-    elif env_name == "tem":
+    elif scheme_name == "tem":
         mat_name = "experiments/diff_snr_data/rainbow_tem_diff_snr_matrix.mat"
         savemat(mat_name, {"rainbow_tem_diff_snr_matrix": rainbow_tem_diff_snr_matrix})
-    elif env_name == "dqn":
+    elif scheme_name == "dqn":
         mat_name = "experiments/diff_snr_data/dqn_diff_snr_matrix.mat"
         savemat(mat_name, {"dqn_diff_snr_matrix": dqn_diff_snr_matrix})
-    elif env_name == "amac":
+    elif scheme_name == "amac":
         mat_name = "experiments/diff_snr_data/amac_diff_snr_matrix.mat"
         savemat(mat_name, {"amac_diff_snr_matrix": amac_diff_snr_matrix})
 
@@ -492,7 +498,7 @@ def run_single(seed, env_name):
 
 if __name__ == '__main__':
     time_start = time.time()
-    run_single(40,"amac")
+    run_single(40,"dqn")
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + " Second")
 

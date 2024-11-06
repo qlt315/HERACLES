@@ -438,10 +438,10 @@ load("experiments\diff_est_err_data\rainbow_tem_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\dqn_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\amac_diff_est_err_matrix.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward", "Accuracy Violation",];
-y_max_list = [0.5,3,1,0.1,40000,0.5,0.001];
+y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 est_err_num = 3;
-for i=1:7
+for i=4
     figure(15+i)
     error_data = zeros(6, est_err_num);
     data = zeros(6,est_err_num);
@@ -497,8 +497,14 @@ for i=1:7
     GO(5).FaceColor = colors(5,:);
     GO(6).FaceColor = colors(6,:);
     
+    if i==3 % acc add aver_min_acc
+        yline(aver_min_acc, "Color",[0 0 0], 'LineWidth', 2);hold on;
+        legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC','Accuracy Threshold'};
+    else
+        legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
+    end
+
     % Draw the legend
-    legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
     [legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
     % object_h(1) is the first bar's text
     % object_h(2) is the second bar's text
@@ -524,6 +530,7 @@ for i=1:7
     
     ylim([y_min_list(i), y_max_list(i)]);
     
+
     % hTitle = title('Texture filled bar chart');
     % hXLabel = xlabel('Samples');
     ax.XTickLabel = {'0','0.3','0.5'};

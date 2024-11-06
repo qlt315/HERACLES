@@ -66,7 +66,7 @@ class Runner:
                 self.algorithm += "_n_steps"
 
         # self.writer = SummaryWriter(
-        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, env_name, number, seed))
+        #     log_dir='runs/dqn/{}_env_{}_number_{}_seed_{}'.format(self.algorithm, scheme_name, number, seed))
 
         self.evaluate_num = 0  # Record the number of evaluations
         self.evaluate_rewards = []  # Record the rewards during the evaluating
@@ -121,7 +121,7 @@ def run_all(seed):
     seed_torch(seed)
 
     env_list = [EnvProposed_origin(), EnvProposed_erf(), EnvSSE(), EnvTEM()]
-    algorithm_list = ["rainbow_dqn", "dqn"]
+    drl_algorithm_list = ["rainbow_dqn", "dqn"]
     kappa_num = 3
     kappa_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
     # env_list = []
@@ -140,8 +140,8 @@ def run_all(seed):
     steps = episode_number * episode_length  # Total step number
 
 
-    for algo_id in range(len(algorithm_list)):
-        algorithm = algorithm_list[algo_id]
+    for algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[algo_id]
         parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
         parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
         parser.add_argument("--evaluate_freq", type=float, default=1e3,
@@ -182,7 +182,7 @@ def run_all(seed):
         args = parser.parse_args()
         for kappa_flag in range(kappa_num):
             for env_id in range(env_num):
-                if algorithm == "dqn" and env_id != 1:
+                if algorithm == "dqn" and env.name != "proposed_erf":
                     continue
                 for w in range(len(kappa_list)):
                     env_index = 0
@@ -294,7 +294,7 @@ def run_all(seed):
              })
 
 
-def run_single(seed,env_name):
+def run_single(seed,scheme_name):
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -306,18 +306,24 @@ def run_single(seed,env_name):
     random.seed(seed)
     seed_torch(seed)
     env_list = []
-    if env_name == "proposed_erf" or env_name == "dqn":
+    drl_algorithm_list = []
+    if scheme_name == "proposed_erf":
         env_list = [EnvProposed_erf()]
-    elif env_name == "proposed_origin":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "proposed_origin":
         env_list = [EnvProposed_origin()]
-    elif env_name == "sse":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "sse":
         env_list = [EnvSSE()]
-    elif env_name == "tem":
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "dqn":
+        env_list = [EnvProposed_erf()]
+        drl_algorithm_list = ["dqn"]
+    elif scheme_name == "tem":
         env_list = [EnvTEM()]
-    algorithm_list = ["rainbow_dqn", "dqn"]
+        drl_algorithm_list = ["rainbow_dqn"]
     kappa_num = 3
     kappa_list = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
-    # env_list = []
     env_num = len(set(type(obj) for obj in env_list))
     rainbow_proposed_erf_diff_kappa_matrix = np.zeros([5, len(kappa_list), 3], dtype=object)
     rainbow_proposed_origin_diff_kappa_matrix = np.zeros([5, len(kappa_list), 3], dtype=object)
@@ -330,8 +336,8 @@ def run_single(seed,env_name):
     episode_number = 1  # Number of episode to train
     steps = episode_number * episode_length  # Total step number
 
-    for algo_id in range(len(algorithm_list)):
-        algorithm = algorithm_list[algo_id]
+    for algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[algo_id]
         parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
         parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
         parser.add_argument("--evaluate_freq", type=float, default=1e3,
@@ -372,7 +378,7 @@ def run_single(seed,env_name):
         args = parser.parse_args()
         for kappa_flag in range(kappa_num):
             for env_id in range(env_num):
-                if algorithm == "dqn" and env_id != 1:
+                if algorithm == "dqn" and env.name != "proposed_erf":
                     continue
                 for w in range(len(kappa_list)):
                     env_index = 0
@@ -411,7 +417,7 @@ def run_single(seed,env_name):
                     runner.run()
 
                     # save the data
-                    if algorithm == "rainbow_dqn" and env_id == 0:
+                    if algorithm == "rainbow_dqn" and env.name == "proposed_origin":
                         rainbow_proposed_origin_diff_kappa_matrix[
                             0, w, kappa_flag] = runner.env.episode_total_delay_list
                         rainbow_proposed_origin_diff_kappa_matrix[
@@ -421,19 +427,19 @@ def run_single(seed,env_name):
                             3, w, kappa_flag] = runner.env.episode_acc_vio_num_list
                         rainbow_proposed_origin_diff_kappa_matrix[
                             4, w, kappa_flag] = runner.env.episode_re_trans_num_list
-                    elif algorithm == "rainbow_dqn" and env_id == 1:
+                    elif algorithm == "rainbow_dqn" and env.name == "proposed_erf":
                         rainbow_proposed_erf_diff_kappa_matrix[0, w, kappa_flag] = runner.env.episode_total_delay_list
                         rainbow_proposed_erf_diff_kappa_matrix[1, w, kappa_flag] = runner.env.episode_total_energy_list
                         rainbow_proposed_erf_diff_kappa_matrix[2, w, kappa_flag] = runner.env.episode_acc_exp_list
                         rainbow_proposed_erf_diff_kappa_matrix[3, w, kappa_flag] = runner.env.episode_acc_vio_num_list
                         rainbow_proposed_erf_diff_kappa_matrix[4, w, kappa_flag] = runner.env.episode_re_trans_num_list
-                    elif algorithm == "rainbow_dqn" and env_id == 2:
+                    elif algorithm == "rainbow_dqn" and env.name == "sse":
                         rainbow_sse_diff_kappa_matrix[0, w, kappa_flag] = runner.env.episode_total_delay_list
                         rainbow_sse_diff_kappa_matrix[1, w, kappa_flag] = runner.env.episode_total_energy_list
                         rainbow_sse_diff_kappa_matrix[2, w, kappa_flag] = runner.env.episode_acc_exp_list
                         rainbow_sse_diff_kappa_matrix[3, w, kappa_flag] = runner.env.episode_acc_vio_num_list
                         rainbow_sse_diff_kappa_matrix[4, w, kappa_flag] = runner.env.episode_re_trans_num_list
-                    elif algorithm == "rainbow_dqn" and env_id == 3:
+                    elif algorithm == "rainbow_dqn" and env.name == "tem":
                         rainbow_tem_diff_kappa_matrix[0, w, kappa_flag] = runner.env.episode_total_delay_list
                         rainbow_tem_diff_kappa_matrix[1, w, kappa_flag] = runner.env.episode_total_energy_list
                         rainbow_tem_diff_kappa_matrix[2, w, kappa_flag] = runner.env.episode_acc_exp_list
@@ -448,7 +454,7 @@ def run_single(seed,env_name):
                     runner.env.reset()
 
     # amac evaluation
-    if env_name == "amac":
+    if scheme_name == "amac":
         print("Evaluating AMAC")
         for kappa_flag in range(kappa_num):
             for w in range(len(kappa_list)):
@@ -474,22 +480,22 @@ def run_single(seed,env_name):
                 amac_diff_kappa_matrix[4, w, kappa_flag] = runner.episode_re_trans_num_list
 
     # save all the data
-    if env_name == "proposed_erf":
+    if scheme_name == "proposed_erf":
         mat_name = "experiments/diff_kappa_data/rainbow_proposed_erf_diff_kappa_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_erf_diff_kappa_matrix": rainbow_proposed_erf_diff_kappa_matrix})
-    elif env_name == "proposed_origin":
+    elif scheme_name == "proposed_origin":
         mat_name = "experiments/diff_kappa_data/rainbow_proposed_origin_diff_kappa_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_origin_diff_kappa_matrix": rainbow_proposed_origin_diff_kappa_matrix})
-    elif env_name == "sse":
+    elif scheme_name == "sse":
         mat_name = "experiments/diff_kappa_data/rainbow_sse_diff_kappa_matrix.mat"
         savemat(mat_name, {"rainbow_sse_diff_kappa_matrix": rainbow_sse_diff_kappa_matrix})
-    elif env_name == "tem":
+    elif scheme_name == "tem":
         mat_name = "experiments/diff_kappa_data/rainbow_tem_diff_kappa_matrix.mat"
         savemat(mat_name, {"rainbow_tem_diff_kappa_matrix": rainbow_tem_diff_kappa_matrix})
-    elif env_name == "dqn":
+    elif scheme_name == "dqn":
         mat_name = "experiments/diff_kappa_data/dqn_diff_kappa_matrix.mat"
         savemat(mat_name, {"dqn_diff_kappa_matrix": dqn_diff_kappa_matrix})
-    elif env_name == "amac":
+    elif scheme_name == "amac":
         mat_name = "experiments/diff_kappa_data/amac_diff_kappa_matrix.mat"
         savemat(mat_name, {"amac_diff_kappa_matrix": amac_diff_kappa_matrix})
 
