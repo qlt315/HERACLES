@@ -120,7 +120,7 @@ def run_all(seed):
     random.seed(seed)
     seed_torch(seed)
     # snr_db_list = np.arange(1.5, 4.25, 0.25)
-    snr_db_list = np.arange(1, 3.5, 0.5)
+    snr_db_list = np.arange(1, 3.5, 0.25)
     drl_algorithm_list = ["rainbow_dqn", "dqn"]
     env_list = [EnvProposed_erf(), EnvProposed_origin(), EnvSSE(), EnvTEM()]
     env_num = len(set(type(obj) for obj in env_list))
@@ -303,7 +303,7 @@ def run_single(seed, scheme_name):
     random.seed(seed)
     seed_torch(seed)
     # snr_db_list = np.arange(1.5, 4.25, 0.25)
-    snr_db_list = np.arange(1, 3.5, 0.5)
+    snr_db_list = np.arange(1, 3.5, 0.25)
 
     env_list = []
     drl_algorithm_list = []
@@ -476,7 +476,7 @@ def run_single(seed, scheme_name):
     if scheme_name == "proposed_erf":
         mat_name = "experiments/diff_snr_data/rainbow_proposed_erf_diff_snr_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_erf_diff_snr_matrix": rainbow_proposed_erf_diff_snr_matrix,
-                           "aver_min_acc": aver_min_acc})
+                           "aver_min_acc": aver_min_acc,"snr_db_list":snr_db_list,})
     elif scheme_name == "proposed_origin":
         mat_name = "experiments/diff_snr_data/rainbow_proposed_origin_diff_snr_matrix.mat"
         savemat(mat_name, {"rainbow_proposed_origin_diff_snr_matrix": rainbow_proposed_origin_diff_snr_matrix})
@@ -498,7 +498,7 @@ def run_single(seed, scheme_name):
 
 if __name__ == '__main__':
     time_start = time.time()
-    run_single(40,"dqn")
+    run_single(40,"proposed_erf")
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + " Second")
 

@@ -12,6 +12,36 @@ load("baselines/dqn/train_data/train_proposed_erf_data.mat")
 load("baselines/random_reward.mat")
 load("baselines/amac_data.mat")
 
+% colors = [184/255, 219/255, 179/255;
+%     114/255,176/255,99/255;
+%     113/255,154/255,172/255;
+%     226/255,145/255,53/255;
+%     148/255,198/255,205/255;
+%     74/255,95/255,126/255];
+
+
+% colors = [141/255, 47/255, 37/255;
+%     78/255,25/255,69/255;
+%     203/255,148/255,117/255;
+%     140/255,191/255,135/255;
+%     62/255,96/255,141/255;
+%     144/255,146/255,145/255];
+
+% colors = [191/255, 223/255, 210/255;
+%     37/255,125/255,139/255;
+%     104/255,190/255,217/255;
+%     239/255,206/255,135/255;
+%     234/255,165/255,88/255;
+%     237/255,141/255,90/255];
+
+
+colors = [193/255, 86/255, 94/255;
+    193/255,86/255,94/255;
+    220/255,169/255,106/255;
+    130/255,173/255,127/255;
+    126/255,164/255,209/255;
+    121/255,67/255,142/255;
+    128/255,124/255,125/255];
 
 colors = lines(7);         % Generate distinct colors for each curve
 num_matrices = 6;  % Number of reward matrices
@@ -315,9 +345,9 @@ for i=1:3
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
         z = filtered_data_curr(4,:); % acc vio prob
-        for k = 1:length(x)
-            text(x(k), y(k), z(k), labels{k}, 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
-        end
+        % for k = 1:length(x)
+        %     text(x(k), y(k), z(k), labels{k}, 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
+        % end
             for k=1:size(filtered_data_curr, 2)
             plot3([x(k), x(k)], [y(k), y(k)], [0, z(k)], "--","Color",colors(j,:),'LineWidth',0.5);  
             plot3([0, x(k)], [y(k), y(k)], [z(k), z(k)], "--","Color",colors(j,:),'LineWidth',0.5);  
@@ -337,6 +367,94 @@ for i=1:3
     set(gca, 'ZScale', 'log');
 end
 
+
+% 2-D Version
+labels = {'0.5', '1', '1.5', '2', '2.5','3','3.5','4'};
+data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
+    rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
+title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
+    "Performance Comparison Under Different Delay Reward Weights",...
+    "Performance Comparison Under Different Energy Consumption Reward Weights"];
+marklist = ["+","o","*","x","p","d"];
+for i=1:3
+    figure();
+    for j=1:6
+        data_curr = data{j};
+        % Data cleaning
+        data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio prob
+
+        
+        scatter(x,y, 50,marklist(j),'LineWidth',2); hold on;
+    end
+    grid on;
+    legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    legend(legend_names, 'Location', 'best');
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    xlabel('Delay (S)'); 
+    ylabel("Energy Consumption (J)"); 
+    title(title_list(i))
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    
+
+    figure();
+    for j=1:6
+        data_curr = data{j};
+        % Data cleaning
+        data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio prob
+        scatter(x,z, 50,marklist(j),'LineWidth',2); hold on;
+    end
+    grid on;
+    legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    legend(legend_names, 'Location', 'best');
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    xlabel('Delay (S)');  
+    ylabel("Accuracy Violation Prob");
+    title(title_list(i))
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    set(gca, 'YScale', 'log');
+
+
+    figure();
+    for j=1:6
+        data_curr = data{j};
+        % Data cleaning
+        data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio prob
+        scatter(y,z, 50,marklist(j),'LineWidth',2); hold on;
+    end
+    grid on;
+    legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    legend(legend_names, 'Location', 'best');
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    xlabel("Energy Consumption (J)"); 
+    ylabel("Accuracy Violation Prob");
+    title(title_list(i))
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    set(gca, 'YScale', 'log');
+       
+    
+end
+
 %% Fig.6 Different SNR
 % load("experiments\diff_snr_data\diff_snr_data.mat")
 load("experiments\diff_snr_data\rainbow_proposed_erf_diff_snr_matrix.mat")
@@ -349,7 +467,7 @@ load("experiments\diff_snr_data\amac_diff_snr_matrix.mat")
 ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward","Accuracy Violation"];
 line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
 snr_num = size(snr_db_list, 2);
-for i=1:7
+for i=1
     figure(9+i)
     % proposed erf
     mean_list = zeros(1,snr_num);
@@ -441,7 +559,7 @@ ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accurac
 y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 est_err_num = 3;
-for i=4
+for i=1
     figure(15+i)
     error_data = zeros(6, est_err_num);
     data = zeros(6,est_err_num);

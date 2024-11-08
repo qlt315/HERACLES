@@ -265,8 +265,9 @@ def run_all(seed):
                 re_trans_mean = int(np.mean(runner.env.re_trans_list))
                 # re_trans_std = np.std(runner.env.episode_re_trans_num_list)
                 re_trans_var = int(np.var(runner.env.re_trans_list))
+
                 re_trans_str = str(re_trans_mean) + "(" + str(re_trans_var) + ")"
-                table_data[w, scheme_id, 5] = re_trans_str
+                table_data[w, scheme_id, 5] = re_trans_mean
 
                 reward_mean = round(np.mean(runner.env.reward_list),2)
                 # reward_std = round(np.std(runner.env.reward_list),2)
@@ -329,7 +330,7 @@ def run_all(seed):
         re_trans_mean = int(np.mean(runner.re_trans_num_list))
         re_trans_var = int(np.var(runner.re_trans_num_list))
         re_trans_str = str(re_trans_mean) + "(" + str(re_trans_var) + ")"
-        table_data[w, scheme_id, 5] = re_trans_str
+        table_data[w, scheme_id, 5] = re_trans_mean
 
         reward_mean = round(np.mean(runner.step_reward_list),2)
         # reward_std = round(np.std(runner.step_reward_list),2)
@@ -515,7 +516,7 @@ def run_single(seed, scheme_name):
                 # re_trans_std = np.std(runner.env.episode_re_trans_num_list)
                 re_trans_var = int(np.var(runner.env.re_trans_list))
                 re_trans_str = str(re_trans_mean) + "(" + str(re_trans_var) + ")"
-                table_data[w, scheme_id, 5] = re_trans_str
+                table_data[w, scheme_id, 5] = re_trans_mean
 
                 reward_mean = round(np.mean(runner.env.reward_list),2)
                 # reward_std = round(np.std(runner.env.reward_list),2)
@@ -534,7 +535,7 @@ def run_single(seed, scheme_name):
                         action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
                     else:
                         action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
-                # print(action_str)
+                print(action_str)
                 table_data[w, scheme_id, 7] = action_str
                 scheme_id = scheme_id + 1
                 runner.env.reset()
@@ -579,7 +580,7 @@ def run_single(seed, scheme_name):
             re_trans_mean = int(np.mean(runner.re_trans_num_list))
             re_trans_var = int(np.var(runner.re_trans_num_list))
             re_trans_str = str(re_trans_mean) + "(" + str(re_trans_var) + ")"
-            table_data[w, scheme_id, 5] = re_trans_str
+            table_data[w, scheme_id, 5] = re_trans_mean
 
             reward_mean = round(np.mean(runner.step_reward_list),2)
             # reward_std = round(np.std(runner.step_reward_list),2)
@@ -597,7 +598,7 @@ def run_single(seed, scheme_name):
                 else:
                     action_str = action_str + ";" + act + "(" + str(action_freq) + "%)"
             table_data[w, scheme_id, 7] = action_str
-
+            print(action_str)
 
     # output the table as an Excel file
     mat_name = "experiments/diff_context_data/performance_table_diff_context.mat"
@@ -608,6 +609,7 @@ def run_single(seed, scheme_name):
 
 if __name__ == '__main__':
     time_start = time.time()
-    run_single(40,"proposed_erf")
+    run_single(40,"amac")
+    # run_all(40)
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + " Second")
