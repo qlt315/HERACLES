@@ -40,6 +40,6 @@ ylim([0, 100]);
 
 % hTitle = title('Texture filled bar chart');
 % hXLabel = xlabel('Samples');
-hYLabel = ylabel('Pick Probability (%)');
+hYLabel = ylabel('Action Pick Probability (%)');
 ax = gca;
 ax.XTickLabel = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};

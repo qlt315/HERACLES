@@ -44,11 +44,10 @@ colors = [193/255, 86/255, 94/255;
     128/255,124/255,125/255];
 
 colors = lines(7);         % Generate distinct colors for each curve
-num_matrices = 6;  % Number of reward matrices
+num_matrices = 5;  % Number of reward matrices
 % step_reward_matrix = {proposed_step_reward_matrix, tem_step_reward_matritemx, sse_step_reward_matrix};
 step_reward_matrix = ...
     {rainbow_dqn_proposed_erf_step_reward_matrix,... 
-    rainbow_dqn_proposed_origin_step_reward_matrix,...
     rainbow_dqn_sse_step_reward_matrix,...
     rainbow_dqn_tem_step_reward_matrix,...
     dqn_proposed_erf_step_reward_matrix,amac_step_reward_list};
@@ -99,9 +98,10 @@ set(gca,'FontName','Times New Roman','FontSize',12);
 title('Reward Curves with Mean and Standard Deviation');
 
 % Generate legend with solid lines only
+xlim([0, 15000]);
 ylim([-0.5, 0.5]);
 set(gca, "YTick",-0.5:0.1:0.5);
-legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+legend_names = {"Proposed", "SSE", "TEM", "DQN","AMAC"};
 legend(legend_names, 'Location', 'best');
 
 %% Figure 2 Modulation SNR-BER Fitting
@@ -261,7 +261,7 @@ load("experiments\diff_kappa_data\amac_diff_kappa_matrix.mat")
 %             filtered_data_curr = remove_outliers(data_curr(:,:,i));
 %             x = filtered_data_curr(1,:); % delay
 %             y = filtered_data_curr(2,:); % energy
-%             z = filtered_data_curr(4,:); % acc vio prob
+%             z = filtered_data_curr(4,:); % acc vio Probablity
 %             [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
 %             surf(X, Y, Z, 'FaceColor', colors(j,:), 'FaceAlpha', 0.5); hold on;
 %         end
@@ -289,7 +289,7 @@ for i=1:3
         filtered_data_curr = remove_outliers(data_curr(:,:,i));
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
-        z = filtered_data_curr(4,:); % acc vio prob
+        z = filtered_data_curr(4,:); % acc vio Probablity
         plot3(x,y,z,'-o','LineWidth',2); hold on;
 
 
@@ -302,7 +302,7 @@ for i=1:3
     set(gca,'FontName','Times New Roman','FontSize',12);
     xlabelHandle = xlabel('Delay (S)'); 
     ylabelHandle = ylabel("Energy Consumption (J)"); 
-    zlabelHandle = zlabel("Accuracy Violation Prob");
+    zlabelHandle = zlabel("Accuracy Violation Probablity");
     title(title_list(i))
     set(gca,'gridlinestyle','--','Gridalpha',0.8);
 end
@@ -330,7 +330,7 @@ for i=1:3
         filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
-        z = filtered_data_curr(4,:); % acc vio prob
+        z = filtered_data_curr(4,:); % acc vio Probablity
         scatter3(x,y,z, 50,marklist(j),'LineWidth',2); hold on;
     end
 
@@ -344,7 +344,7 @@ for i=1:3
         filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
-        z = filtered_data_curr(4,:); % acc vio prob
+        z = filtered_data_curr(4,:); % acc vio Probablity
         % for k = 1:length(x)
         %     text(x(k), y(k), z(k), labels{k}, 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
         % end
@@ -361,7 +361,7 @@ for i=1:3
     set(gca,'FontName','Times New Roman','FontSize',12);
     xlabelHandle = xlabel('Delay (S)'); 
     ylabelHandle = ylabel("Energy Consumption (J)"); 
-    zlabelHandle = zlabel("Accuracy Violation Prob");
+    zlabelHandle = zlabel("Accuracy Violation Probablity");
     title(title_list(i))
     set(gca,'gridlinestyle','--','Gridalpha',0.8);
     set(gca, 'ZScale', 'log');
@@ -388,53 +388,69 @@ for i=1:3
         filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
         x = filtered_data_curr(1,:); % delay
         y = filtered_data_curr(2,:); % energy
-        z = filtered_data_curr(4,:); % acc vio prob
+        z = filtered_data_curr(4,:); % acc vio Probablity
 
-
+        
         scatter(x,y, 50,marklist(j),'LineWidth',2); hold on;
     end
     grid on;
     legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
-    xlabelHandle = xlabel('Delay (S)'); 
-    ylabelHandle = ylabel("Energy Consumption (J)"); 
-    zlabelHandle = zlabel("Accuracy Violation Prob");
+    xlabel('Delay (S)'); 
+    ylabel("Energy Consumption (J)"); 
     title(title_list(i))
     set(gca,'gridlinestyle','--','Gridalpha',0.8);
-    set(gca, 'ZScale', 'log');
-    xlabelHandle = xlabel('Delay (S)'); 
-    ylabelHandle = ylabel("Energy Consumption (J)");
     
 
     figure();
     for j=1:6
-    data_curr = data{j};
-    % Data cleaning
-    data_curr_array = zeros(size(data_curr));
-    for k = 1:3
-        data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
-    end
-    filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
-    x = filtered_data_curr(1,:); % delay
-    y = filtered_data_curr(2,:); % energy
-    z = filtered_data_curr(4,:); % acc vio prob
-
-
-        scatter(x,y, 50,marklist(j),'LineWidth',2); hold on;
+        data_curr = data{j};
+        % Data cleaning
+        data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio Probablity
+        scatter(x,z, 50,marklist(j),'LineWidth',2); hold on;
     end
     grid on;
     legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
-    xlabelHandle = xlabel('Delay (S)'); 
-    ylabelHandle = ylabel("Energy Consumption (J)"); 
-    zlabelHandle = zlabel("Accuracy Violation Prob");
+    xlabel('Delay (S)');  
+    ylabel("Accuracy Violation Probablity");
     title(title_list(i))
     set(gca,'gridlinestyle','--','Gridalpha',0.8);
-    set(gca, 'ZScale', 'log');
-    xlabelHandle = xlabel('Delay (S)'); 
-    ylabelHandle = ylabel("Energy Consumption (J)");
+    set(gca, 'YScale', 'log');
+
+
+    figure();
+    for j=1:6
+        data_curr = data{j};
+        % Data cleaning
+        data_curr_array = zeros(size(data_curr));
+        for k = 1:3
+            data_curr_array(:,:,k) = cell2mat(data_curr(:,:,k));
+        end
+        filtered_data_curr = remove_outliers(data_curr_array(:,:,i));
+        x = filtered_data_curr(1,:); % delay
+        y = filtered_data_curr(2,:); % energy
+        z = filtered_data_curr(4,:); % acc vio Probablity
+        scatter(y,z, 50,marklist(j),'LineWidth',2); hold on;
+    end
+    grid on;
+    legend_names = {"Proposed (erf)", "Proposed (origin)", "SSE", "TEM", "DQN","AMAC"};
+    legend(legend_names, 'Location', 'best');
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    xlabel("Energy Consumption (J)"); 
+    ylabel("Accuracy Violation Probablity");
+    title(title_list(i))
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    set(gca, 'YScale', 'log');
        
     
 end
@@ -448,10 +464,10 @@ load("experiments\diff_snr_data\rainbow_tem_diff_snr_matrix.mat")
 load("experiments\diff_snr_data\dqn_diff_snr_matrix.mat")
 load("experiments\diff_snr_data\amac_diff_snr_matrix.mat")
 
-ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward","Accuracy Violation"];
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Probablity", "Re-transmission Number","Average Reward","Accuracy Violation"];
 line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
 snr_num = size(snr_db_list, 2);
-for i=1
+for i=1:7
     figure(9+i)
     % proposed erf
     mean_list = zeros(1,snr_num);
@@ -539,7 +555,7 @@ load("experiments\diff_est_err_data\rainbow_sse_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\rainbow_tem_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\dqn_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\amac_diff_est_err_matrix.mat")
-ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Prob", "Re-transmission Number","Average Reward", "Accuracy Violation",];
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Probablity", "Re-transmission Number","Average Reward", "Accuracy Violation",];
 y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 est_err_num = 3;
@@ -639,3 +655,247 @@ for i=1
 
 
 end
+
+
+
+%% Fig.8 Different context
+% load("experiments\diff_context_data\diff_context_data.mat")
+load("experiments\diff_context_data\rainbow_proposed_erf_diff_context_matrix.mat")
+load("experiments\diff_context_data\rainbow_proposed_origin_diff_context_matrix.mat")
+load("experiments\diff_context_data\rainbow_sse_diff_context_matrix.mat")
+load("experiments\diff_context_data\rainbow_tem_diff_context_matrix.mat")
+load("experiments\diff_context_data\dqn_diff_context_matrix.mat")
+load("experiments\diff_context_data\amac_diff_context_matrix.mat")
+ylabel_list = ["Delay (S)", "Energy Consumption (J)", "Accuracy (mAP)", "Accuracy Violation Probablity", "Re-transmission Number","Average Reward", "Accuracy Violation",];
+y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
+y_min_list = [0,0,0,0,0,-0.5,0];
+context_num = 6;
+for i=7
+    figure(15+i)
+    error_data = zeros(6, context_num);
+    data = zeros(6,context_num);
+    for j=1:context_num
+        data(1,j) = mean(rainbow_proposed_erf_diff_context_matrix{i,j});
+        % error_data(1,j) = std(rainbow_proposed_erf_diff_context_matrix{i,j});
+
+        data(2,j) = mean(rainbow_proposed_origin_diff_context_matrix{i,j});
+        % error_data(2,j) = std(rainbow_proposed_origin_diff_context_matrix{i,j});
+
+        data(3,j) = mean(rainbow_sse_diff_context_matrix{i,j});
+        % error_data(3,j) = std(rainbow_sse_diff_context_matrix{i,j});
+
+        data(4,j) = mean(rainbow_tem_diff_context_matrix{i,j});
+        % error_data(4,j) = std(rainbow_tem_diff_context_matrix{i,j});
+
+        data(5,j) = mean(dqn_diff_context_matrix{i,j});
+        % error_data(5,j) = std(dqn_diff_context_matrix{i,j});
+
+        data(6,j) = mean(amac_diff_context_matrix{i,j});
+        % error_data(6,j) = std(amac_diff_context_matrix{i,j});
+    end
+
+    data=data';
+    X = [1,2,3,4,5,6];
+    GO = bar(X,data,1,'EdgeColor','k','LineWidth',1); hold on;
+    
+    if i==4  % acc vio use log Y-axis
+        set(gca, 'YScale', 'log')
+    end
+
+    % numGroups = size(data, 1);
+    % numBars = size(data, 2);   
+    % groupWidth = min(0.8, numBars / (numBars + 1.5));
+    % for j = 1:numBars
+    %     xCenter = X - groupWidth / 2 + (2 * j - 1) * groupWidth / (2 * numBars); hold on;
+    %     errorbar(xCenter, data(:, j), error_data(j, :), 'k', 'LineStyle', 'none', 'LineWidth', 1);
+    % end
+    
+    
+    hatchfill2(GO(1),'cross','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(2),'single','HatchAngle',45,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(3),'single','HatchAngle',0,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(4),'single','HatchAngle',-45,'HatchDensity',40,'HatchColor','k');
+    hatchfill2(GO(5),'cross','HatchAngle',-60,'HatchDensity',30,'HatchColor','k');
+    hatchfill2(GO(6),'cross','HatchAngle',60,'HatchDensity',30,'HatchColor','k');
+    
+    
+    GO(1).FaceColor = colors(1,:);
+    GO(2).FaceColor = colors(2,:);
+    GO(3).FaceColor = colors(3,:);
+    GO(4).FaceColor = colors(4,:);
+    GO(5).FaceColor = colors(5,:);
+    GO(6).FaceColor = colors(6,:);
+    
+    if i==3 % acc add aver_min_acc
+        yline(aver_min_acc, "Color",[0 0 0], 'LineWidth', 2);hold on;
+        legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC','Accuracy Threshold'};
+    else
+        legendData = {'Proposed (erf)', 'Proposed (origin)', 'SSE', 'TEM', 'DQN','AMAC'};
+    end
+
+    % Draw the legend
+    [legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
+    % object_h(1) is the first bar's text
+    % object_h(2) is the second bar's text
+    % object_h(3) is the first bar's patch
+    % object_h(4) is the second bar's patch
+    %
+    % Set the two patches within the legend
+    hatchfill2(object_h(7), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(8), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(9), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(10), 'single', 'HatchAngle', -45, 'HatchDensity', 40, 'HatchColor', 'k');
+    hatchfill2(object_h(11), 'cross', 'HatchAngle', -60, 'HatchDensity', 30, 'HatchColor', 'k');
+    hatchfill2(object_h(12), 'cross', 'HatchAngle', 60, 'HatchDensity', 30, 'HatchColor', 'k');
+    % Some extra formatting to make it pretty :)
+    set(gca,'FontName','Times New Roman','FontSize',12);
+    set(gca,'gridlinestyle','--','Gridalpha',0.8);
+    set(gca, 'XMinorTick','on', 'XMinorGrid','on', 'YMinorTick','on', 'YMinorGrid','on');
+    
+    % hTitle = title('Texture filled bar chart');
+    hXLabel = xlabel('Context');
+    hYLabel = ylabel(ylabel_list(i));
+    ax = gca;
+    
+    ylim([y_min_list(i), y_max_list(i)]);
+    
+
+    % hTitle = title('Texture filled bar chart');
+    % hXLabel = xlabel('Samples');
+    ax.XTickLabel = {'Sunny', 'Snow', 'Fog', 'Motorway', 'Night','Rain','Mix'};
+
+
+end
+
+
+%% Fig.9 Different Actions
+% Fig.9.1 Different Actions under different contexts
+figure()
+data = [89.67, 4.37, 3.8;
+        50.67, 22.57, 13.47;
+        46.9, 46.6, 3.6;
+        58.17, 35.67, 2.67;
+        51.4, 42.2, 3.2;
+        67.23, 22.3, 5.43;
+        71.47, 18.8, 6.37];
+X = [1,2,3,4,5,6,7];
+
+% Create a horizontal bar chart
+GO = barh(X, data, 1, 'EdgeColor', 'k', 'LineWidth', 1);
+
+% Add hatching
+hatchfill2(GO(1), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(GO(2), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(GO(3), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+
+% Define colors for each bar group
+GO(1).FaceColor = colors(1,:);
+GO(2).FaceColor = colors(2,:);
+GO(3).FaceColor = colors(3,:);
+
+% Draw the legend
+legendData = {};  % Define legend labels if needed
+[legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
+
+% Set hatching patterns in the legend
+hatchfill2(object_h(4), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(5), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(6), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+
+% Formatting
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'gridlinestyle', '--', 'Gridalpha', 0.8);
+set(gca, 'XMinorTick', 'on', 'XMinorGrid', 'on', 'YMinorTick', 'on', 'YMinorGrid', 'on');
+xlim([0, 100]);  % Adjust X limit if needed
+ylim([0.5, 7.5]);  % Adjust Y limit if needed
+
+% Labels
+hXLabel = xlabel('Action Pick Probability (%)');
+hYLabel = ylabel('Context');
+ax = gca;
+ax.YTickLabel = {'Sunny', 'Snow', 'Fog', 'Motorway', 'Night', 'Rain', 'Mix'};
+
+
+text_list = {'[1]-Res101','[3]-Res18','[1,2]-Res18';
+    '[1,2]-Res18','[4]-Res50','[1]-Res101';
+    '[1,2]-Res18','[1]-Res101','[3]-Res50';
+    '[1]-Res101','[1,2]-Res18','[3]-Res50';
+    '[1]-Res101', '[1,2]-Res18','[3]-Res50';
+    '[1]-Res101','[3]-Res50','[4]-Res101'
+    };
+
+% Add text labels to each bar without border or background, with bold font
+for i = 1:size(data, 1) % Loop over each row
+    for j = 1:size(data, 2) % Loop over each column
+        % Add text at the end of each bar with a slight offset
+        text(data(i, j) + 2, X(i) - 0.2 + (j-1)*0.4, text_list{i, j}, ...
+            'FontSize', 10, 'FontWeight', 'bold', 'HorizontalAlignment', 'left', ...
+            'BackgroundColor', 'none', 'EdgeColor', 'none');
+    end
+end
+
+
+
+% Fig.9.2 Different Actions under different SNR
+figure()
+data = [73.53, 19.6, 2.87;
+        71.6, 21.57, 3.7;
+        68.9, 24.37, 5;
+        63.0, 30.27, 6.2;
+        71.47, 18.8, 6.37;
+        87, 6.43, 3.3];
+X = [1, 2, 3, 4, 5, 6];
+
+% Create a horizontal bar chart
+GO = barh(X, data, 1, 'EdgeColor', 'k', 'LineWidth', 1);
+
+% Add hatching patterns to each bar
+hatchfill2(GO(1), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(GO(2), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(GO(3), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+
+% Define colors for each bar group
+GO(1).FaceColor = colors(1,:);
+GO(2).FaceColor = colors(2,:);
+GO(3).FaceColor = colors(3,:);
+
+% Draw the legend
+legendData = {};  % Define legend labels if needed
+[legend_h, object_h, plot_h, text_str] = legendflex(GO, legendData, 'Padding', [2, 2, 10], 'FontSize', 11, 'Location', 'NorthWest');
+
+% Set hatching patterns in the legend
+hatchfill2(object_h(4), 'cross', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(5), 'single', 'HatchAngle', 45, 'HatchDensity', 40, 'HatchColor', 'k');
+hatchfill2(object_h(6), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchColor', 'k');
+
+% Formatting
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
+set(gca, 'gridlinestyle', '--', 'Gridalpha', 0.8);
+set(gca, 'XMinorTick', 'on', 'XMinorGrid', 'on', 'YMinorTick', 'on', 'YMinorGrid', 'on');
+xlim([0, 100]);  % Adjust X limit if needed
+ylim([0.5, 6.5]);  % Adjust Y limit if needed
+
+% Labels
+hXLabel = xlabel('Action Pick Probability (%)');
+hYLabel = ylabel('SNR (dB)');
+ax = gca;
+ax.YTickLabel = {'0', '0.5', '1', '1.5', '2', '2.5'};
+
+text_list = {'[1,2]-Res18','[1]-Res101','[3,4]-Res18';
+    '[1,2]-Res18','[1]-Res101','[3]-Res50';
+    '[1]-Res101','[1,2]-Res18','[3]-Res50';
+    '[1,2]-Res18','[1]-Res101','[3]-Res50';
+    '[1]-Res101', '[1,2]-Res18','[3]-Res50';
+    '[1]-Res101','[3]-Res50','[4]-Res101'
+    };
+
+% Add text labels to each bar without border or background, with bold font
+for i = 1:size(data, 1) % Loop over each row
+    for j = 1:size(data, 2) % Loop over each column
+        % Add text at the end of each bar with a slight offset
+        text(data(i, j) + 2, X(i) - 0.2 + (j-1)*0.4, text_list{i, j}, ...
+            'FontSize', 10, 'FontWeight', 'bold', 'HorizontalAlignment', 'left', ...
+            'BackgroundColor', 'none', 'EdgeColor', 'none');
+    end
+end
+

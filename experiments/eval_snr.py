@@ -302,7 +302,7 @@ def run_single(seed, scheme_name):
     np.random.seed(seed)
     random.seed(seed)
     seed_torch(seed)
-    # snr_db_list = np.arange(1.5, 4.25, 0.25)
+    # snr_db_list = np.arange(0, 3, 0.5)
     snr_db_list = np.arange(1, 3.5, 0.25)
 
     env_list = []
@@ -498,7 +498,7 @@ def run_single(seed, scheme_name):
 
 if __name__ == '__main__':
     time_start = time.time()
-    run_single(40,"proposed_erf")
+    run_single(40,"amac")
     time_end = time.time()
     print("Running Time：" + str(time_end - time_start) + " Second")
 

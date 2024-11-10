@@ -294,6 +294,7 @@ def run_all(seed):
              })
 
 
+
 def run_single(seed,scheme_name):
     def seed_torch(seed):
         torch.manual_seed(seed)
@@ -498,6 +499,12 @@ def run_single(seed,scheme_name):
     elif scheme_name == "amac":
         mat_name = "experiments/diff_kappa_data/amac_diff_kappa_matrix.mat"
         savemat(mat_name, {"amac_diff_kappa_matrix": amac_diff_kappa_matrix})
+
+
+
+
+
+
 
 if __name__ == '__main__':
     time_start = time.time()

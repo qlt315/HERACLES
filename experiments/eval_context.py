@@ -99,8 +99,8 @@ class Runner:
                     self.epsilon = self.epsilon - self.epsilon_decay if self.epsilon - self.epsilon_decay > self.epsilon_min else self.epsilon_min
 
                 # When dead or win or reaching the max_steps, done will be Ture, we need to distinguish them;
-                # terminal means dead or win,there is no next state s';
-                # but when reaching the max_steps,there is a next state s' actually.
+                # terminal means dead or win,there is no next state c';
+                # but when reaching the max_steps,there is a next state c' actually.
                 if done and steps != self.args.limit:
                     terminal = True
                 else:
@@ -116,7 +116,7 @@ class Runner:
 
 
 
-def run_all(seed):
+def run_all_table(seed):
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -356,7 +356,7 @@ def run_all(seed):
     create_excel(table_data, "experiments/diff_context_data/performance_table_diff_context.xlsx")
 
 
-def run_single(seed, scheme_name):
+def run_single_table(seed, scheme_name):
     def seed_torch(seed):
         torch.manual_seed(seed)
         if torch.backends.cudnn.enabled:
@@ -606,6 +606,392 @@ def run_single(seed, scheme_name):
     create_excel(table_data, "experiments/diff_context_data/performance_table_diff_context_" + scheme_name + ".xlsx")
 
 
+def run_all(seed):
+    def seed_torch(seed):
+        torch.manual_seed(seed)
+        if torch.backends.cudnn.enabled:
+            torch.cuda.manual_seed(seed)
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+
+
+    np.random.seed(seed)
+    random.seed(seed)
+    seed_torch(seed)
+    # context_list = np.arange(1.5, 4.25, 0.25)
+    context_list = ["sunny", "snow", "fog", "motorway", "night", "rain", "mix"]
+    drl_algorithm_list = ["rainbow_dqn", "dqn"]
+    env_list = [EnvProposed_erf(), EnvProposed_origin(), EnvSSE(), EnvTEM()]
+    env_num = len(set(type(obj) for obj in env_list))
+
+    rainbow_proposed_erf_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    rainbow_proposed_origin_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    rainbow_sse_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    rainbow_tem_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    amac_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    dqn_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+
+    episode_length = 3000  # Number of steps / episode
+    episode_number = 1  # Number of episode to train
+    steps = episode_number * episode_length  # Total step number
+
+
+    for algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[algo_id]
+        parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
+        parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
+        parser.add_argument("--evaluate_freq", type=float, default=1e3,
+                            help="Evaluate the policy every 'evaluate_freq' steps")
+        parser.add_argument("--evaluate_times", type=float, default=3, help="Evaluate times")
+
+        parser.add_argument("--buffer_capacity", type=int, default=int(1e5), help="The maximum replay-buffer capacity ")
+        parser.add_argument("--batch_size", type=int, default=256, help="batch size")
+        parser.add_argument("--hidden_dim", type=int, default=256,
+                            help="The number of neurons in hidden layers of the neural network")
+        parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate of actor")
+        parser.add_argument("--gamma", type=float, default=0.99, help="Discount factor")
+        parser.add_argument("--epsilon_init", type=float, default=0.5, help="Initial epsilon")
+        parser.add_argument("--epsilon_min", type=float, default=0.1, help="Minimum epsilon")
+        parser.add_argument("--epsilon_decay_steps", type=int, default=int(1e5),
+                            help="How many steps before the epsilon decays to the minimum")
+        parser.add_argument("--tau", type=float, default=0.005, help="soft update the target network")
+        parser.add_argument("--use_soft_update", type=bool, default=True, help="Whether to use soft update")
+        parser.add_argument("--target_update_freq", type=int, default=200,
+                            help="Update frequency of the target network(hard update)")
+        parser.add_argument("--n_steps", type=int, default=5, help="n_steps")
+        parser.add_argument("--alpha", type=float, default=0.6, help="PER parameter")
+        parser.add_argument("--beta_init", type=float, default=0.4, help="Important sampling parameter in PER")
+        parser.add_argument("--use_lr_decay", type=bool, default=True, help="Learning rate Decay")
+        parser.add_argument("--grad_clip", type=float, default=10.0, help="Gradient clip")
+        if algorithm == "rainbow_dqn":
+            parser.add_argument("--use_double", type=bool, default=True, help="Whether to use double Q-learning")
+            parser.add_argument("--use_dueling", type=bool, default=True, help="Whether to use dueling network")
+            parser.add_argument("--use_noisy", type=bool, default=True, help="Whether to use noisy network")
+            parser.add_argument("--use_per", type=bool, default=True, help="Whether to use PER")
+            parser.add_argument("--use_n_steps", type=bool, default=True, help="Whether to use n_steps Q-learning")
+        else:
+            parser.add_argument("--use_double", type=bool, default=False, help="Whether to use double Q-learning")
+            parser.add_argument("--use_dueling", type=bool, default=False, help="Whether to use dueling network")
+            parser.add_argument("--use_noisy", type=bool, default=False, help="Whether to use noisy network")
+            parser.add_argument("--use_per", type=bool, default=False, help="Whether to use PER")
+            parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
+        args = parser.parse_args()
+
+        for c in range(len(context_list)):
+            scheme_id = 0
+            for env_id in range(env_num):
+                if algorithm == "dqn" and env.name != "proposed_erf":
+                    continue
+                env_index = 0
+                env = env_list[env_id]
+                runner = Runner(args=args, env=env, number=1, seed=seed)
+                # load the model
+                # runner.agent.net, runner.agent.target_net = sl.load_nn_model(runner)
+                folder_path = context_list[c] + "_models"
+                runner.agent.net, runner.agent.target_net = sl.load_nn_model_diff_context(runner, folder_path)
+                runner.env.context_list = [context_list[c]] * len(context_list)
+                print("context:", context_list[c])
+                print("algorithm:", runner.algorithm)
+                runner.run()
+                action_str = ""
+                show_action_num = 3
+                index, values = most_picked_action = get_top_k_values(runner.env.action_freq_list, show_action_num)
+                for act in range(show_action_num - 1, -1, -1):
+                    action_index = index[act]
+                    action_freq = round(values[act] / runner.env.slot_num * 100, 2)
+                    if action_str == "":
+                        action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+                    else:
+                        action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(
+                            action_freq) + "%)"
+                print(action_str)
+                # save the data
+                if algorithm == "rainbow_dqn" and env.name == "proposed_origin":
+                    rainbow_proposed_origin_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_proposed_origin_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_proposed_origin_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_proposed_origin_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_proposed_origin_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_proposed_origin_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_proposed_origin_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+
+                elif algorithm == "rainbow_dqn" and env.name == "proposed_erf":
+                    rainbow_proposed_erf_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_proposed_erf_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_proposed_erf_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_proposed_erf_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_proposed_erf_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_proposed_erf_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_proposed_erf_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                    aver_min_acc = np.mean(runner.env.min_acc_list[0,:])
+
+                elif algorithm == "rainbow_dqn" and env.name == "sse":
+                    rainbow_sse_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_sse_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_sse_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_sse_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_sse_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_sse_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_sse_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                elif algorithm == "rainbow_dqn" and env.name == "tem":
+                    rainbow_tem_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_tem_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_tem_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_tem_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_tem_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_tem_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_tem_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                elif algorithm == "dqn":
+                    dqn_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    dqn_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    dqn_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    dqn_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    dqn_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    dqn_diff_context_matrix[5, c] = runner.env.reward_list
+                    dqn_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                runner.env.reset()
+
+    # amac evaluation
+    print("Evaluating AMAC")
+    for c in range(len(context_list)):
+        runner = amac.Amac(is_test=True)
+        runner.context_list = [context_list[c]] * len(context_list)
+        runner.run()
+        action_str = "[1,2,3,4]"
+        show_action_num = 3
+        counter = Counter(runner.action_list)
+        most_common_elements = counter.most_common(show_action_num)
+        for act, freq in most_common_elements:
+            action_freq = round(freq / runner.slot_num * 100, 2)
+            if action_str == "[1,2,3,4]+":
+                action_str = action_str + act + "(" + str(action_freq) + "%)"
+            else:
+                action_str = action_str + ";" + act + "(" + str(action_freq) + "%)"
+        print(action_str)
+
+        amac_diff_context_matrix[0, c] = runner.total_delay_list
+        amac_diff_context_matrix[1, c] = runner.total_energy_list
+        amac_diff_context_matrix[2, c] = runner.total_acc_list
+        amac_diff_context_matrix[3, c] = runner.acc_vio_num
+        amac_diff_context_matrix[4, c] = runner.re_trans_num_list
+        amac_diff_context_matrix[5, c] = runner.step_reward_list
+        amac_diff_context_matrix[6, c] = runner.episode_acc_vio_list
+
+    # save all the data
+    mat_name = "experiments/diff_context_data/diff_context_data.mat"
+    savemat(mat_name,
+            {"rainbow_proposed_erf_diff_context_matrix": rainbow_proposed_erf_diff_context_matrix,
+             "rainbow_proposed_origin_diff_context_matrix": rainbow_proposed_origin_diff_context_matrix,
+             "rainbow_sse_diff_context_matrix": rainbow_sse_diff_context_matrix,
+             "rainbow_tem_diff_context_matrix": rainbow_tem_diff_context_matrix,
+             "dqn_diff_context_matrix": dqn_diff_context_matrix,
+             "amac_diff_context_matrix": amac_diff_context_matrix,
+             "context_list":context_list,
+             "aver_min_acc": aver_min_acc
+             })
+
+
+def run_single(seed, scheme_name):
+    def seed_torch(seed):
+        torch.manual_seed(seed)
+        if torch.backends.cudnn.enabled:
+            torch.cuda.manual_seed(seed)
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+
+    np.random.seed(seed)
+    random.seed(seed)
+    seed_torch(seed)
+
+    context_list = ["sunny", "snow", "fog", "motorway", "night", "rain"]
+
+    env_list = []
+    drl_algorithm_list = []
+    if scheme_name == "proposed_erf":
+        env_list = [EnvProposed_erf()]
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "proposed_origin":
+        env_list = [EnvProposed_origin()]
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "sse":
+        env_list = [EnvSSE()]
+        drl_algorithm_list = ["rainbow_dqn"]
+    elif scheme_name == "dqn":
+        env_list = [EnvProposed_erf()]
+        drl_algorithm_list = ["dqn"]
+    elif scheme_name == "tem":
+        env_list = [EnvTEM()]
+        drl_algorithm_list = ["rainbow_dqn"]
+    env_num = len(set(type(obj) for obj in env_list))
+
+    rainbow_proposed_erf_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    rainbow_proposed_origin_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    rainbow_sse_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    rainbow_tem_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    amac_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+    dqn_diff_context_matrix = np.zeros([7, len(context_list)], dtype=object)
+
+    episode_length = 3000  # Number of steps / episode
+    episode_number = 1  # Number of episode to train
+    steps = episode_number * episode_length  # Total step number
+
+    for algo_id in range(len(drl_algorithm_list)):
+        algorithm = drl_algorithm_list[algo_id]
+        parser = argparse.ArgumentParser("Hyperparameter Setting for DQN")
+        parser.add_argument("--max_train_steps", type=int, default=int(steps), help=" Maximum number of training steps")
+        parser.add_argument("--evaluate_freq", type=float, default=1e3,
+                            help="Evaluate the policy every 'evaluate_freq' steps")
+        parser.add_argument("--evaluate_times", type=float, default=3, help="Evaluate times")
+
+        parser.add_argument("--buffer_capacity", type=int, default=int(1e5), help="The maximum replay-buffer capacity ")
+        parser.add_argument("--batch_size", type=int, default=256, help="batch size")
+        parser.add_argument("--hidden_dim", type=int, default=256,
+                            help="The number of neurons in hidden layers of the neural network")
+        parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate of actor")
+        parser.add_argument("--gamma", type=float, default=0.99, help="Discount factor")
+        parser.add_argument("--epsilon_init", type=float, default=0.5, help="Initial epsilon")
+        parser.add_argument("--epsilon_min", type=float, default=0.1, help="Minimum epsilon")
+        parser.add_argument("--epsilon_decay_steps", type=int, default=int(1e5),
+                            help="How many steps before the epsilon decays to the minimum")
+        parser.add_argument("--tau", type=float, default=0.005, help="soft update the target network")
+        parser.add_argument("--use_soft_update", type=bool, default=True, help="Whether to use soft update")
+        parser.add_argument("--target_update_freq", type=int, default=200,
+                            help="Update frequency of the target network(hard update)")
+        parser.add_argument("--n_steps", type=int, default=5, help="n_steps")
+        parser.add_argument("--alpha", type=float, default=0.6, help="PER parameter")
+        parser.add_argument("--beta_init", type=float, default=0.4, help="Important sampling parameter in PER")
+        parser.add_argument("--use_lr_decay", type=bool, default=True, help="Learning rate Decay")
+        parser.add_argument("--grad_clip", type=float, default=10.0, help="Gradient clip")
+        if algorithm == "rainbow_dqn":
+            parser.add_argument("--use_double", type=bool, default=True, help="Whether to use double Q-learning")
+            parser.add_argument("--use_dueling", type=bool, default=True, help="Whether to use dueling network")
+            parser.add_argument("--use_noisy", type=bool, default=True, help="Whether to use noisy network")
+            parser.add_argument("--use_per", type=bool, default=True, help="Whether to use PER")
+            parser.add_argument("--use_n_steps", type=bool, default=True, help="Whether to use n_steps Q-learning")
+        else:
+            parser.add_argument("--use_double", type=bool, default=False, help="Whether to use double Q-learning")
+            parser.add_argument("--use_dueling", type=bool, default=False, help="Whether to use dueling network")
+            parser.add_argument("--use_noisy", type=bool, default=False, help="Whether to use noisy network")
+            parser.add_argument("--use_per", type=bool, default=False, help="Whether to use PER")
+            parser.add_argument("--use_n_steps", type=bool, default=False, help="Whether to use n_steps Q-learning")
+        args = parser.parse_args()
+
+        for c in range(len(context_list)):
+            scheme_id = 0
+            for env_id in range(env_num):
+                env_index = 0
+                env = env_list[env_id]
+                runner = Runner(args=args, env=env, number=1, seed=seed)
+                # load the model
+                runner.agent.net, runner.agent.target_net = sl.load_nn_model(runner)
+                runner.env.context_list = [context_list[c]] * len(context_list)
+                print("context:", context_list[c])
+                print("algorithm:", runner.algorithm)
+                runner.run()
+                action_str = ""
+                show_action_num = 3
+                index, values = most_picked_action = get_top_k_values(runner.env.action_freq_list, show_action_num)
+                for act in range(show_action_num - 1, -1, -1):
+                    action_index = index[act]
+                    action_freq = round(values[act] / runner.env.slot_num * 100, 2)
+                    if action_str == "":
+                        action_str = runner.env.get_action_name(action_index) + "(" + str(action_freq) + "%)"
+                    else:
+                        action_str = action_str + ";" + runner.env.get_action_name(action_index) + "(" + str(
+                            action_freq) + "%)"
+                print(action_str)
+                # save the data
+                if algorithm == "rainbow_dqn" and env.name == "proposed_origin":
+                    rainbow_proposed_origin_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_proposed_origin_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_proposed_origin_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_proposed_origin_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_proposed_origin_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_proposed_origin_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_proposed_origin_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+
+                elif algorithm == "rainbow_dqn" and env.name == "proposed_erf":
+                    rainbow_proposed_erf_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_proposed_erf_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_proposed_erf_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_proposed_erf_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_proposed_erf_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_proposed_erf_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_proposed_erf_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                    aver_min_acc = np.mean(runner.env.min_acc_list[0, :])
+
+                elif algorithm == "rainbow_dqn" and env.name == "sse":
+                    rainbow_sse_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_sse_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_sse_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_sse_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_sse_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_sse_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_sse_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                elif algorithm == "rainbow_dqn" and env.name == "tem":
+                    rainbow_tem_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    rainbow_tem_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    rainbow_tem_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    rainbow_tem_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    rainbow_tem_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    rainbow_tem_diff_context_matrix[5, c] = runner.env.reward_list
+                    rainbow_tem_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                elif algorithm == "dqn":
+                    dqn_diff_context_matrix[0, c] = runner.env.episode_total_delay_list
+                    dqn_diff_context_matrix[1, c] = runner.env.total_energy_list
+                    dqn_diff_context_matrix[2, c] = runner.env.acc_exp_list
+                    dqn_diff_context_matrix[3, c] = runner.env.episode_acc_vio_num_list
+                    dqn_diff_context_matrix[4, c] = runner.env.episode_re_trans_num_list
+                    dqn_diff_context_matrix[5, c] = runner.env.reward_list
+                    dqn_diff_context_matrix[6, c] = runner.env.episode_acc_vio_list
+                runner.env.reset()
+
+    if scheme_name == "amac":
+        # amac evaluation
+        print("Evaluating AMAC")
+        for c in range(len(context_list)):
+            runner = amac.Amac(is_test=True)
+            runner.context_list = [context_list[c]] * len(context_list)
+            runner.run()
+            action_str = "[1,2,3,4]"
+            show_action_num = 3
+            counter = Counter(runner.action_list)
+            most_common_elements = counter.most_common(show_action_num)
+            for act, freq in most_common_elements:
+                action_freq = round(freq / runner.slot_num * 100, 2)
+                if action_str == "[1,2,3,4]+":
+                    action_str = action_str + act + "(" + str(action_freq) + "%)"
+                else:
+                    action_str = action_str + ";" + act + "(" + str(action_freq) + "%)"
+            print(action_str)
+
+            amac_diff_context_matrix[0, c] = runner.total_delay_list
+            amac_diff_context_matrix[1, c] = runner.total_energy_list
+            amac_diff_context_matrix[2, c] = runner.total_acc_list
+            amac_diff_context_matrix[3, c] = runner.acc_vio_num
+            amac_diff_context_matrix[4, c] = runner.re_trans_num_list
+            amac_diff_context_matrix[5, c] = runner.step_reward_list
+            amac_diff_context_matrix[6, c] = runner.episode_acc_vio_list
+
+    if scheme_name == "proposed_erf":
+        mat_name = "experiments/diff_context_data/rainbow_proposed_erf_diff_context_matrix.mat"
+        savemat(mat_name, {"rainbow_proposed_erf_diff_context_matrix": rainbow_proposed_erf_diff_context_matrix,
+                           "aver_min_acc": aver_min_acc,"context_list":context_list})
+    elif scheme_name == "proposed_origin":
+        mat_name = "experiments/diff_context_data/rainbow_proposed_origin_diff_context_matrix.mat"
+        savemat(mat_name, {"rainbow_proposed_origin_diff_context_matrix": rainbow_proposed_origin_diff_context_matrix})
+    elif scheme_name == "sse":
+        mat_name = "experiments/diff_context_data/rainbow_sse_diff_context_matrix.mat"
+        savemat(mat_name, {"rainbow_sse_diff_context_matrix": rainbow_sse_diff_context_matrix})
+    elif scheme_name == "tem":
+        mat_name = "experiments/diff_context_data/rainbow_tem_diff_context_matrix.mat"
+        savemat(mat_name, {"rainbow_tem_diff_context_matrix": rainbow_tem_diff_context_matrix})
+    elif scheme_name == "dqn":
+        mat_name = "experiments/diff_context_data/dqn_diff_context_matrix.mat"
+        savemat(mat_name, {"dqn_diff_context_matrix": dqn_diff_context_matrix})
+    elif scheme_name == "amac":
+        mat_name = "experiments/diff_context_data/amac_diff_context_matrix.mat"
+        savemat(mat_name, {"amac_diff_context_matrix": amac_diff_context_matrix})
 
 if __name__ == '__main__':
     time_start = time.time()
