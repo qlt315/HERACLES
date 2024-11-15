@@ -9,7 +9,7 @@ import numpy as np
 import os
 import re
 from scipy.io import loadmat
-import envs_wo_one.utils_tem as util
+import envs_wo_one_sensor.utils_tem as util
 import random
 import matplotlib.pyplot as plt
 import scipy.special as ss

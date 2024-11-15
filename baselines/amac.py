@@ -242,6 +242,7 @@ class Amac:
                     branch_com_energy = platform_data["branch_energy"][22, 0]
 
                     # Retransmission simulation
+                    block_num = 1
                     if self.enable_re_trans:
                         self.re_trans_num = 0
                         block_num = np.floor(coded_data_size / self.sub_block_length)

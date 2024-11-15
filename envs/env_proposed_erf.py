@@ -229,6 +229,7 @@ class EnvProposed_erf(gym.Env):
         re_trans_energy = 0
         # Calculate delay
         re_trans_delay = 0
+        block_num = 1
         if len(action_info.fusion_name) == 1:  # TM
 
             data_size_idx = action_info.fusion_name[0] - 1
@@ -243,18 +244,18 @@ class EnvProposed_erf(gym.Env):
                 # print("PER:", tm_per)
                 # print("Block num:", block_num)
                 for j in range(int(block_num)):
-                    re_trans_num_block = 0
+                    re_trans_num_packet = 0
                     is_trans_success = 0
                     while is_trans_success == 0:
                         # Generate 1 (success) with probability 1-p and 0 (fail) with p
                         is_trans_success = \
                             random.choices([0, 1], weights=[tm_per, 1 - tm_per])[0]
-                        if is_trans_success == 1 or re_trans_num_block >= self.max_re_trans_num:
+                        if is_trans_success == 1 or re_trans_num_packet >= self.max_re_trans_num:
                             break
                         else:
-                            re_trans_num_block = re_trans_num_block + 1
+                            re_trans_num_packet = re_trans_num_packet + 1
                             tm_per = 1 - (1 - tm_ber) ** (self.sub_block_length / (1 - self.tm_coding_rate))
-                    self.re_trans_num = self.re_trans_num + re_trans_num_block
+                    self.re_trans_num = self.re_trans_num + re_trans_num_packet
                 re_trans_delay = self.re_trans_num * (
                             (1 / self.tm_coding_rate - 1) * self.sub_block_length / tm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
@@ -273,25 +274,25 @@ class EnvProposed_erf(gym.Env):
                 hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                 block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
                 block_num_2 = np.floor(self.data_size[0, order[1] - 1] / self.hm_coding_rate / self.sub_block_length)
-
+                block_num = np.max(block_num_1, block_num_2)
                 # print("block num",max(block_num_1, block_num_2))
                 # print("HM PER:", hm_per)
-                for j in range(int(max(block_num_1, block_num_2))):
-                    re_trans_num_block = 0
+                for j in range(int(block_num)):
+                    re_trans_num_packet = 0
                     is_trans_success = 0
                     while is_trans_success == 0:
                         # Generate 1 (success) with probability 1-p and 0 (fail) with p
                         is_trans_success = \
                             random.choices([0, 1], weights=[hm_per, 1 - hm_per])[0]
-                        if is_trans_success == 1 or re_trans_num_block >= self.max_re_trans_num:
+                        if is_trans_success == 1 or re_trans_num_packet >= self.max_re_trans_num:
                             break
                         else:
-                            re_trans_num_block = re_trans_num_block + 1
+                            re_trans_num_packet = re_trans_num_packet + 1
                             hm_per_1 = 1 - (1 - hm_ber_1) ** (self.sub_block_length * (1 - self.tm_coding_rate))
                             hm_per_2 = 1 - (1 - hm_ber_2) ** (self.sub_block_length * (1 - self.tm_coding_rate))
                             hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                             # print("Changed:",hm_per_1,hm_per_2,hm_per)
-                    self.re_trans_num = self.re_trans_num + re_trans_num_block
+                    self.re_trans_num = self.re_trans_num + re_trans_num_packet
                 re_trans_delay = self.re_trans_num * (self.sub_block_length * (1 - self.tm_coding_rate) / hm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
                 # print("re trans delay:",re_trans_delay)
@@ -364,7 +365,7 @@ class EnvProposed_erf(gym.Env):
             print("Average accuracy expectation", episode_acc_exp)
             print("Average episode reward", episode_reward)
             print("Delay violation slot number:", self.delay_vio_num)
-            print("Retransmission number:", episode_re_trans_num)
+            print("Retransmission number per packet:", episode_re_trans_num)
             print("Accuracy violation rate:", self.acc_vio_num)
             print("Accuracy violation:", episode_acc_vio)
 

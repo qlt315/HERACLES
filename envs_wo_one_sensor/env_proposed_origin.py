@@ -6,7 +6,7 @@ import os
 import re
 from scipy.io import loadmat
 from tensorboard.compat.tensorflow_stub.dtypes import float32
-import envs_wo_one.utils_proposed as util
+import envs_wo_one_sensor.utils_proposed as util
 import random
 import matplotlib.pyplot as plt
 import scipy.special as ss
@@ -14,9 +14,9 @@ import scipy.special as ss
 
 # import envs.mobile_channel_gen
 
-class EnvProposed_erf(gym.Env):
+class EnvProposed_origin(gym.Env):
     def __init__(self):
-        self.name = "proposed_erf"
+        self.name = "proposed_origin"
         # Parameter settings
         self.slot_num = 3000  # Number of time slots
         self.max_energy = 2000  # Maximum energy consumption (J)
@@ -204,11 +204,11 @@ class EnvProposed_erf(gym.Env):
             mod_order = 6
         tm_trans_rate = mod_order * self.bandwidth * np.log2(1 + tm_snr)  # Bit / s
 
-        hm_snr_1 = tm_snr * self.hm_power_ratio
-        hm_snr_2 = tm_snr * (1 - self.hm_power_ratio)
+        # hm_snr_1 = tm_snr * self.hm_power_ratio
+        # hm_snr_2 = tm_snr * (1 - self.hm_power_ratio)
 
-        # hm_snr_1 = tm_snr
-        # hm_snr_2 = tm_snr
+        hm_snr_1 = tm_snr
+        hm_snr_2 = tm_snr
 
         hm_snr_1_db = 10 * np.log10(hm_snr_1)
         hm_snr_2_db = 10 * np.log10(hm_snr_2)
@@ -217,7 +217,7 @@ class EnvProposed_erf(gym.Env):
         hm_ber_1 = np.clip(self.hm_polynomial_model_1(hm_snr_1_db), 0.00001, 0.99999)
         hm_ber_2 = np.clip(self.hm_polynomial_model_2(hm_snr_2_db), 0.00001, 0.99999)
 
-        hm_trans_rate = (4+2) * self.bandwidth * np.log2(1 + tm_snr)
+        hm_trans_rate = (4+2) * self.bandwidth * np.log2(1 + hm_snr_1 + hm_snr_2)
 
         # Calculate PER of each branch (totally 21 branches)
         # print(tm_ber, hm_ber_1, hm_ber_2)
@@ -289,12 +289,13 @@ class EnvProposed_erf(gym.Env):
                             hm_per = 1 - (1 - hm_per_1) * (1 - hm_per_2)
                             # print("Changed:",hm_per_1,hm_per_2,hm_per)
                     self.re_trans_num = self.re_trans_num + re_trans_num_block
-                re_trans_delay = self.re_trans_num * (self.sub_block_length * (1 - self.tm_coding_rate) / hm_trans_rate)
+                re_trans_delay = self.re_trans_num * (
+                            self.sub_block_length * (1 - self.tm_coding_rate) / hm_trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
                 # print("re trans delay:",re_trans_delay)
             trans_delay = data_size / hm_trans_rate + re_trans_delay
         # print("Re-trans number:", self.re_trans_num)
-        # print("trans delay:",trans_delay, "re_trans_delay",re_trans_delay)
+        # print(re_trans_delay,re_trans_energy)
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
@@ -322,7 +323,7 @@ class EnvProposed_erf(gym.Env):
 
         self.acc_exp_list[0, self.step_num] = acc_exp
         # Reward calculation
-        reward_1 = ss.erf(acc_exp - min_acc)
+        reward_1 = acc_exp - min_acc
         reward_2 = total_delay / max_delay
         reward_3 = total_energy / self.max_energy
         # reward_3 = total_energy

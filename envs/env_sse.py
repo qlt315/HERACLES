@@ -207,6 +207,7 @@ class EnvSSE(gym.Env):
         re_trans_delay = 0
         re_trans_energy = 0
         # Retransmission simulation
+        block_num = 1
         if self.enable_re_trans:
             self.re_trans_num = 0
             block_num_1 = np.floor(self.data_size[0, order[0] - 1] / self.hm_coding_rate / self.sub_block_length)
@@ -223,7 +224,8 @@ class EnvSSE(gym.Env):
             # print("PER:",per)
             re_trans_delay = self.re_trans_num * ((1 / self.hm_coding_rate - 1) * self.sub_block_length / hm_trans_rate)
             re_trans_energy = self.max_power * re_trans_delay
-            for j in range(int(max(block_num_1, block_num_2, block_num_3, block_num_4))):
+            block_num = int(max(block_num_1, block_num_2, block_num_3, block_num_4))
+            for j in range(block_num):
                 # print("block num",int(max(block_num_1, block_num_2, block_num_3, block_num_4)))
                 re_trans_num_block = 0
                 is_trans_success = 0

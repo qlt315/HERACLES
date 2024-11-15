@@ -6,9 +6,9 @@ from envs.env_proposed_erf import EnvProposed_erf
 from envs.env_tem import EnvTEM
 from envs.env_sse import EnvSSE
 
-# from envs_wo_one.env_proposed_origin import EnvProposed_origin
-# from envs_wo_one.env_proposed_erf import EnvProposed_erf
-# from envs_wo_one.env_tem import EnvTEM
+# from envs_wo_one_sensor.env_proposed_origin import EnvProposed_origin
+# from envs_wo_one_sensor.env_proposed_erf import EnvProposed_erf
+# from envs_wo_one_sensor.env_tem import EnvTEM
 
 from torch.utils.tensorboard import SummaryWriter
 from rainbow_dqn.rainbow_replay_buffer import *

@@ -145,6 +145,7 @@ for s in range(len(snr_db_list)):
 
             re_trans_delay = 0
             re_trans_energy = 0
+            block_num = 1
             if enable_re_trans:
                 re_trans_num = 0
                 block_num = np.floor(coded_data_size / sub_block_length)

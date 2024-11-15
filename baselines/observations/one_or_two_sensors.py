@@ -1,6 +1,5 @@
-# this ablation scheme uses the typical modulation method,
-# i.e., all $K$ selected semantic features are transmitted
-# without considering the different priorities.
+# Please run all_sensor_no_stem.py first!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 import gym
 import torch
@@ -10,16 +9,16 @@ import numpy as np
 import os
 import re
 from scipy.io import loadmat
-import envs.utils_tem as util
+import envs.utils_proposed as util
 import random
 import matplotlib.pyplot as plt
 import scipy.special as ss
 from scipy.io import savemat
 
 
-class EnvTEM(gym.Env):
+class ObsEnv(gym.Env):
     def __init__(self):
-        self.name = "tem"
+        self.name = "obs"
         self.seed()
         # Parameter settings
         self.slot_num = 1  # Number of time slots
@@ -176,6 +175,7 @@ class EnvTEM(gym.Env):
         print("data size:",coded_data_size)
         re_trans_energy = 0
         # Retransmission simulation
+        block_num = 1
         if self.enable_re_trans:
             self.re_trans_num = 0
             block_num = np.floor(coded_data_size / self.sub_block_length)
@@ -198,6 +198,7 @@ class EnvTEM(gym.Env):
                         re_trans_num_block = re_trans_num_block + 1
                         tm_per = 1 - (1 - tm_ber) ** (self.sub_block_length / (1 - self.tm_coding_rate))
                 self.re_trans_num = self.re_trans_num + re_trans_num_block
+            self.re_trans_num = self.re_trans_num
             re_trans_delay = self.re_trans_num * (
                         (1 / self.tm_coding_rate - 1) * self.sub_block_length / tm_trans_rate)
             re_trans_energy = self.max_power * re_trans_delay
@@ -301,7 +302,7 @@ if __name__ == "__main__":
     obs_delay = data["obs_delay"]
     obs_re_trans = data["obs_re_trans"]
 
-    action_list = [12,13,14,15,16,17]
+    action_list = [18,19,20,21,23,25]
     for a in range(len(action_list)):
         for s in range(len(snr_db_list)):
             def seed_torch(seed):
@@ -310,7 +311,7 @@ if __name__ == "__main__":
                     torch.cuda.manual_seed(seed)
                     torch.backends.cudnn.benchmark = False
                     torch.backends.cudnn.deterministic = True
-            env = EnvTEM()
+            env = ObsEnv()
             env.target_snr_db = snr_db_list[s]
             seed = 37
             np.random.seed(seed)

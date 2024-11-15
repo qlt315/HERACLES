@@ -233,6 +233,7 @@ class EnvTEM(gym.Env):
         data_size = self.data_size[0, data_size_idx] / self.tm_coding_rate
 
         # Retransmission simulation
+        block_num = 1
         if self.enable_re_trans:
             self.re_trans_num = 0
             block_num = np.floor(data_size / self.sub_block_length)
