@@ -318,40 +318,18 @@ ax.MinorGridAlpha = 0.6;
 ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
 tightfig;
 %% Fig.5 Different Reward Weight
-% load("experiments\diff_kappa_data\diff_kappa_data.mat")
-load("experiments\diff_kappa_data\rainbow_proposed_erf_diff_kappa_matrix.mat")
-load("experiments\diff_kappa_data\rainbow_proposed_origin_diff_kappa_matrix.mat")
-load("experiments\diff_kappa_data\rainbow_sse_diff_kappa_matrix.mat")
-load("experiments\diff_kappa_data\rainbow_tem_diff_kappa_matrix.mat")
-load("experiments\diff_kappa_data\dqn_diff_kappa_matrix.mat")
-load("experiments\diff_kappa_data\amac_diff_kappa_matrix.mat")
-% data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
-%     rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
-% 
-% title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
-%     "Performance Comparison Under Different Delay Reward Weights",...
-%     "Performance Comparison Under Different Energy Consumption Reward Weights"];
-% for i=1:3
-%     figure(6+i)
-%         for j=1:6
-%             data_curr = data{j};
-%             % Data cleaning
-%             filtered_data_curr = remove_outliers(data_curr(:,:,i));
-%             x = filtered_data_curr(1,:); % delay
-%             y = filtered_data_curr(2,:); % energy
-%             z = filtered_data_curr(4,:); % acc vio Probablity
-%             [X,Y,Z]=griddata(x,y,z,linspace(min(x),max(x))',linspace(min(y),max(y)),'v4');
-%             surf(X, Y, Z, 'FaceColor', colors(j,:), 'FaceAlpha', 0.5); hold on;
-%         end
-%             title(title_list(i));
-%             xlabel('Delay [s]');
-%             ylabel('Energy Consumption [J]');
-%             zlabel('Accuracy Violation Rate');
-%             legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
-%             legend(legend_names, 'Location', 'best');
-%             set(gca,'gridlinestyle','--','Gridalpha',0.8);
-%             set(gca,'FontName','Times New Roman','FontSize',12);
-% end
+load("experiments\diff_kappa_data\diff_kappa_data.mat")
+% load("experiments\diff_kappa_data\rainbow_proposed_erf_diff_kappa_matrix.mat")
+% load("experiments\diff_kappa_data\rainbow_proposed_origin_diff_kappa_matrix.mat")
+% load("experiments\diff_kappa_data\rainbow_sse_diff_kappa_matrix.mat")
+% load("experiments\diff_kappa_data\rainbow_tem_diff_kappa_matrix.mat")
+% load("experiments\diff_kappa_data\dqn_diff_kappa_matrix.mat")
+% load("experiments\diff_kappa_data\amac_diff_kappa_matrix.mat")
+
+
+[relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(1,:), rainbow_tem_diff_kappa_matrix(1,:))
+[relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(2,:), rainbow_tem_diff_kappa_matrix(2,:))
+[relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(3,:), rainbow_tem_diff_kappa_matrix(3,:))
 
 % Plot wih Lines
 data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
@@ -680,6 +658,10 @@ ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
 end
 
 
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(1,:), rainbow_tem_diff_snr_matrix(1,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(2,:), rainbow_tem_diff_snr_matrix(2,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(3,:), rainbow_tem_diff_snr_matrix(3,:))
+
 %% Fig.7 Different Est Err
 % load("experiments\diff_est_err_data\diff_est_err_data.mat")
 load("experiments\diff_est_err_data\rainbow_proposed_erf_diff_est_err_matrix.mat")
@@ -803,7 +785,7 @@ ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accurac
 y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 context_num = 6;
-for i=1
+for i=1:7
     figure(15+i)
     error_data = zeros(6, context_num);
     data = zeros(6,context_num);
@@ -911,6 +893,9 @@ for i=1
 
 end
 
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_context_matrix(1,:), rainbow_tem_diff_context_matrix(1,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_context_matrix(2,:), rainbow_tem_diff_context_matrix(2,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_context_matrix(3,:), rainbow_tem_diff_context_matrix(3,:))
 
 %% Fig.9 Different Actions
 % Fig.9.1 Different Actions under different contexts
