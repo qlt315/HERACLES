@@ -12,6 +12,14 @@ load("baselines/dqn/train_data/train_proposed_erf_data.mat")
 load("baselines/random_reward.mat")
 load("baselines/amac_data.mat")
 
+% colors = [68/255, 133/255, 199/255;
+%     212/255, 86/255, 46/255;
+%     219/255, 180/255, 40/255;
+%     104/255, 36/255, 135/255;
+%     132/255, 186/255, 66/255;
+%     122/255, 187/255, 219/255;
+%     165/255, 28/255, 54/255];
+
 % colors = [184/255, 219/255, 179/255;
 %     114/255,176/255,99/255;
 %     113/255,154/255,172/255;
@@ -44,6 +52,9 @@ load("baselines/amac_data.mat")
 %     128/255,124/255,125/255];
 
 colors = lines(7);         % Generate distinct colors for each curve
+alpha = 0.15;
+colors = colors + (1 - colors) * alpha;
+
 num_matrices = 5;  % Number of reward matrices
 % step_reward_matrix = {proposed_step_reward_matrix, tem_step_reward_matritemx, sse_step_reward_matrix};
 step_reward_matrix = ...
@@ -100,7 +111,7 @@ set(gca,'FontName','Times New Roman','FontSize',12);
 xlim([0, 15000]);
 ylim([-0.5, 0.5]);
 set(gca, "YTick",-0.5:0.1:0.5);
-legend_names = {"Proposed", "SSE", "TEM", "DQN","AMAC"};
+legend_names = {"HERACLES", "SSE", "TEM", "DQN","AMAC"};
 legend(legend_names, 'Location', 'best');
 
 % Adjust grid line thickness
@@ -135,7 +146,7 @@ grid on;
 xlabel('SNR [dB]'),ylabel('Bit Error Rate (BER)');
 set(gca,'FontName','Times New Roman','FontSize',12);
 % title('LDPC Code Rate=1/2 (64-QAM=2/3), Channel Estimation Error Parameter = 0.5');
-legend("QPSK / 16QAM Real Data (Layer 1)","QPSK / 16QAM Real Data (Layer 2)", "QPSK Real Data", "16-QAM Modulation Real Data", "64-QAM Modulation Real Data", ...
+legend("QPSK / 16QAM Sim Data (Layer 1)","QPSK / 16QAM Sim Data (Layer 2)", "QPSK Sim Data", "16-QAM Modulation Sim Data", "64-QAM Modulation Sim Data", ...
     "QPSK / 16QAM Fit Data (Layer 1)", "QPSK / 16QAM Fit Data (Layer 2)","QPSK Fit Data", "16-QAM Modulation Fit Data", "64-QAM Modulation Fit Data");
 
 xlim([0,10]);
@@ -160,9 +171,10 @@ ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
 %% Figure 4.1 Observation Energy
 load("baselines\observations\observation.mat")
 snr_list = 1:0.2:3;
+marklist = ["-+","-o","-*","-x","-p","-d","-^"];
 figure(4)
 for i=1:7
-    plot(snr_list, obs_energy(i,:), "-o", 'LineWidth', 3,"Color",colors(i,:)); hold on;
+    plot(snr_list, obs_energy(i,:), marklist(i), 'LineWidth', 3,"Color",colors(i,:)); hold on;
 end
 
 % for i=1:length(obs_energy_no_retrans)
@@ -177,26 +189,19 @@ set(gca, "YTick",0:2:15);
 set(gca, "XTick",1:0.2:3);
 xlabel('SNR [dB]'),ylabel('Energy Consumption [J]');
 set(gca,'FontName','Times New Roman','FontSize',12);
-% Adjust grid line thickness
+
+grid on;
+% Adjust grid line properties for darker appearance
 ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
-
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-tightfig;
-
+ax.GridColor = [0 0 0]; % Set grid color to black
+ax.GridAlpha = 0.8; % Make grid lines fully opaque
+ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 
 
 %% Figure 4.2 Observation Delay
 figure(5)
 for i=1:7
-    plot(snr_list, obs_delay(i,:), "-o", 'LineWidth', 3,"Color",colors(i,:)); hold on;
+    plot(snr_list, obs_delay(i,:),  marklist(i), 'LineWidth', 3,"Color",colors(i,:)); hold on;
 end
 
 % for i=1:length(obs_delay_no_retrans)
@@ -212,26 +217,20 @@ set(gca, "XTick",1:0.5:3);
 xlabel('SNR [dB]'),ylabel('Delay [s]');
 set(gca,'FontName','Times New Roman','FontSize',12);
 
-% Adjust grid line thickness
+grid on;
+% Adjust grid line properties for darker appearance
 ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
+ax.GridColor = [0 0 0]; % Set grid color to black
+ax.GridAlpha = 0.8; % Make grid lines fully opaque
+ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-tightfig;
 
 
 
 %% Figure 4.2 Observation Re-trans
-figure(5)
+figure(6)
 for i=1:7
-    plot(snr_list, obs_re_trans(i,:), "-o", 'LineWidth', 3,"Color",colors(i,:)); hold on;
+    plot(snr_list, obs_re_trans(i,:),  marklist(i), 'LineWidth', 3,"Color",colors(i,:)); hold on;
 end
 
 grid on;
@@ -239,25 +238,19 @@ grid on;
 legend("Camera (Res101)","Radar (Res101)","LiDAR (Res101)","Dual Camera (Res101)", "Radar+LiDAR (Res101)","Camera+LiDAR (Res101)","All Sensors (Res18)");
 % set(gca, "YTick",0:1:10);
 % set(gca, "XTick",1:0.5:3);
-xlabel('SNR [dB]'),ylabel('Retransmission Packet Number');
+xlabel('SNR [dB]'),ylabel('Number of Packet Retransmissions');
 set(gca,'FontName','Times New Roman','FontSize',12);
-% Adjust grid line thickness
+grid on;
+% Adjust grid line properties for darker appearance
 ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
+ax.GridColor = [0 0 0]; % Set grid color to black
+ax.GridAlpha = 0.8; % Make grid lines fully opaque
+ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-tightfig;
 
 
 %% Figure 4.3 Observation Accuracy
-figure(6)
+figure(7)
 load("baselines\observations\obs_acc.mat")
 data=obs_acc';
 % X = ['Snow','Fog','Motorway','Night','Rain','Sunny'];
@@ -304,19 +297,13 @@ ylim([0, 100]);
 hYLabel = ylabel('Accuracy [mAP]');
 ax = gca;
 ax.XTickLabel = {'Snow','Fog','Motorway','Night','Rain','Sunny'};
-% Adjust grid line thickness
+grid on;
+% Adjust grid line properties for darker appearance
 ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
+ax.GridColor = [0 0 0]; % Set grid color to black
+ax.GridAlpha = 0.8; % Make grid lines fully opaque
+ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-tightfig;
 %% Fig.5 Different Reward Weight
 load("experiments\diff_kappa_data\diff_kappa_data.mat")
 % load("experiments\diff_kappa_data\rainbow_proposed_erf_diff_kappa_matrix.mat")
@@ -327,46 +314,12 @@ load("experiments\diff_kappa_data\diff_kappa_data.mat")
 % load("experiments\diff_kappa_data\amac_diff_kappa_matrix.mat")
 
 
-[relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(1,:), rainbow_tem_diff_kappa_matrix(1,:))
-[relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(2,:), rainbow_tem_diff_kappa_matrix(2,:))
-[relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(3,:), rainbow_tem_diff_kappa_matrix(3,:))
-
-% Plot wih Lines
-data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
-    rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
-title_list = ["Performance Comparison Under Different Accuracy Reward Weights",...
-    "Performance Comparison Under Different Delay Reward Weights",...
-    "Performance Comparison Under Different Energy Consumption Reward Weights"];
-for i=1:3
-    figure(6+i)
-    for j=1:6
-        data_curr = data{j};
-        % Data cleaning
-        filtered_data_curr = remove_outliers(data_curr(:,:,i));
-        x = filtered_data_curr(1,:); % delay
-        y = filtered_data_curr(2,:); % energy
-        z = filtered_data_curr(4,:); % acc vio Probablity
-        plot3(x,y,z,'-o','LineWidth',2); hold on;
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(1,:), rainbow_tem_diff_kappa_matrix(1,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(2,:), rainbow_tem_diff_kappa_matrix(2,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_kappa_matrix(3,:), rainbow_tem_diff_kappa_matrix(3,:))
 
 
-    end
-
-    grid on;
-
-    legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
-    legend(legend_names, 'Location', 'best');
-    set(gca,'FontName','Times New Roman','FontSize',12);
-    xlabelHandle = xlabel('Delay [s]'); 
-    ylabelHandle = ylabel("Energy Consumption [J]"); 
-    zlabelHandle = zlabel("Accuracy Violation Probablity");
-    title(title_list(i))
-    set(gca,'gridlinestyle','--','Gridalpha',0.8);
-end
-
-
-
-
-% Scatter
+% 3-D Scatter
 labels = {'0.5', '1', '1.5', '2', '2.5','3','3.5','4'};
 data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
     rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
@@ -412,7 +365,7 @@ for i=1:3
     end
     grid on;
        
-    legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
+    legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
     xlabelHandle = xlabel('Delay [s]'); 
@@ -435,7 +388,7 @@ for i=1:3
 end
 
 
-% 2-D Version
+% 2-D Version Scatter
 labels = {'0.5', '1', '1.5', '2', '2.5','3','3.5','4'};
 data = {rainbow_proposed_erf_diff_kappa_matrix, rainbow_proposed_origin_diff_kappa_matrix, rainbow_sse_diff_kappa_matrix,...
     rainbow_tem_diff_kappa_matrix, dqn_diff_kappa_matrix, amac_diff_kappa_matrix};
@@ -461,7 +414,7 @@ for i=1:3
         scatter(x,y, 50,marklist(j),'LineWidth',2); hold on;
     end
     grid on;
-    legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
+    legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
     xlabel('Delay [s]'); 
@@ -496,7 +449,7 @@ for i=1:3
         scatter(x,z, 50,marklist(j),'LineWidth',2); hold on;
     end
     grid on;
-    legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
+    legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
     xlabel('Delay [s]');  
@@ -532,7 +485,7 @@ for i=1:3
         scatter(y,z, 50,marklist(j),'LineWidth',2); hold on;
     end
     grid on;
-    legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
+    legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
     legend(legend_names, 'Location', 'best');
     set(gca,'FontName','Times New Roman','FontSize',12);
     xlabel("Energy Consumption [J]"); 
@@ -563,104 +516,174 @@ load("experiments\diff_snr_data\rainbow_tem_diff_snr_matrix.mat")
 load("experiments\diff_snr_data\dqn_diff_snr_matrix.mat")
 load("experiments\diff_snr_data\amac_diff_snr_matrix.mat")
 
-ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accuracy Violation Probablity", "Retransmission Packet Number","Reward","Accuracy Violation"];
-line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
+% ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accuracy Violation Probablity", "Number of Packet Retransmissions","Reward","Accuracy Violation"];
+% line_style_list = ["-+","-o","-*","-x","-p","-d","^"];
+% snr_num = size(snr_db_list, 2);
+% for i=1
+%     figure(9+i)
+%     % proposed erf
+%     mean_list = zeros(1,snr_num);
+%     std_list = zeros(1,snr_num);
+%     for j=1:snr_num
+%         mean_list(1,j) = mean(rainbow_proposed_erf_diff_snr_matrix{i,j});
+%         % std_list(1,j) = std(rainbow_proposed_erf_diff_snr_matrix{i,j});
+%     end
+%     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,1), 'LineWidth', 3,"Color",colors(1,:)); hold on;
+%     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,1), colors(1,:)); hold on;
+%     plot(snr_db_list, mean_list,line_style_list(1,1),'LineWidth', 3,"Color",colors(1,:)); hold on;
+% 
+% 
+%     % proposed origin
+%     for j=1:snr_num
+%         mean_list(1,j) = mean(rainbow_proposed_origin_diff_snr_matrix{i,j});
+%         % std_list(1,j) = std(rainbow_proposed_origin_diff_snr_matrix{i,j});
+%     end
+%     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,2), 'LineWidth', 3,"Color",colors(2,:)); hold on;
+%     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,2), colors(2,:));
+%     plot(snr_db_list, mean_list,line_style_list(1,2),'LineWidth', 3,"Color",colors(2,:)); hold on;
+% 
+%     % sse
+%     for j=1:snr_num
+%         mean_list(1,j) = mean(rainbow_sse_diff_snr_matrix{i,j});
+%         % std_list(1,j) = std(rainbow_sse_diff_snr_matrix{i,j});
+%     end
+%     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,3), 'LineWidth', 3,"Color",colors(3,:)); hold on;
+%     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,3), colors(3,:));
+%     plot(snr_db_list, mean_list,line_style_list(1,3),'LineWidth', 3,"Color",colors(3,:)); hold on;
+% 
+% 
+%     % tem
+%     for j=1:snr_num
+%         mean_list(1,j) = mean(rainbow_tem_diff_snr_matrix{i,j});
+%         % std_list(1,j) = std(rainbow_tem_diff_snr_matrix{i,j});
+%     end
+%     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,4), 'LineWidth', 3,"Color",colors(4,:)); hold on;
+%     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,4), colors(4,:));
+%     plot(snr_db_list, mean_list,line_style_list(1,4),'LineWidth', 3,"Color",colors(4,:)); hold on;
+% 
+% 
+%     % dqn
+%     for j=1:snr_num
+%         mean_list(1,j) = mean(dqn_diff_snr_matrix{i,j});
+%         % std_list(1,j) = std(dqn_diff_snr_matrix{i,j});
+%     end
+%     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,5), 'LineWidth', 3,"Color",colors(5,:)); hold on;
+%     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,5), colors(5,:));
+%     plot(snr_db_list, mean_list,line_style_list(1,5),'LineWidth', 3,"Color",colors(5,:)); hold on;
+% 
+%     % amac
+%     for j=1:snr_num
+%         mean_list(1,j) = mean(amac_diff_snr_matrix{i,j});
+%         % std_list(1,j) = std(amac_diff_snr_matrix{i,j});
+%     end
+%     % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,6), 'LineWidth', 3,"Color",colors(6,:)); hold on;
+%     % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,6), colors(6,:));
+%     plot(snr_db_list, mean_list,line_style_list(1,6),'LineWidth', 3,"Color",colors(6,:)); hold on;
+% 
+%     if i==4  % acc vio use log Y-axis
+%         set(gca, 'YScale', 'log')
+%     end
+% 
+% grid on;
+% 
+% legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
+%     % if i==3 % acc add aver_min_acc
+%     %     plot(snr_db_list, aver_min_acc*ones(size(snr_db_list)),"Color",[0 0 0],'LineWidth', 2); hold on;
+%     %     legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN","AMAC","Accuracy Threshold"};  
+%     % end
+% legend(legend_names, 'Location', 'best');
+% xlim([1, 3]);  % Adjust Y limit if needed
+% set(gca,'FontName','Times New Roman','FontSize',12);
+% xlabel('SNR [dB]'),ylabel(ylabel_list(i));
+% 
+% % Adjust grid line thickness
+% ax = gca; % Get current axes
+% ax.GridLineStyle = '--'; % Solid grid lines
+% ax.GridAlpha = 0.8; % Grid line transparency
+% ax.LineWidth = 1.2; % Grid line thickness
+% 
+% % Optional: Customize major and minor grid lines
+% ax.XGrid = 'on';
+% ax.YGrid = 'on';
+% ax.MinorGridLineStyle = '--';
+% ax.MinorGridAlpha = 0.6;
+% ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
+% end
+% 
+
+% Initialize tiled layout
+figure('Position', [100, 100, 1400, 600]); % Wider and shorter figure size
+tiled_layout = tiledlayout(2, 3, 'TileSpacing', 'Compact', 'Padding', 'Loose');
+legend_names = {"HERACLES (w/ erf)", "HERACLES (w/o erf)", "SSE", "TEM", "DQN", "AMAC"};
+colors = lines(numel(legend_names));
+ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", ...
+               "Accuracy Violation Probability", "Number of Packet Retransmissions", "Reward"];
+
 snr_num = size(snr_db_list, 2);
-for i=1:7
-    figure(9+i)
-    % proposed erf
-    mean_list = zeros(1,snr_num);
-    std_list = zeros(1,snr_num);
-    for j=1:snr_num
-        mean_list(1,j) = mean(rainbow_proposed_erf_diff_snr_matrix{i,j});
-        % std_list(1,j) = std(rainbow_proposed_erf_diff_snr_matrix{i,j});
-    end
-    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,1), 'LineWidth', 3,"Color",colors(1,:)); hold on;
-    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,1), colors(1,:)); hold on;
-    plot(snr_db_list, mean_list,line_style_list(1,1),'LineWidth', 3,"Color",colors(1,:)); hold on;
+datasets = {rainbow_proposed_erf_diff_snr_matrix, rainbow_proposed_origin_diff_snr_matrix, ...
+            rainbow_sse_diff_snr_matrix, rainbow_tem_diff_snr_matrix, ...
+            dqn_diff_snr_matrix, amac_diff_snr_matrix};
 
-        
-    % proposed origin
-    for j=1:snr_num
-        mean_list(1,j) = mean(rainbow_proposed_origin_diff_snr_matrix{i,j});
-        % std_list(1,j) = std(rainbow_proposed_origin_diff_snr_matrix{i,j});
-    end
-    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,2), 'LineWidth', 3,"Color",colors(2,:)); hold on;
-    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,2), colors(2,:));
-    plot(snr_db_list, mean_list,line_style_list(1,2),'LineWidth', 3,"Color",colors(2,:)); hold on;
+% Collect handles for legend
+legend_handles = gobjects(numel(datasets), 1);
 
-    % sse
-    for j=1:snr_num
-        mean_list(1,j) = mean(rainbow_sse_diff_snr_matrix{i,j});
-        % std_list(1,j) = std(rainbow_sse_diff_snr_matrix{i,j});
-    end
-    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,3), 'LineWidth', 3,"Color",colors(3,:)); hold on;
-    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,3), colors(3,:));
-    plot(snr_db_list, mean_list,line_style_list(1,3),'LineWidth', 3,"Color",colors(3,:)); hold on;
-
-
-    % tem
-    for j=1:snr_num
-        mean_list(1,j) = mean(rainbow_tem_diff_snr_matrix{i,j});
-        % std_list(1,j) = std(rainbow_tem_diff_snr_matrix{i,j});
-    end
-    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,4), 'LineWidth', 3,"Color",colors(4,:)); hold on;
-    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,4), colors(4,:));
-    plot(snr_db_list, mean_list,line_style_list(1,4),'LineWidth', 3,"Color",colors(4,:)); hold on;
-
-
-    % dqn
-    for j=1:snr_num
-        mean_list(1,j) = mean(dqn_diff_snr_matrix{i,j});
-        % std_list(1,j) = std(dqn_diff_snr_matrix{i,j});
-    end
-    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,5), 'LineWidth', 3,"Color",colors(5,:)); hold on;
-    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,5), colors(5,:));
-    plot(snr_db_list, mean_list,line_style_list(1,5),'LineWidth', 3,"Color",colors(5,:)); hold on;
-
-    % amac
-    for j=1:snr_num
-        mean_list(1,j) = mean(amac_diff_snr_matrix{i,j});
-        % std_list(1,j) = std(amac_diff_snr_matrix{i,j});
-    end
-    % errorbar(snr_db_list, mean_list, std_list, line_style_list(1,6), 'LineWidth', 3,"Color",colors(6,:)); hold on;
-    % shading_errorbar(snr_db_list, mean_list, std_list,line_style_list(1,6), colors(6,:));
-    plot(snr_db_list, mean_list,line_style_list(1,6),'LineWidth', 3,"Color",colors(6,:)); hold on;
-    
-    if i==4  % acc vio use log Y-axis
-        set(gca, 'YScale', 'log')
+for i = 1:6
+    nexttile;
+    for k = 1:numel(datasets)
+        mean_list = zeros(1, snr_num);
+        for j = 1:snr_num
+            mean_list(1, j) = mean(datasets{k}{i, j});
+        end
+        if i == 1
+            legend_handles(k) = plot(snr_db_list, mean_list, line_style_list(k), 'LineWidth', 3, ...
+                                     'Color', colors(k, :)); hold on;
+        else
+            plot(snr_db_list, mean_list, line_style_list(k), 'LineWidth', 3, 'Color', colors(k, :)); hold on;
+        end
     end
 
-grid on;
+    grid on;
+    xlabel('SNR [dB]');
+    ylabel(ylabel_list(i));
+    set(gca, 'FontName', 'Times New Roman', 'FontSize', 17);
 
-legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC"};
-    % if i==3 % acc add aver_min_acc
-    %     plot(snr_db_list, aver_min_acc*ones(size(snr_db_list)),"Color",[0 0 0],'LineWidth', 2); hold on;
-    %     legend_names = {"Proposed (w/ erf)", "Proposed (w/o erf)", "SSE", "TEM", "DQN","AMAC","Accuracy Threshold"};  
-    % end
-legend(legend_names, 'Location', 'best');
-xlim([1, 3]);  % Adjust Y limit if needed
-set(gca,'FontName','Times New Roman','FontSize',12);
-xlabel('SNR [dB]'),ylabel(ylabel_list(i));
+    if i == 4
+        set(gca, 'YScale', 'log');
+    end
 
-% Adjust grid line thickness
-ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
+    % Set x-axis limits
+    xlim([1, 3]);
+    xticks(1:0.5:3); % Set specific x-axis ticks
 
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
+    % Adjust grid line thickness
+    ax = gca; % Get current axes
+    ax.GridLineStyle = '--'; % Solid grid lines
+    ax.GridAlpha = 0.8; % Grid line transparency
+    ax.LineWidth = 1.2; % Grid line thickness
+
+    % Optional: Customize major and minor grid lines
+    ax.XGrid = 'on';
+    ax.YGrid = 'on';
+    ax.MinorGridLineStyle = '--';
+    ax.MinorGridAlpha = 0.6;
+    ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
+
+    % Remove x-axis label for the top three plots (i.e., i=1, 2, 3)
+    if i <= 3
+        xlabel(''); % Remove x-axis label name
+    end
 end
+
+% Add legend below all subplots
+lgd = legend(legend_handles, legend_names, 'Orientation', 'horizontal', 'FontSize', 17, ...
+             'Location', 'southoutside');
 
 
 % [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(1,:), rainbow_tem_diff_snr_matrix(1,:))
 % [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(2,:), rainbow_tem_diff_snr_matrix(2,:))
 % [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(3,:), rainbow_tem_diff_snr_matrix(3,:))
+% [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_snr_matrix(4,:), amac_diff_snr_matrix(4,:))
+
 
 %% Fig.7 Different Est Err
 % load("experiments\diff_est_err_data\diff_est_err_data.mat")
@@ -670,7 +693,7 @@ load("experiments\diff_est_err_data\rainbow_sse_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\rainbow_tem_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\dqn_diff_est_err_matrix.mat")
 load("experiments\diff_est_err_data\amac_diff_est_err_matrix.mat")
-ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accuracy Violation Probablity", "Retransmission Packet Number","Reward", "Accuracy Violation",];
+ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accuracy Violation Probablity", "Number of Packet Retransmissions","Reward", "Accuracy Violation",];
 y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 est_err_num = 3;
@@ -732,9 +755,9 @@ for i=1
     
     if i==3 % acc add aver_min_acc
         yline(aver_min_acc, "Color",[0 0 0], 'LineWidth', 2);hold on;
-        legendData = {'Proposed (w/ erf)', 'Proposed (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC','Accuracy Threshold'};
+        legendData = {'HERACLES (w/ erf)', 'HERACLES (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC','Accuracy Threshold'};
     else
-        legendData = {'Proposed (w/ erf)', 'Proposed (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC'};
+        legendData = {'HERACLES (w/ erf)', 'HERACLES (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC'};
     end
 
     % Draw the legend
@@ -773,7 +796,7 @@ end
 
 
 
-%% Fig.8 Different context
+%% Fig.8 Different Context
 % load("experiments\diff_context_data\diff_context_data.mat")
 load("experiments\diff_context_data\rainbow_proposed_erf_diff_context_matrix.mat")
 load("experiments\diff_context_data\rainbow_proposed_origin_diff_context_matrix.mat")
@@ -781,11 +804,11 @@ load("experiments\diff_context_data\rainbow_sse_diff_context_matrix.mat")
 load("experiments\diff_context_data\rainbow_tem_diff_context_matrix.mat")
 load("experiments\diff_context_data\dqn_diff_context_matrix.mat")
 load("experiments\diff_context_data\amac_diff_context_matrix.mat")
-ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accuracy Violation Probablity", "Retransmission Packet Number","Reward", "Accuracy Violation",];
+ylabel_list = ["Delay [s]", "Energy Consumption [J]", "Accuracy [mAP]", "Accuracy Violation Probablity", "Number of Packet Retransmissions","Reward", "Accuracy Violation",];
 y_max_list = [0.5,3,1,0.1,40000,0.5,0.1];
 y_min_list = [0,0,0,0,0,-0.5,0];
 context_num = 6;
-for i=1:7
+for i=1:71
     figure(15+i)
     error_data = zeros(6, context_num);
     data = zeros(6,context_num);
@@ -843,9 +866,9 @@ for i=1:7
     
     if i==3 % acc add aver_min_acc
         yline(aver_min_acc, "Color",[0 0 0], 'LineWidth', 2);hold on;
-        legendData = {'Proposed (w/ erf)', 'Proposed (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC','Accuracy Threshold'};
+        legendData = {'HERACLES (w/ erf)', 'HERACLES (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC','Accuracy Threshold'};
     else
-        legendData = {'Proposed (w/ erf)', 'Proposed (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC'};
+        legendData = {'HERACLES (w/ erf)', 'HERACLES (w/o erf)', 'SSE', 'TEM', 'DQN','AMAC'};
     end
 
     % Draw the legend
@@ -878,19 +901,12 @@ for i=1:7
     % hXLabel = xlabel('Samples');
     ax.XTickLabel = {'Sunny', 'Snow', 'Fog', 'Motorway', 'Night','Rain','Mix'};
 
-    % Adjust grid line thickness
+    grid on;
+    % Adjust grid line properties for darker appearance
     ax = gca; % Get current axes
-    ax.GridLineStyle = '--'; % Solid grid lines
-    ax.GridAlpha = 0.8; % Grid line transparency
-    ax.LineWidth = 1.2; % Grid line thickness
-    
-    % Optional: Customize major and minor grid lines
-    ax.XGrid = 'on';
-    ax.YGrid = 'on';
-    ax.MinorGridLineStyle = '--';
-    ax.MinorGridAlpha = 0.6;
-    ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-
+    ax.GridColor = [0 0 0]; % Set grid color to black
+    ax.GridAlpha = 0.8; % Make grid lines fully opaque
+    ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 end
 
 % [relative_diff, worse_diff] = compare_matrices(rainbow_proposed_erf_diff_context_matrix(1,:), rainbow_tem_diff_context_matrix(1,:))
@@ -935,18 +951,13 @@ hatchfill2(object_h(6), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchCol
 % Formatting
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
  % Adjust grid line thickness
-ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
 
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-set(gca, 'XMinorTick', 'on', 'XMinorGrid', 'on', 'YMinorTick', 'on', 'YMinorGrid', 'on');
+grid on;
+% Adjust grid line properties for darker appearance
+ax = gca; % Get current axes
+ax.GridColor = [0 0 0]; % Set grid color to black
+ax.GridAlpha = 0.8; % Make grid lines fully opaque
+ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 xlim([0, 1]);  % Adjust X limit if needed
 ylim([0.5, 7.5]);  % Adjust Y limit if needed
 
@@ -1013,21 +1024,12 @@ hatchfill2(object_h(6), 'single', 'HatchAngle', 0, 'HatchDensity', 40, 'HatchCol
 
 % Formatting
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
- % Adjust grid line thickness
+grid on;
+% Adjust grid line properties for darker appearance
 ax = gca; % Get current axes
-ax.GridLineStyle = '--'; % Solid grid lines
-ax.GridAlpha = 0.8; % Grid line transparency
-ax.LineWidth = 1.2; % Grid line thickness
-
-% Optional: Customize major and minor grid lines
-ax.XGrid = 'on';
-ax.YGrid = 'on';
-ax.MinorGridLineStyle = '--';
-ax.MinorGridAlpha = 0.6;
-ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color
-set(gca, 'XMinorTick', 'on', 'XMinorGrid', 'on', 'YMinorTick', 'on', 'YMinorGrid', 'on');
-xlim([0, 100]);  % Adjust X limit if needed
-ylim([0.5, 6.5]);  % Adjust Y limit if needed
+ax.GridColor = [0 0 0]; % Set grid color to black
+ax.GridAlpha = 0.8; % Make grid lines fully opaque
+ax.GridLineStyle = '--'; % Optional: Dashed grid lines for better visibility
 
 % Labels
 hXLabel = xlabel('Action Pick Probability');
