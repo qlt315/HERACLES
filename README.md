@@ -59,7 +59,11 @@ Distributed sensor fusion is a key component of a broad spectrum of applications
 - **`figure_gen.m`**: Script for generating all the figures in the paper.
 ---
 
+### Important Notes  
 
+1. This repository does not include the training and evaluation code of the multi-branch dynamic split neural network. It only provides an interface between the neural network evaluation data and the optimization framework. If you have any questions regarding neural network details, please contact Yashuo Wu (yashuow@uci.edu).  
+
+2. When running the Python scripts, please set the working directory to the root of the HERACLES repository, e.g., `D:/your_path_to_this_repo/HERACLES`.
 
 
 ## Contributing
