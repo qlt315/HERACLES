@@ -1054,4 +1054,3 @@ for i = 1:size(data, 1) % Loop over each row
             'BackgroundColor', 'none', 'EdgeColor', 'none');
     end
 end
-
