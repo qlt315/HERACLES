@@ -141,7 +141,7 @@ class EnvTEM(gym.Env):
         if self.enable_re_trans:
             self.re_trans_num = 0
             per = 1 - (1 - ber) ** self.sub_block_length
-            per = np.clip(per, 0.00001, 0.99999)  # ✅ Clamp PER to valid range
+            per = np.clip(per, 0.00001, 0.99999)  
             for _ in range(int(block_num)):
                 re_trans_num_block = 0
                 is_trans_success = 0
@@ -152,7 +152,7 @@ class EnvTEM(gym.Env):
                     else:
                         re_trans_num_block += 1
                         per = 1 - (1 - ber) ** (self.sub_block_length / (1 - spectral_eff / np.log2(1 + snr_linear)))
-                        per = np.clip(per, 0.00001, 0.99999)  # ✅ Clamp again after update
+                        per = np.clip(per, 0.00001, 0.99999)  
                 self.re_trans_num += re_trans_num_block
             re_trans_delay = self.re_trans_num * ((1 / spectral_eff - 1) * self.sub_block_length / trans_rate)
             re_trans_energy = self.max_power * re_trans_delay
