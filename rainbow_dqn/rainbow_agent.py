@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import copy
-from rainbow_dqn.rainbow_network import Dueling_Net, Net
+from HERACLES.rainbow_dqn.rainbow_network import Dueling_Net, Net
 
 
 class DQN(object):

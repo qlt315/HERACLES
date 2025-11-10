@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from collections import deque
-from rainbow_dqn.rainbow_sum_tree import SumTree
+from HERACLES.rainbow_dqn.rainbow_sum_tree import SumTree
 
 
 class ReplayBuffer(object):

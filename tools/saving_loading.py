@@ -4,198 +4,198 @@ from scipy.io import savemat
 def load_nn_model(runner):
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('rainbow_dqn/models/rainbow_dqn_proposed_origin.pth')
-            target_net = torch.load('rainbow_dqn/models/rainbow_dqn_target_proposed_origin.pth')
+            net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_proposed_origin.pth')
+            target_net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            net = torch.load('rainbow_dqn/models/rainbow_dqn_proposed_erf.pth')
-            target_net = torch.load('rainbow_dqn/models/rainbow_dqn_target_proposed_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_proposed_erf.pth')
         elif runner.env.name == "sse":
-            net = torch.load('rainbow_dqn/models/rainbow_dqn_sse.pth')
-            target_net = torch.load('rainbow_dqn/models/rainbow_dqn_target_sse.pth')
+            net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_sse.pth')
+            target_net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            net = torch.load('rainbow_dqn/models/rainbow_dqn_tem.pth')
-            target_net = torch.load('rainbow_dqn/models/rainbow_dqn_target_tem.pth')
+            net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_tem.pth')
+            target_net = torch.load('/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('baselines/dqn/models/dqn_proposed_erf.pth')
-            target_net = torch.load('baselines/dqn/models/dqn_target_proposed_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/dqn_target_proposed_erf.pth')
         elif runner.env.name == "proposed_erf":
-            net = torch.load('baselines/dqn/models/rainbow_dqn_proposed_erf.pth')
-            target_net = torch.load('baselines/dqn/models/rainbow_dqn_target_proposed_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_target_proposed_erf.pth')
         elif runner.env.name == "sse":
-            net = torch.load('baselines/dqn/models/rainbow_dqn_sse.pth')
-            target_net = torch.load('baselines/dqn/models/rainbow_dqn_target_sse.pth')
+            net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_sse.pth')
+            target_net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            net = torch.load('baselines/dqn/models/rainbow_dqn_tem.pth')
-            target_net = torch.load('baselines/dqn/models/rainbow_dqn_target_tem.pth')
+            net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_tem.pth')
+            target_net = torch.load('/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_target_tem.pth')
     return net, target_net
 
 def save_nn_model(runner):
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'rainbow_dqn/models/rainbow_dqn_proposed_origin.pth')
-            torch.save(runner.agent.target_net, 'rainbow_dqn/models/rainbow_dqn_target_proposed_origin.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            torch.save(runner.agent.net, 'rainbow_dqn/models/rainbow_dqn_proposed_erf.pth')
-            torch.save(runner.agent.target_net, 'rainbow_dqn/models/rainbow_dqn_target_proposed_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_proposed_erf.pth')
         elif runner.env.name == "sse":
-            torch.save(runner.agent.net, 'rainbow_dqn/models/rainbow_dqn_sse.pth')
-            torch.save(runner.agent.target_net, 'rainbow_dqn/models/rainbow_dqn_target_sse.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_sse.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            torch.save(runner.agent.net, 'rainbow_dqn/models/rainbow_dqn_tem.pth')
-            torch.save(runner.agent.target_net, 'rainbow_dqn/models/rainbow_dqn_target_tem.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_tem.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/rainbow_dqn/models/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'baselines/dqn/models/dqn_proposed_erf".pth')
-            torch.save(runner.agent.target_net, 'baselines/dqn/models/dqn_target_proposed_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/baselines/dqn/models/dqn_proposed_erf".pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/baselines/dqn/models/dqn_target_proposed_erf.pth')
         elif runner.env.name == "proposed_erf":
-            torch.save(runner.agent.net, 'baselines/dqn/models/rainbow_dqn_proposed_erf.pth')
-            torch.save(runner.agent.target_net, 'baselines/dqn/models/rainbow_dqn_target_proposed_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_target_proposed_erf.pth')
         elif runner.env.name == "sse":
-            torch.save(runner.agent.net, 'baselines/dqn/models/rainbow_dqn_sse.pth')
-            torch.save(runner.agent.target_net, 'baselines/dqn/models/rainbow_dqn_target_sse.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_sse.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            torch.save(runner.agent.net, 'baselines/dqn/models/rainbow_dqn_tem.pth')
-            torch.save(runner.agent.target_net, 'baselines/dqn/models/rainbow_dqn_target_tem.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_tem.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/baselines/dqn/models/rainbow_dqn_target_tem.pth')
 
 
 def save_nn_model_diff_kappa(runner,folder_path):
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            torch.save(runner.agent.net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            torch.save(runner.agent.net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_sse.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_sse.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            torch.save(runner.agent.net,  'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_tem.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
+            torch.save(runner.agent.net,  '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_tem.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_origin.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_proposed_origin.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            torch.save(runner.agent.net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_erf.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_target_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            torch.save(runner.agent.net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_sse.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_sse.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_sse.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            torch.save(runner.agent.net,  'experiments/diff_reward_weights_data/' + folder_path + '/dqn_tem.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_tem.pth')
+            torch.save(runner.agent.net,  '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_tem.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_tem.pth')
 
 def save_nn_model_diff_context(runner,folder_path):
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_sse.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_sse.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            torch.save(runner.agent.net,  'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_tem.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
+            torch.save(runner.agent.net,  '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_tem.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/dqn_proposed_origin.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_target_proposed_origin.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_proposed_origin.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_proposed_target_erf.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            torch.save(runner.agent.net, 'experiments/diff_context_data/' + folder_path + '/dqn_sse.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_target_sse.pth')
+            torch.save(runner.agent.net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_sse.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            torch.save(runner.agent.net,  'experiments/diff_context_data/' + folder_path + '/dqn_tem.pth')
-            torch.save(runner.agent.target_net, 'experiments/diff_context_data/' + folder_path + '/dqn_target_tem.pth')
+            torch.save(runner.agent.net,  '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_tem.pth')
+            torch.save(runner.agent.target_net, '/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_target_tem.pth')
 
 
 def load_nn_model_diff_kappa(runner,folder_path):
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_sse.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_sse.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_tem.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_tem.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_erf.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_proposed_origin.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_erf.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_target_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_sse.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_sse.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_sse.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_tem.pth')
-            target_net = torch.load('experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_tem.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_tem.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_reward_weights_data/' + folder_path + '/dqn_target_tem.pth')
     return net, target_net
 
 
 def load_nn_model_diff_context(runner,folder_path):
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_origin.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_sse.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_sse.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_tem.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_tem.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/rainbow_dqn_target_tem.pth')
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_target_proposed_origin.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_target_proposed_origin.pth')
         elif runner.env.name == "proposed_erf":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_proposed_target_erf.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_proposed_erf.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_proposed_target_erf.pth')
         elif runner.env.name == "sse":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_sse.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_target_sse.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_sse.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_target_sse.pth')
         elif runner.env.name == "tem":
-            net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_tem.pth')
-            target_net = torch.load('experiments/diff_context_data/' + folder_path + '/dqn_target_tem.pth')
+            net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_tem.pth')
+            target_net = torch.load('/home/ababu/HERACLES/experiments/diff_context_data/' + folder_path + '/dqn_target_tem.pth')
     return net, target_net
 
 def save_train_data(runner,step_reward_matrix):
     # save the data
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            mat_name = "rainbow_dqn/train_data/train_proposed_origin_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/train_data/train_proposed_origin_data.mat"
         elif runner.env.name == "proposed_erf":
-            mat_name = "rainbow_dqn/train_data/train_proposed_erf_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/train_data/train_proposed_erf_data.mat"
         elif runner.env.name == "sse":
-            mat_name = "rainbow_dqn/train_data/train_sse_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/train_data/train_sse_data.mat"
         elif runner.env.name == "tem":
-            mat_name = "rainbow_dqn/train_data/train_tem_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/train_data/train_tem_data.mat"
 
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            mat_name = "baselines/dqn/train_data/train_proposed_origin_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/train_data/train_proposed_origin_data.mat"
         elif runner.env.name == "proposed_erf":
-            mat_name = "baselines/dqn/train_data/train_proposed_erf_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/train_data/train_proposed_erf_data.mat"
         elif runner.env.name == "sse":
-            mat_name = "baselines/dqn/train_data/train_sse_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/train_data/train_sse_data.mat"
         elif runner.env.name == "tem":
-            mat_name = "baselines/dqn/train_data/train_tem_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/train_data/train_tem_data.mat"
 
     savemat(mat_name,
             {runner.algorithm + "_" + runner.env.name + "_train_episode_total_delay": runner.env.episode_total_delay_list,
@@ -214,23 +214,23 @@ def save_eval_data(runner):
     # save the data
     if runner.algorithm == "rainbow_dqn":
         if runner.env.name == "proposed_origin":
-            mat_name = "rainbow_dqn/eval_data/eval_proposed_origin_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/eval_data/eval_proposed_origin_data.mat"
         elif runner.env.name == "proposed_erf":
-            mat_name = "rainbow_dqn/eval_data/eval_proposed_erf_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/eval_data/eval_proposed_erf_data.mat"
         elif runner.env.name == "sse":
-            mat_name = "rainbow_dqn/eval_data/eval_sse_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/eval_data/eval_sse_data.mat"
         elif runner.env.name == "tem":
-            mat_name = "rainbow_dqn/eval_data/eval_tem_data.mat"
+            mat_name = "/home/ababu/HERACLES/rainbow_dqn/eval_data/eval_tem_data.mat"
 
     elif runner.algorithm == "dqn":
         if runner.env.name == "proposed_origin":
-            mat_name = "baselines/dqn/eval_data/eval_proposed_origin_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/eval_data/eval_proposed_origin_data.mat"
         elif runner.env.name == "proposed_erf":
-            mat_name = "baselines/dqn/eval_data/eval_proposed_erf_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/eval_data/eval_proposed_erf_data.mat"
         elif runner.env.name == "sse":
-            mat_name = "baselines/dqn/eval_data/eval_sse_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/eval_data/eval_sse_data.mat"
         elif runner.env.name == "tem":
-            mat_name = "baselines/dqn/eval_data/eval_tem_data.mat"
+            mat_name = "/home/ababu/HERACLES/baselines/dqn/eval_data/eval_tem_data.mat"
 
     savemat(mat_name,
             {runner.algorithm + "_" + runner.env.name + "_eval_episode_total_delay": runner.env.episode_total_delay_list,
