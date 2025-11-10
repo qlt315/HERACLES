@@ -1054,3 +1054,36 @@ for i = 1:size(data, 1) % Loop over each row
             'BackgroundColor', 'none', 'EdgeColor', 'none');
     end
 end
+
+
+
+figure(2);
+load("system_data/modulation_fitting_data.mat");
+plot(hm_snr_list, hm_ber_1, "-o","LineWidth",3,"Color",colors(1,:));hold on;
+plot(hm_snr_list, hm_ber_2, "-o","LineWidth",3,"Color",colors(2,:));
+plot(tm_snr_list_qpsk, tm_ber_qpsk, "-o","LineWidth",3,"Color",colors(3,:));
+plot(tm_snr_list_16qam, tm_ber_16qam, "-o","LineWidth",3,"Color",colors(4,:));
+plot(tm_snr_list_64qam, tm_ber_64qam, "-o","LineWidth",3,"Color",colors(5,:));
+
+
+grid on;
+xlabel('SNR [dB]'),ylabel('Bit Error Rate (BER)');
+set(gca,'FontName','Times New Roman','FontSize',12);
+% title('LDPC Code Rate=1/2 (64-QAM=2/3), Channel Estimation Error Parameter = 0.5');
+legend("QPSK / 16QAM(Layer 1)","QPSK / 16QAM (Layer 2)", "QPSK", "16-QAM", "64-QAM");
+
+xlim([0,10]);
+ylim([-0.005,1]);
+
+% Adjust grid line thickness
+ax = gca; % Get current axes
+ax.GridLineStyle = '--'; % Solid grid lines
+ax.GridAlpha = 0.8; % Grid line transparency
+ax.LineWidth = 1.2; % Grid line thickness
+
+% Optional: Customize major and minor grid lines
+ax.XGrid = 'on';
+ax.YGrid = 'on';
+ax.MinorGridLineStyle = '--';
+ax.MinorGridAlpha = 0.6;
+ax.MinorGridColor = [0.5 0.5 0.5]; % Light gray color

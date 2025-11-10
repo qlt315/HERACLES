@@ -1,23 +1,23 @@
 import torch
 import numpy as np
 import gym
-from HERACLES.experiments.eval_bad_actions import get_top_k_values
-from HERACLES.envs.env_proposed_origin import EnvProposed_origin
-from HERACLES.envs.env_proposed_erf import EnvProposed_erf
-from HERACLES.envs.env_tem import EnvTEM
-from HERACLES.envs.env_sse import EnvSSE
+from experiments.eval_bad_actions import get_top_k_values
+from envs.env_proposed_origin import EnvProposed_origin
+from envs.env_proposed_erf import EnvProposed_erf
+from envs.env_tem import EnvTEM
+from envs.env_sse import EnvSSE
 
 # from envs_wo_one_sensor.env_proposed_origin import EnvProposed_origin
 # from envs_wo_one_sensor.env_proposed_erf import EnvProposed_erf
 # from envs_wo_one_sensor.env_tem import EnvTEM
-from HERACLES.envs_wo_one_sensor.env_sse import EnvSSE
+from envs_wo_one_sensor.env_sse import EnvSSE
 
 from torch.utils.tensorboard import SummaryWriter
-from HERACLES.rainbow_replay_buffer import *
-from HERACLES.rainbow_agent import DQN
+from rainbow_replay_buffer import *
+from rainbow_agent import DQN
 import argparse
 import random
-import HERACLES.tools.saving_loading as sl
+import tools.saving_loading as sl
 import time
 time_start = time.time()
 class Runner:
