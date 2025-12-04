@@ -64,7 +64,7 @@ def action_gen():
 
     backbone_list = ["18"] * 9 + ["50"] * 9 + ["101"] * 9 + ["18"] * 6
 
-    platform_data = loadmat("system_data/platform_data.mat")
+    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data.mat")
     acc_sunny_list = action_list_gen(platform_data["sunny"][:21])
     acc_rain_list = action_list_gen(platform_data["rain"][:21])
     acc_snow_list = action_list_gen(platform_data["snow"][:21])
@@ -136,3 +136,35 @@ def obtain_min_acc(current_context):
         print("min acc calculation failed!")
         min_acc = np.array([0.1])
     return min_acc / 125
+def obtain_cqi_and_snr(wireless_data_path, slot_num):
+    csv_files = glob.glob(os.path.join(wireless_data_path, "*.csv"))
+    if not csv_files:
+        raise FileNotFoundError(f"No CSV files found in {wireless_data_path}")
+
+    # Concatenate CQI traces from all files
+    cqi_list = []
+    for f in csv_files:
+        df = pd.read_csv(f)
+        # Adjust column name if needed (sometimes 'Ce', 'CQI', or 'cqi')
+        if "Ce" in df.columns:
+            cqi_list.extend(df["Ce"].dropna().astype(int).tolist())
+        elif "CQI" in df.columns:
+            cqi_list.extend(df["CQI"].dropna().astype(int).tolist())
+        else:
+            raise KeyError(f"No CQI column found in {f}")
+
+    # Trim to slot_num length
+    cqi_array = np.array(cqi_list[:slot_num])
+
+    # 3GPP CQI→SNR threshold table [25]
+    cqi_to_snr_table = {
+        0: -6.7, 1: -4.7, 2: -2.3, 3: 0.2, 4: 2.4,
+        5: 4.3, 6: 5.9, 7: 8.1, 8: 10.3, 9: 11.7,
+        10: 14.1, 11: 16.3, 12: 18.7, 13: 21.0,
+        14: 22.7, 15: 24.7
+    }
+
+    # Map CQI values to SNR
+    snr_array = np.array([cqi_to_snr_table.get(int(cqi), 0) for cqi in cqi_array])
+
+    return snr_array, cqi_array
