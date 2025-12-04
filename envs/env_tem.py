@@ -91,25 +91,40 @@ class EnvTEM(gym.Env):
         # Data loading and fitting
         # Load HM data
         self.mcs_df = pd.read_csv("/home/ababu/mcs_performance_table.csv")
-        self.mcs_models = {}
-        self.mcs_efficiencies = {}
+        #if not os.path.isfile(mcs_csv_path):
+            # Try current directory fallback
+         #   mcs_csv_path = "/home/ababu/mcs_performance_table.csv"
+        #if not os.path.isfile(mcs_csv_path):
+         #   raise FileNotFoundError(f"MCS CSV not found at expected locations. Please place at {mcs_csv_path}")
 
-        for mcs_index, group in self.mcs_df.groupby("MCS_Index"):
-            sinr = group["SINR_dB"].values
-            ber = group["BER"].values
-            eff = group["Spectral_Efficiency_bpsHz"].values[0]  # constant per MCS index
-            coeffs = np.polyfit(sinr, ber, deg=5)
-            self.mcs_models[mcs_index] = np.poly1d(coeffs)
-            self.mcs_efficiencies[mcs_index] = eff
+        self.mcs_df = pd.read_csv("/home/ababu/mcs_performance_table.csv", sep=None, engine='python')  # let pandas infer delimiter
+        # Clean column names in case of whitespace / BOM
+        self.mcs_df.columns = [c.strip() for c in self.mcs_df.columns]
+
+        # ensure proper dtypes
+        # expected columns: 'SINR_dB', 'MCS_Index', 'BER', 'Spectral_Efficiency_bpsHz'
+        for col in ['SINR_dB', 'MCS_Index', 'BER', 'Spectral_Efficiency_bpsHz']:
+            if col not in self.mcs_df.columns:
+                raise ValueError(f"Expected column '{col}' in MCS CSV.")
+        self.mcs_df['SINR_dB'] = self.mcs_df['SINR_dB'].astype(float)
+        self.mcs_df['MCS_Index'] = self.mcs_df['MCS_Index'].astype(int)
+        self.mcs_df['BER'] = self.mcs_df['BER'].astype(float)
+        self.mcs_df['Spectral_Efficiency_bpsHz'] = self.mcs_df['Spectral_Efficiency_bpsHz'].astype(float)
+
+        # Precompute available MCS indices from CSV
+        self.available_mcs = np.unique(self.mcs_df['MCS_Index'].values)
+
+
         wireless_data_path = '/home/ababu/HERACLES/system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
+    
     def step(self, action):
         max_delay = np.random.uniform(low=0.3, high=1, size=1)
         curr_context_id = self.context_train_list[self.context_flag]
         self.curr_context = self.context_list[curr_context_id]
         if self.step_num % self.context_interval == 0 and self.step_num != 0:
-            self.context_flag += 1
+            self.context_flag = self.context_flag + 1
             curr_context_id = self.context_train_list[self.context_flag]
             self.curr_context = self.context_list[curr_context_id]
 
@@ -121,48 +136,79 @@ class EnvTEM(gym.Env):
         action_info = util.action_mapping(self.action_sunny_list, self.action_rain_list, self.action_snow_list,
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
+        requested_mcs = int(action)  # action is directly treated as MCS index
+        if requested_mcs not in self.available_mcs:
+            nearest_idx = np.argmin(np.abs(self.available_mcs - requested_mcs))
+            chosen_mcs = int(self.available_mcs[nearest_idx])
+        else:
+            chosen_mcs = requested_mcs
 
-        mcs_index = action
-        snr_db = self.target_snr_db
-        snr_db = np.clip(snr_db, self.mcs_df["SINR_dB"].min(), self.mcs_df["SINR_dB"].max())
+        snr_db = float(self.target_snr_db)
         snr_linear = 10 ** (snr_db / 10)
+        # Filter table for the chosen MCS
+        df_mcs = self.mcs_df[self.mcs_df['MCS_Index'] == chosen_mcs]
 
-        ber_model = self.mcs_models.get(mcs_index, None)
-        ber = np.clip(ber_model(snr_db), 0.00001, 0.99999) if ber_model else 0.5
-        spectral_eff = self.mcs_efficiencies.get(mcs_index, 0.5)
-        trans_rate = spectral_eff * self.bandwidth
+        if df_mcs.empty:
+            # Fail-safe: pick row with overall nearest MCS+SINR in table
+            all_diff = np.abs(self.mcs_df['MCS_Index'] - requested_mcs) + np.abs(self.mcs_df['SINR_dB'] - snr_db) * 0.01
+            row = self.mcs_df.iloc[int(np.argmin(all_diff.values))]
+            mcs_ber = float(row['BER'])
+            spectral_eff = float(row['Spectral_Efficiency_bpsHz'])
+        else:
+            # select the row in df_mcs where SINR_dB is closest to snr_db
+            idx = int(np.argmin(np.abs(df_mcs['SINR_dB'].values - snr_db)))
+            row = df_mcs.iloc[idx]
+            mcs_ber = float(row['BER'])
+            spectral_eff = float(row['Spectral_Efficiency_bpsHz'])
 
-        data_size_idx = action_info.fusion_name[0] - 1
-        data_size = self.data_size[0, data_size_idx]
-        block_num = np.floor(data_size / self.sub_block_length)
+        # Transmission rate (bits/s) from spectral efficiency (bits/s/Hz)
+        tm_trans_rate = spectral_eff * self.bandwidth  # bits / s
+        tm_ber = np.clip(mcs_ber, 1e-12, 0.999999)  # keep in bounds
 
-        re_trans_delay = 0
+        # Calculate PER and retransmission similar to before
         re_trans_energy = 0
+        re_trans_delay = 0
+        data_size_idx = action_info.fusion_name[0] - 1
+        data_size = self.data_size[0, data_size_idx]  # bytes? earlier code used / self.tm_coding_rate
+        # Assuming data_size in bits required; if bytes then multiply by 8
+        # To be consistent with previous code where they divided by coding rate, we simply treat data_size as bits here.
+        # If your data_size is bytes, use data_size *= 8
+
+        # Use block size self.sub_block_length (bits) as before
+        block_num = 1
         if self.enable_re_trans:
             self.re_trans_num = 0
-            per = 1 - (1 - ber) ** self.sub_block_length
-            per = np.clip(per, 0.00001, 0.99999)  
-            for _ in range(int(block_num)):
+            # number of blocks (floor)
+            block_num = max(1, int(np.floor(data_size / self.sub_block_length)))
+            tm_per = 1 - (1 - tm_ber) ** self.sub_block_length
+            for j in range(int(block_num)):
                 re_trans_num_block = 0
                 is_trans_success = 0
                 while is_trans_success == 0:
-                    is_trans_success = random.choices([0, 1], weights=[per, 1 - per])[0]
+                    is_trans_success = random.choices([0, 1], weights=[tm_per, 1 - tm_per])[0]
                     if is_trans_success == 1 or re_trans_num_block >= self.max_re_trans_num:
                         break
                     else:
                         re_trans_num_block += 1
-                        per = 1 - (1 - ber) ** (self.sub_block_length / (1 - spectral_eff / np.log2(1 + snr_linear)))
-                        per = np.clip(per, 0.00001, 0.99999)  
+                        tm_per = 1 - (1 - tm_ber) ** max(1, int(self.sub_block_length / 1))  # kept simple
                 self.re_trans_num += re_trans_num_block
-            re_trans_delay = self.re_trans_num * ((1 / spectral_eff - 1) * self.sub_block_length / trans_rate)
+            # compute retrans delay & energy using tm_trans_rate
+            re_trans_delay = self.re_trans_num * ((1 / 1 - 1) * self.sub_block_length / tm_trans_rate) if tm_trans_rate > 0 else 0
+            # note: (1/1 -1) = 0, so re_trans_delay simplified; keep base cost as retransmissions cost proportional to block length/time
+            # Use simpler estimate: each retrans block costs block transmission time
+            if tm_trans_rate > 0:
+                re_trans_delay = self.re_trans_num * (self.sub_block_length / tm_trans_rate)
             re_trans_energy = self.max_power * re_trans_delay
 
-        trans_delay = data_size / trans_rate + re_trans_delay
+        # Transmission delay
+        trans_delay = 0
+        if tm_trans_rate > 0:
+            trans_delay = data_size / tm_trans_rate
+        trans_delay += re_trans_delay
         com_delay = action_info.com_delay
         total_delay = trans_delay + com_delay
         self.total_delay_list[0, self.step_num] = total_delay
         self.re_trans_list[0, self.step_num] = self.re_trans_num
-
         trans_energy = self.max_power * trans_delay + re_trans_energy
         com_energy = action_info.com_energy
         total_energy = trans_energy + com_energy
