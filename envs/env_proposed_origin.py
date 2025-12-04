@@ -54,7 +54,9 @@ class EnvProposed_origin(gym.Env):
                                                    p=self.context_prob)
         self.delay_vio_num = 0
         self.context_flag = 0
-        self.num_actions = 31  # Assuming MCS indices 0–30
+        self.num_actions = 33  # Assuming MCS indices 0–30
+        #self.mcs_list = [0, 15, 30]  # Only 3 MCS values
+        #self.num_actions = len(self.mcs_list)
         self.show_fit_plot = False
         self.curr_context = None
         self.enable_re_trans = True
@@ -79,19 +81,21 @@ class EnvProposed_origin(gym.Env):
 
         # Load MCS performance table from CSV
         self.mcs_df = pd.read_csv("/home/ababu/mcs_performance_table.csv")
-
-        # Fit polynomial BER models and store spectral efficiencies
+        self.mcs_list = sorted(self.mcs_df["MCS_Index"].unique().tolist())
+        self.num_actions = len(self.mcs_list)
+        self.action_space = spaces.Discrete(self.num_actions)
         self.mcs_models = {}
         self.mcs_efficiencies = {}
-
-        for mcs_index, group in self.mcs_df.groupby("MCS_Index"):
-            sinr = group["SINR_dB"].values
-            ber = group["BER"].values
-            eff = group["Spectral_Efficiency_bpsHz"].values[0]  # constant per MCS index
-            coeffs = np.polyfit(sinr, ber, deg=5)
-            self.mcs_models[mcs_index] = np.poly1d(coeffs)
-            self.mcs_efficiencies[mcs_index] = eff
-
+        for mcs in self.mcs_list:
+            df_mcs = self.mcs_df[self.mcs_df["MCS_Index"] == mcs]
+            ber_interp = interp1d(
+                df_mcs["SINR_dB"],
+                df_mcs["BER"],
+                kind="linear",
+                fill_value="extrapolate"
+            )
+        self.mcs_models[int(mcs)] = ber_interp
+        self.mcs_efficiencies[int(mcs)] = float(df_mcs["Spectral_Efficiency_bpsHz"].iloc[0])
         wireless_data_path = '/home/ababu/HERACLES/system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
     def step(self, action):
@@ -111,15 +115,17 @@ class EnvProposed_origin(gym.Env):
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
 
-        mcs_index = action  # Direct mapping
-        snr_db = self.target_snr_db
-        snr_db = np.clip(snr_db, self.mcs_df["SINR_dB"].min(), self.mcs_df["SINR_dB"].max())
+        # Map action index → actual MCS index from CSV
+        mcs_index = self.mcs_list[action]
+        snr_db = float(self.snr_array[self.step_num])
+        snr_db = np.clip(snr_db,
+                         self.mcs_df["SINR_dB"].min(),
+                         self.mcs_df["SINR_dB"].max())
         snr_linear = 10 ** (snr_db / 10)
-
-    # BER and spectral efficiency from CSV-based models
         ber_model = self.mcs_models.get(mcs_index, None)
-        ber = np.clip(ber_model(snr_db), 0.00001, 0.99999) if ber_model else 0.5
+        ber = np.clip(ber_model(snr_db), 1e-6, 0.999999) if ber_model else 0.5
         spectral_eff = self.mcs_efficiencies.get(mcs_index, 0.5)
+
         trans_rate = spectral_eff * self.bandwidth  # bits/sec
 
         re_trans_delay = 0
@@ -133,6 +139,8 @@ class EnvProposed_origin(gym.Env):
             if self.enable_re_trans:
                 self.re_trans_num = 0
                 per = 1 - (1 - ber) ** self.sub_block_length
+                #per = 1 - (1 - bler) ** self.sub_block_length
+                per = float(np.clip(per, 0.0, 1.0))  # clamp to [0,1]
                 for _ in range(int(block_num)):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -143,6 +151,11 @@ class EnvProposed_origin(gym.Env):
                         else:
                             re_trans_num_block += 1
                             per = 1 - (1 - ber) ** (self.sub_block_length / (1 - spectral_eff / np.log2(1 + snr_linear)))
+                            denom = (1.0 - spectral_eff / max(np.log2(1.0 + snr_linear), 1e-9))
+                            denom = max(denom, 1e-6)  # avoid zero/negative
+                            eff_len = self.sub_block_length / denom
+                            per = 1.0 - (1.0 - ber) ** eff_len
+                            per = float(np.clip(per, 0.0, 1.0))
                     self.re_trans_num += re_trans_num_block
                 re_trans_delay = self.re_trans_num * ((1 / spectral_eff - 1) * self.sub_block_length / trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
@@ -157,6 +170,8 @@ class EnvProposed_origin(gym.Env):
             if self.enable_re_trans:
                 self.re_trans_num = 0
                 per = 1 - (1 - ber) ** self.sub_block_length
+                #per = 1 - (1 - bler) ** self.sub_block_length
+                per = float(np.clip(per, 0.0, 1.0))  # clamp to [0,1]
                 for _ in range(int(block_num)):
                     re_trans_num_block = 0
                     is_trans_success = 0
@@ -167,6 +182,11 @@ class EnvProposed_origin(gym.Env):
                         else:
                             re_trans_num_block += 1
                             per = 1 - (1 - ber) ** (self.sub_block_length / (1 - spectral_eff / np.log2(1 + snr_linear)))
+                            denom = (1.0 - spectral_eff / max(np.log2(1.0 + snr_linear), 1e-9))
+                            denom = max(denom, 1e-6)  # avoid zero/negative
+                            eff_len = self.sub_block_length / denom
+                            per = 1.0 - (1.0 - ber) ** eff_len
+                            per = float(np.clip(per, 0.0, 1.0))
                     self.re_trans_num += re_trans_num_block
                 re_trans_delay = self.re_trans_num * ((1 / spectral_eff - 1) * self.sub_block_length / trans_rate)
                 re_trans_energy = self.max_power * re_trans_delay
