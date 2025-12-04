@@ -7,7 +7,7 @@ from scipy.io import loadmat
 
 
 def acc_exp_gen(per, current_context):
-    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data.mat")
+    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data_cp.mat")
     acc_context = platform_data.get(current_context, [0])[-1]
     try:
         acc_exp = acc_context * (1 - per)
@@ -17,7 +17,7 @@ def acc_exp_gen(per, current_context):
     return acc_exp
 
 def acc_normalize(acc_exp, current_context):
-    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data.mat")
+    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data_cp.mat")
     try:
         acc_list = platform_data[current_context][:21]
         acc_exp_nor = acc_exp / np.max(acc_list)
@@ -46,7 +46,7 @@ def action_gen():
     fusion_name_list = [list(p) for p in permutations([1, 2, 3, 4])]
     backbone_list = ["18"] * 24
 
-    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data.mat")
+    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data_cp.mat")
     acc_contexts = {
         "sunny": platform_data["sunny"][-1],
         "rain": platform_data["rain"][-1],
@@ -116,7 +116,7 @@ def estimate_cqi(cqi_true, est_err_para, min_cqi=1, max_cqi=15):
     cqi_estimated = np.round(cqi_true + noise)
     return int(np.clip(cqi_estimated, min_cqi, max_cqi))
 def obtain_min_acc(current_context):
-    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data.mat")
+    platform_data = loadmat("/home/ababu/HERACLES/system_data/platform_data_cp.mat")
     try:
         acc_context_map = {
             "sunny": platform_data["sunny"][:21],
