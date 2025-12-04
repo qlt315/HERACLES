@@ -87,18 +87,21 @@ class EnvSSE(gym.Env):
 
         # Data loading and fitting
         self.mcs_df = pd.read_csv("/home/ababu/mcs_performance_table.csv")
-
+        allowed_mcs = list(range(0, 30))
 # Fit polynomial BER models and store spectral efficiencies
         self.mcs_models = {}
         self.mcs_efficiencies = {}
-
+        self.mcs_coding_rates = {}
         for mcs_index, group in self.mcs_df.groupby("MCS_Index"):
+            if mcs_index not in allowed_mcs:
+                continue
             sinr = group["SINR_dB"].values
             ber = group["BER"].values
             eff = group["Spectral_Efficiency_bpsHz"].values[0]  # constant per MCS index
             coeffs = np.polyfit(sinr, ber, deg=5)
             self.mcs_models[mcs_index] = np.poly1d(coeffs)
             self.mcs_efficiencies[mcs_index] = eff
+            self.mcs_coding_rates[mcs_index] = eff / 6.0
         wireless_data_path = '/home/ababu/HERACLES/system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
     def step(self, action):
@@ -119,15 +122,15 @@ class EnvSSE(gym.Env):
                                           self.curr_context, action)
 
         mcs_index = action
-        snr_db = self.target_snr_db
-        snr_db = np.clip(snr_db, self.mcs_df["SINR_dB"].min(), self.mcs_df["SINR_dB"].max())
+        snr_db = np.clip(self.target_snr_db,
+                         self.mcs_df["SINR_dB"].min(),
+                         self.mcs_df["SINR_dB"].max())
         snr_linear = 10 ** (snr_db / 10)
 
         ber_model = self.mcs_models.get(mcs_index, None)
-        ber = np.clip(ber_model(snr_db), 0.00001, 0.99999) if ber_model else 0.5
+        ber = np.clip(ber_model(snr_db), 1e-5, 0.99999) if ber_model else 0.5
         spectral_eff = self.mcs_efficiencies.get(mcs_index, 0.5)
         trans_rate = spectral_eff * self.bandwidth
-
         order = action_info.fusion_name
         data_size = np.max(self.data_size[0, [i - 1 for i in order]])
         block_num = np.floor(data_size / self.sub_block_length)
@@ -138,7 +141,10 @@ class EnvSSE(gym.Env):
 
         if self.enable_re_trans:
             self.re_trans_num = 0
-            per = 1 - ((1 - ber) ** self.sub_block_length)
+            #per = 1 - ((1 - ber) ** self.sub_block_length)
+            # initial PER
+            per = 1 - (1 - ber) ** self.sub_block_length
+            per = float(np.clip(per, 0.0, 1.0))  # clamp to [0,1]
             for _ in range(int(block_num)):
                 re_trans_num_block = 0
                 is_trans_success = 0
@@ -148,7 +154,12 @@ class EnvSSE(gym.Env):
                         break
                     else:
                         re_trans_num_block += 1
-                        per = 1 - ((1 - ber) ** (self.sub_block_length / (1 - spectral_eff / np.log2(1 + snr_linear))))
+                        #per = 1 - ((1 - ber) ** (self.sub_block_length / (1 - spectral_eff / np.log2(1 + snr_linear))))
+                        denom = (1.0 - spectral_eff / max(np.log2(1.0 + snr_linear), 1e-9))
+                        denom = max(denom, 1e-6)  # avoid zero/negative
+                        eff_len = self.sub_block_length / denom
+                        per = 1.0 - (1.0 - ber) ** eff_len
+                        per = float(np.clip(per, 0.0, 1.0))
                 self.re_trans_num += re_trans_num_block
             re_trans_delay = self.re_trans_num * ((1 / spectral_eff - 1) * self.sub_block_length / trans_rate)
             re_trans_energy = self.max_power * re_trans_delay
