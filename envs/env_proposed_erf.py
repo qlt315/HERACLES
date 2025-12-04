@@ -54,7 +54,11 @@ class EnvProposed_erf(gym.Env):
                                                    p=self.context_prob)
         self.delay_vio_num = 0
         self.context_flag = 0
-        self.num_actions = 31  # Assuming MCS indices 0–28
+        self.num_actions = 33  # Assuming MCS indices 0–28
+        #self.mcs_list = [0, 15, 30]  # Only 3 MCS values
+        #self.num_actions = len(self.mcs_list)
+        #self.action_space = spaces.Discrete(self.num_actions)
+
         self.show_fit_plot = False
         self.curr_context = None
         self.enable_re_trans = True
@@ -78,18 +82,9 @@ class EnvProposed_erf(gym.Env):
         self.action_name = "None"
 
         self.mcs_df = pd.read_csv("/home/ababu/mcs_performance_table.csv")
-
-        self.mcs_models = {}
-        self.mcs_efficiencies = {}
-
-        for mcs_index, group in self.mcs_df.groupby("MCS_Index"):
-            sinr = group["SINR_dB"].values
-            ber = group["BER"].values
-            eff = group["Spectral_Efficiency_bpsHz"].values[0]  # constant per MCS index
-            coeffs = np.polyfit(sinr, ber, deg=5)
-            self.mcs_models[mcs_index] = np.poly1d(coeffs)
-            self.mcs_efficiencies[mcs_index] = eff
-
+        self.mcs_list = sorted(self.mcs_df["MCS_Index"].unique().tolist())
+        self.num_actions = len(self.mcs_list)
+        self.action_space = spaces.Discrete(self.num_actions)
         wireless_data_path = '/home/ababu/HERACLES/system_data/5G_dataset/Netflix/Driving/animated-RickandMorty'
         self.snr_array, self.cqi_array = util.obtain_cqi_and_snr(wireless_data_path, self.slot_num)
 
@@ -111,23 +106,36 @@ class EnvProposed_erf(gym.Env):
         action_info = util.action_mapping(self.action_sunny_list, self.action_rain_list, self.action_snow_list,
                                           self.action_motorway_list, self.action_fog_list, self.action_night_list,
                                           self.curr_context, action)
-
-        mcs_index = action  # Direct mapping
+        #mcs_index = action  # Direct mapping
+        mcs_index = self.mcs_list[action]  # Map action index to actual MCS
         snr_db = self.target_snr_db
         snr_db = np.clip(snr_db, 0, 30)  # Adjust based on your dataset range
         snr_linear = 10 ** (snr_db / 10)
 
     # BLER estimation
-        bler_model = self.mcs_models.get(mcs_index, None)
-        bler = np.clip(bler_model(snr_db), 0.00001, 0.99999)
-        spectral_eff = self.mcs_efficiencies.get(mcs_index, 0.5)  # fallback
-        trans_rate = spectral_eff * self.bandwidth  # in bits/sec
-        re_trans_energy = 0
-        re_trans_delay = 0
-        block_num = 1
+        #bler_model = self.mcs_models.get(mcs_index, None)
+        #bler = np.clip(bler_model(snr_db), 0.00001, 0.99999)
+        df_mcs = self.mcs_df[self.mcs_df['MCS_Index'] == mcs_index] 
+        if not df_mcs.empty: 
+            idx = int(np.argmin(np.abs(df_mcs['SINR_dB'].values - snr_db))) 
+            row = df_mcs.iloc[idx] 
+            bler = np.clip(float(row['BER']), 1e-12, 0.999999) 
+            spectral_eff = float(row['Spectral_Efficiency_bpsHz']) 
+        else: 
+            bler = 0.5 
+            spectral_eff = 0.5 
+        coding_rate = spectral_eff / 6.0
+        trans_rate = spectral_eff * self.bandwidth
+        #data_size_idx = action_info.fusion_name[0] - 1 if len(action_info.fusion_name) == 1 else \
+        #                max([self.data_size[0, i - 1] for i in action_info.fusion_name])
+        #data_size = self.data_size[0, data_size_idx] / coding_rate
+        if len(action_info.fusion_name) == 1:
+            data_size_idx = action_info.fusion_name[0] - 1
+        else:
+            data_size_idx = max(action_info.fusion_name, key=lambda i: self.data_size[0, i - 1]) - 1
 
-        data_size_idx = action_info.fusion_name[0] - 1 if len(action_info.fusion_name) == 1 else \
-                        max([self.data_size[0, i - 1] for i in action_info.fusion_name])
+        
+        #coding_rate = self.mcs_coding_rates.get(mcs_index, 0.5)  # default if missing
         data_size = self.data_size[0, data_size_idx] / coding_rate
 
         if self.enable_re_trans:
@@ -165,8 +173,7 @@ class EnvProposed_erf(gym.Env):
             self.acc_vio_num += 1
             self.bad_action_freq_list[0, action] += 1
             self.acc_vio_list[0, self.step_num] = np.abs(acc_exp - min_acc)
-
-        self.acc_exp_list[0, self.step_num] = acc_exp
+            self.acc_exp_list[0, self.step_num] = acc_exp
         reward_1 = ss.erf(acc_exp - min_acc)
         reward_2 = total_delay / max_delay
         reward_3 = total_energy / self.max_energy
@@ -243,8 +250,8 @@ class EnvProposed_erf(gym.Env):
         self.episode_re_trans_num_list = []
         self.episode_acc_vio_num_list = []
         self.episode_acc_vio_list = []
-        return np.array(state_init)
-
+        #return np.array(state_init)
+        return np.array([cqi_init, snr_init, context_id_init, min_acc_init])
     def input_est_err(self, est_err_para):
         self.est_err_para = est_err_para
         self.mcs_folder_path = "./system_data/mcs_index"
